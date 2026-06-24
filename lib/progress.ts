@@ -34,7 +34,10 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   return snap.data() as UserProfile;
 }
 
-/** Persist the current step for a lesson (resume point). */
+/**
+ * Persist the current step for a lesson (resume point).
+ * Only writes `currentStep` so a sticky `completed` flag is preserved on replay.
+ */
 export async function saveLessonStep(
   uid: string,
   lessonId: string,
@@ -44,7 +47,7 @@ export async function saveLessonStep(
     userRef(uid),
     {
       progress: {
-        [lessonId]: { currentStep, completed: false },
+        [lessonId]: { currentStep },
       },
     },
     { merge: true }
@@ -57,13 +60,17 @@ function todayString(): string {
 
 /**
  * Mark a lesson complete, award the badge, and bump the streak.
- * Returns the updated profile so callers can reflect new badges/streak.
+ * Preserves the first completion time, counts completed runs (attempts), and
+ * records the fewest total graded attempts across completed runs in
+ * `bestChallengeAttempts`. Safe to call on replays.
+ * Returns the updated profile so callers can reflect new badges/streak/best.
  */
 export async function completeLesson(
   uid: string,
   lessonId: string,
   totalSteps: number,
-  badge: string
+  badge: string,
+  gradedAttempts: number
 ): Promise<UserProfile | null> {
   const current = await getUserProfile(uid);
   const today = todayString();
@@ -79,6 +86,12 @@ export async function completeLesson(
   const badges = new Set(current?.badges ?? []);
   badges.add(badge);
 
+  const prev = current?.progress?.[lessonId];
+  const attempts = (prev?.attempts ?? 0) + 1;
+  const prevBest = prev?.bestChallengeAttempts ?? null;
+  const bestChallengeAttempts =
+    prevBest === null ? gradedAttempts : Math.min(prevBest, gradedAttempts);
+
   await setDoc(
     userRef(uid),
     {
@@ -89,7 +102,10 @@ export async function completeLesson(
         [lessonId]: {
           currentStep: totalSteps,
           completed: true,
-          completedAt: serverTimestamp(),
+          // Preserve the first completion timestamp; only set it once.
+          ...(prev?.completed ? {} : { completedAt: serverTimestamp() }),
+          attempts,
+          bestChallengeAttempts,
         },
       },
     },

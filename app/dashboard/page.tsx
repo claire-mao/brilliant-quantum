@@ -5,7 +5,7 @@ import RouteGuard from "@/components/RouteGuard";
 import NavBar from "@/components/NavBar";
 import Badge from "@/components/Badge";
 import { useAuth } from "@/lib/auth-context";
-import { quantumBasicsCourse, QUANTUM_BEGINNER_BADGE } from "@/content/lessons";
+import { quantumBasicsCourse, isLessonUnlocked } from "@/content/lessons";
 import type { Lesson, UserProfile } from "@/lib/types";
 
 export default function DashboardPage() {
@@ -21,10 +21,11 @@ function DashboardContent() {
   const { profile } = useAuth();
   const course = quantumBasicsCourse;
 
-  const lesson1 = course.lessons[0];
-  const lesson1Done = !!profile?.progress?.[lesson1.id]?.completed;
-  const hasBadge = profile?.badges?.includes(QUANTUM_BEGINNER_BADGE);
-  const nextLesson = course.lessons.find((l) => l.locked);
+  const earnedBadges = course.lessons
+    .map((l) => l.badge)
+    .filter(
+      (b): b is NonNullable<typeof b> => !!b && !!profile?.badges?.includes(b.id)
+    );
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
@@ -37,9 +38,11 @@ function DashboardContent() {
         </p>
       )}
 
-      {hasBadge && (
-        <div className="mt-5">
-          <Badge />
+      {earnedBadges.length > 0 && (
+        <div className="mt-5 flex flex-col gap-2">
+          {earnedBadges.map((b) => (
+            <Badge key={b.id} title={b.title} subtitle={b.subtitle} />
+          ))}
         </div>
       )}
 
@@ -51,17 +54,67 @@ function DashboardContent() {
         ))}
       </ul>
 
-      {lesson1Done && nextLesson && (
-        <div className="mt-6 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3">
-          <p className="text-sm font-medium text-indigo-900">
-            Up next: {nextLesson.title}
-          </p>
-          <p className="text-sm text-indigo-700">
-            Great work finishing Lesson 1! {nextLesson.title} is coming soon.
-          </p>
-        </div>
-      )}
+      <Recommendation profile={profile} />
     </main>
+  );
+}
+
+function Recommendation({ profile }: { profile: UserProfile | null }) {
+  const lessons = quantumBasicsCourse.lessons;
+  // Lessons are ordered and unlock sequentially, so the first lesson that has
+  // content and isn't completed is always the right next step to recommend.
+  const nextLesson = lessons.find(
+    (l) => l.steps.length > 0 && !profile?.progress?.[l.id]?.completed
+  );
+
+  if (!nextLesson) {
+    return (
+      <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+        <p className="text-sm font-medium text-slate-700">Next unit coming soon</p>
+        <p className="text-sm text-slate-500">
+          You&apos;ve completed every lesson available. More quantum adventures are on the way.
+        </p>
+      </div>
+    );
+  }
+
+  const isFirst = lessons[0]?.id === nextLesson.id;
+  const started = (profile?.progress?.[nextLesson.id]?.currentStep ?? 0) > 0;
+
+  return (
+    <RecommendationCard
+      title={`${isFirst ? "Start here" : "Up next"}: ${nextLesson.title}`}
+      body={nextLesson.description}
+      href={`/lessons/${nextLesson.id}`}
+      cta={started ? "Continue" : "Start lesson"}
+    />
+  );
+}
+
+function RecommendationCard({
+  title,
+  body,
+  href,
+  cta,
+}: {
+  title: string;
+  body: string;
+  href: string;
+  cta: string;
+}) {
+  return (
+    <div className="mt-6 flex flex-col gap-3 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p className="text-sm font-medium text-indigo-900">{title}</p>
+        <p className="text-sm text-indigo-700">{body}</p>
+      </div>
+      <Link
+        href={href}
+        className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-center text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+      >
+        {cta}
+      </Link>
+    </div>
   );
 }
 
@@ -75,13 +128,14 @@ function LessonCard({
   const progress = profile?.progress?.[lesson.id];
   const completed = !!progress?.completed;
   const inProgress = !completed && (progress?.currentStep ?? 0) > 0;
+  const unlocked = isLessonUnlocked(lesson.id, profile);
 
-  if (lesson.locked) {
+  if (!unlocked) {
     return (
       <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 opacity-80">
         <div>
           <p className="font-semibold text-slate-600">{lesson.title}</p>
-          <p className="text-sm text-slate-400">{lesson.description}</p>
+          <p className="text-sm text-slate-400">Finish the previous lesson to unlock.</p>
         </div>
         <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium text-slate-500">
           Locked
