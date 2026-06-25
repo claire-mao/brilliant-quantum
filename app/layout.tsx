@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Brilliant Quantum",
-  description: "Learn quantum computing fundamentals through short, interactive lessons.",
+  description: "Build intuition for quantum computing through short, interactive lessons.",
 };
 
 export default function RootLayout({

@@ -1,21 +1,29 @@
 "use client";
 
-/** Animated two-bar histogram of measurement outcomes (counts of 0 and 1). */
+/**
+ * Animated two-bar histogram of measurement outcomes (counts of 0 and 1).
+ * Bar captions default to "Measured 0" / "Measured 1" but can be overridden
+ * (for example, "Target missed" / "Target reached" in the interference lesson).
+ */
 export default function Histogram({
   zeros,
   ones,
   total,
+  zeroLabel = "Measured 0",
+  oneLabel = "Measured 1",
 }: {
   zeros: number;
   ones: number;
   total: number;
+  zeroLabel?: string;
+  oneLabel?: string;
 }) {
   const max = Math.max(zeros, ones, 1);
 
   return (
     <div className="flex items-end gap-6 sm:gap-10">
       <HistogramBar
-        label="0"
+        caption={zeroLabel}
         count={zeros}
         total={total}
         heightPct={(zeros / max) * 100}
@@ -23,7 +31,7 @@ export default function Histogram({
         track="bg-sky-100"
       />
       <HistogramBar
-        label="1"
+        caption={oneLabel}
         count={ones}
         total={total}
         heightPct={(ones / max) * 100}
@@ -35,14 +43,14 @@ export default function Histogram({
 }
 
 function HistogramBar({
-  label,
+  caption,
   count,
   total,
   heightPct,
   color,
   track,
 }: {
-  label: string;
+  caption: string;
   count: number;
   total: number;
   heightPct: number;
@@ -61,9 +69,7 @@ function HistogramBar({
           style={{ height: `${heightPct}%` }}
         />
       </div>
-      <span className="text-sm font-medium text-slate-500">
-        Measured {label}
-      </span>
+      <span className="text-sm font-medium text-slate-500">{caption}</span>
       <span className="text-xs text-slate-400 tabular-nums">{pct}%</span>
     </div>
   );

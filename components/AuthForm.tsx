@@ -63,7 +63,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       </h1>
       <p className="mt-1 text-sm text-slate-500">
         {isSignup
-          ? "Start learning quantum computing in minutes."
+          ? "Create an account to save your progress."
           : "Log in to continue where you left off."}
       </p>
 
@@ -129,7 +129,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           </>
         ) : (
           <>
-            New here?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/signup" className="font-medium text-indigo-600 hover:underline">
               Create an account
             </Link>

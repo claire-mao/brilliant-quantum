@@ -318,8 +318,37 @@ function Body({
   }
 }
 
+/** Sample one playground measurement: 1 with `probPercent`% chance, else 0. */
+function samplePlaygroundOutcome(probPercent: number): 0 | 1 {
+  return Math.random() * 100 < probPercent ? 1 : 0;
+}
+
 function PlaygroundView({ body }: { body: string }) {
   const [pOne, setPOne] = useState(50);
+  const [prediction, setPrediction] = useState<0 | 1 | null>(null);
+  const [shot, setShot] = useState<0 | 1 | null>(null);
+  const [runs, setRuns] = useState<{ zeros: number; ones: number } | null>(null);
+
+  // Changing the prepared state invalidates any prior measurement.
+  function changeProbability(value: number) {
+    setPOne(value);
+    setShot(null);
+    setRuns(null);
+    setPrediction(null);
+  }
+
+  function measureOnce() {
+    setShot(samplePlaygroundOutcome(pOne));
+  }
+
+  function measureMany() {
+    let ones = 0;
+    for (let i = 0; i < 20; i++) {
+      if (samplePlaygroundOutcome(pOne) === 1) ones++;
+    }
+    setRuns({ ones, zeros: 20 - ones });
+  }
+
   return (
     <div className="mt-3">
       <p className="text-base leading-7 text-slate-700">{body}</p>
@@ -327,7 +356,63 @@ function PlaygroundView({ body }: { body: string }) {
         <ProbabilityVisual pOne={pOne} />
       </div>
       <div className="mt-6">
-        <QubitSlider value={pOne} onChange={setPOne} />
+        <QubitSlider value={pOne} onChange={changeProbability} />
+      </div>
+
+      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4">
+        <p className="text-sm font-medium text-slate-700">
+          You set the probability. Predict one measurement before taking it:
+        </p>
+        <div className="mt-2 flex gap-2">
+          {([0, 1] as const).map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => setPrediction(g)}
+              aria-pressed={prediction === g}
+              className={`h-9 w-12 rounded-lg border text-sm font-bold tabular-nums transition-colors ${
+                prediction === g
+                  ? "border-indigo-400 bg-indigo-50 text-indigo-700"
+                  : "border-slate-300 bg-white text-slate-600 hover:border-indigo-300"
+              }`}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={measureOnce}
+            className="rounded-lg bg-indigo-600 px-4 py-2.5 text-base font-semibold text-white transition-transform hover:bg-indigo-700 active:scale-95"
+          >
+            Measure once
+          </button>
+          <button
+            type="button"
+            onClick={measureMany}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-base font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            Measure 20 fresh qubits
+          </button>
+        </div>
+
+        {shot !== null && (
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            Measured <span className="font-bold tabular-nums text-slate-900">{shot}</span>
+            {prediction !== null && prediction !== shot
+              ? " - not what you predicted. "
+              : ". "}
+            One shot only ever returns 0 or 1, so it can&apos;t reveal the setting you chose.
+          </p>
+        )}
+        {runs && (
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            20 fresh qubits gave {runs.zeros} zeros and {runs.ones} ones. The setting hides
+            in the statistics - only many measurements bring it into view.
+          </p>
+        )}
       </div>
     </div>
   );

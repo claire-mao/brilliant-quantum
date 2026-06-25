@@ -9,7 +9,8 @@ export const INTERFERENCE_EXPLORER_BADGE = "interference-explorer";
 const lesson1: Lesson = {
   id: "qubits-superposition",
   title: "Qubits & Superposition",
-  description: "Discover how a qubit is different from a classical bit - by playing with one.",
+  description:
+    "Build intuition for qubits and superposition by preparing states and measuring them.",
   badge: {
     id: QUANTUM_BEGINNER_BADGE,
     title: "Quantum Beginner",
@@ -19,52 +20,51 @@ const lesson1: Lesson = {
     {
       type: "bit-explorer",
       id: "classical-bit",
-      title: "Meet a classical bit",
+      title: "Classical bits",
       prompt:
-        "Flip the switch a few times. A normal computer bit is always either 0 or 1. Can a classical bit be both 0 and 1 at the same time?",
+        "A classical bit stores exactly one value at a time: 0 or 1. Flip the switch, then decide whether a classical bit can ever represent both simultaneously.",
       options: [
         {
           id: "no",
-          label: "No, it's always one or the other",
+          label: "No — it always holds one definite value",
           correct: true,
           feedback:
-            "Exactly. A classical bit is like a light switch: it's either OFF (0) or ON (1). It always holds one definite value - never both at once.",
+            "Correct. A classical bit always holds a single definite value, 0 or 1. Representing both at once is a property of quantum systems, which you'll examine next.",
         },
         {
           id: "yes",
-          label: "Yes, it can be both",
+          label: "Yes — it can represent both at once",
           feedback:
-            "Not for a classical bit. A regular bit always has one definite value, 0 or 1. Holding both at once is a quantum idea - and that's exactly where we're headed next.",
+            "Not for a classical bit. A classical bit is defined to hold one definite value, 0 or 1. Holding both at once is a quantum property, introduced next.",
         },
       ],
     },
     {
       type: "informative",
       id: "why-quantum",
-      title: "Why quantum computing matters",
+      title: "Why quantum computing",
       emoji: "⚛️",
       body: [
-        "Regular computers are amazing, but some problems are just too big for them - like designing new medicines, building better batteries, or modeling how molecules behave.",
-        "Quantum computers work in a fundamentally different way. By using qubits instead of bits, they can explore many possibilities at once, which could crack problems that would take a normal computer billions of years.",
-        "You don't need any heavy math to start. In this lesson, you'll build the core intuition by playing with a qubit yourself.",
+        "Some computational problems — such as molecular simulation, materials discovery, and optimization — scale beyond what classical computers can solve efficiently.",
+        "Quantum computers process information differently, using qubits instead of classical bits. In this lesson, you'll build intuition for qubits through interactive experiments rather than mathematics.",
       ],
       resources: [
         {
           label: "IBM Quantum Learning",
           url: "https://learning.quantum.ibm.com/",
-          description: "Free beginner-friendly courses on quantum computing.",
+          description: "Introductory courses on quantum computing.",
           kind: "docs",
         },
         {
-          label: "Qiskit beginner resources",
+          label: "Qiskit documentation",
           url: "https://www.ibm.com/quantum/qiskit",
-          description: "Tools and tutorials for writing your first quantum programs.",
+          description: "Tools and tutorials for writing quantum programs.",
           kind: "docs",
         },
         {
-          label: "Watch: Quantum computing for beginners",
-          url: "https://www.youtube.com/results?search_query=quantum+computing+for+beginners",
-          description: "Short explainer videos (opens YouTube in a new tab).",
+          label: "Quantum computing: a short introduction",
+          url: "https://www.youtube.com/results?search_query=quantum+computing+introduction",
+          description: "Introductory explainer videos (opens YouTube).",
           kind: "video",
         },
       ],
@@ -72,53 +72,53 @@ const lesson1: Lesson = {
     {
       type: "prediction",
       id: "predict-qubit",
-      title: "Predict: what makes a qubit different?",
+      title: "Predict: how a qubit differs",
       prompt:
-        "A classical bit might be 100% a 0. A qubit could be 50% likely to measure 0 and 50% likely to measure 1. Before we dig in - what do you think makes a qubit different?",
+        "A classical bit is fixed at 0 or 1. A qubit can be 50% likely to measure 0 and 50% likely to measure 1. Predict what best describes this difference.",
       options: [
         {
           id: "both",
-          label: "It can hold both possibilities at once",
+          label: "A qubit holds a combination of 0 and 1 until measured",
           correct: true,
           feedback:
-            "That's the key idea! A qubit can be in a blend of 0 and 1 at the same time - called superposition. The percentages describe how likely each result is when you measure it.",
+            "Correct. This combination is called superposition. The percentages are the probabilities of each outcome when the qubit is measured.",
         },
         {
           id: "random",
-          label: "It just changes randomly",
+          label: "A qubit switches between 0 and 1 at random",
           feedback:
-            "Close, but not quite. A qubit isn't randomly flipping. It holds a real blend of 0 and 1 (superposition), and the probabilities are fixed until you measure it.",
+            "Not quite. A qubit is not switching values. It holds a fixed superposition of 0 and 1, and the probabilities stay set until you measure it.",
         },
         {
           id: "faster",
-          label: "It's just a faster bit",
+          label: "A qubit is simply a faster bit",
           feedback:
-            "It's not about raw speed. The real difference is that a qubit can be in a blend of 0 and 1 at once - something a classical bit simply cannot do.",
+            "Speed is not the distinction. A qubit can hold a superposition of 0 and 1 — a state a classical bit cannot represent.",
         },
       ],
     },
     {
       type: "playground",
       id: "superposition-playground",
-      title: "Superposition playground",
+      title: "Prepare and measure",
       body:
-        "A qubit can exist in a superposition of outcomes. The probabilities describe what a measurement might produce. Drag the slider and watch the two bars: P(0) and P(1) always add up to 100%.",
+        "Set the probability, then predict: can a single measurement reveal which setting you chose? Measure one qubit, then measure many freshly prepared qubits, and compare what a single outcome and the full set reveal.",
     },
     {
       type: "informative",
       id: "what-measurement-means",
-      title: "What measurement means",
+      title: "What measurement does",
       emoji: "🔎",
       body: [
-        "So far the qubit has been a blend of 0 and 1. But the moment you look - or \"measure\" - it has to commit to a single answer: 0 or 1.",
-        "Think of a spinning coin. While it spins, asking \"heads or tails?\" doesn't make sense. The instant it lands, it's one or the other.",
-        "The probabilities don't tell you what one measurement will be - they tell you how often each result shows up if you measure many times. Let's see that in action next.",
+        "A qubit can hold a superposition of 0 and 1, but that superposition cannot be observed directly.",
+        "Measurement returns a single definite outcome, 0 or 1. The probabilities describe how often each outcome occurs, not what any single measurement will be.",
+        "To recover the probabilities, prepare many identical qubits and measure each once. Observe this next.",
       ],
       resources: [
         {
           label: "IBM Quantum Learning: measurement",
           url: "https://learning.quantum.ibm.com/",
-          description: "Go deeper on measurement when you're ready.",
+          description: "A deeper treatment of measurement.",
           kind: "docs",
         },
       ],
@@ -126,64 +126,64 @@ const lesson1: Lesson = {
     {
       type: "simulation",
       id: "run-measurements",
-      title: "Run some measurements",
+      title: "Measure repeatedly",
       prompt:
-        "Set a probability, then tap \"Measure 100 times\" to actually measure the qubit again and again. What do you notice about the results?",
+        "Set a probability, then measure 100 times. Observe how the outcomes are distributed.",
       teaching:
-        "Each measurement forces the qubit to pick a single answer - 0 or 1. You can't control any single result, but over many measurements the outcomes follow the probabilities. The higher the probability, the more often that result shows up.",
+        "Each measurement returns a single outcome, 0 or 1. No single result is predictable, but across many measurements the frequencies approach the probabilities you set.",
       defaultProbability: 70,
       sampleSize: 100,
     },
     {
       type: "prediction",
       id: "prediction-challenge",
-      title: "Quick prediction",
+      title: "Predict the distribution",
       prompt:
-        "Imagine a qubit set to P(1) = 75%. If we measure it many times, which result should appear more often?",
+        "A qubit is prepared with P(1) = 75%. Measured many times, which outcome occurs more often?",
       options: [
         {
           id: "one",
           label: "1",
           correct: true,
           feedback:
-            "Right! With a 75% chance of 1, you'd expect about 75 ones and 25 zeros out of 100 measurements. The higher-probability outcome shows up more often.",
+            "Correct. With P(1) = 75%, about 75 of 100 measurements return 1. The higher-probability outcome occurs more often.",
         },
         {
           id: "zero",
           label: "0",
           feedback:
-            "Not this time. P(1) = 75% means measuring 1 is the likely result. P(0) would only be 25%, so 0 would actually appear less often.",
+            "Not quite. P(1) = 75% leaves P(0) = 25%, so 0 occurs less often than 1.",
         },
         {
           id: "equal",
-          label: "About equal",
+          label: "About equally",
           feedback:
-            "They'd only be equal if both were 50%. Here P(1) = 75% and P(0) = 25%, so 1 should appear about three times as often as 0.",
+            "Equal frequencies require P(0) = P(1) = 50%. Here P(1) = 75% and P(0) = 25%, so 1 occurs about three times as often.",
         },
       ],
     },
     {
       type: "challenge",
       id: "build-target",
-      title: "Build the target qubit",
-      prompt: "Now you try. Set the qubit so it has a 75% chance of measuring 1.",
+      title: "Prepare a target state",
+      prompt: "Prepare the qubit so that P(1) = 75%.",
       targetProbability: 75,
       tolerance: 5,
       correctFeedback:
-        "Great! You've created a qubit where measuring 1 is much more likely than measuring 0 - about 75% to 25%. That's superposition you designed yourself.",
+        "Correct. The qubit now measures 1 about 75% of the time and 0 about 25% — a superposition you prepared.",
       incorrectFeedback:
-        "Not quite there. You want P(1) to be about 75%, which leaves P(0) at about 25%. Nudge the slider toward the higher end and check again.",
+        "Not yet. Aim for P(1) near 75%, which leaves P(0) near 25%. Adjust the slider and check again.",
     },
     {
       type: "reflection",
       id: "reflection",
-      title: "You did it!",
-      intro: "In a few minutes of playing, you uncovered the core ideas behind a qubit:",
+      title: "Summary",
+      intro: "You prepared and measured qubits and observed:",
       points: [
-        "Classical bits hold one definite value - 0 or 1.",
-        "Qubits use probabilities to describe a superposition of 0 and 1.",
-        "Measuring a qubit produces a single outcome, 0 or 1.",
-        "Higher-probability outcomes appear more often over many measurements.",
+        "A classical bit holds one definite value; a qubit holds a superposition of 0 and 1.",
+        "Probabilities describe a qubit's measurement outcomes and sum to 100%.",
+        "Measurement returns a single outcome, 0 or 1.",
+        "Outcome frequencies approach the probabilities only over many measurements.",
       ],
     },
   ],
@@ -192,28 +192,29 @@ const lesson1: Lesson = {
 const lesson2: Lesson = {
   id: "measurement",
   title: "Measurement",
-  description: "What really happens the moment you measure a qubit?",
+  description:
+    "Examine what measurement does to a qubit's state, and why one outcome cannot reveal it.",
   badge: {
     id: MEASUREMENT_ROOKIE_BADGE,
     title: "Measurement Rookie",
-    subtitle: "Completed the Measurement lesson",
+    subtitle: "Completed Measurement",
   },
   steps: [
     {
       type: "informative",
       id: "what-is-measurement",
-      title: "What does measurement mean?",
+      title: "What does measurement do?",
       emoji: "🔎",
       body: [
-        "A qubit can sit in a blend of 0 and 1 - that's superposition. But you can never see that blend directly.",
-        "Measuring a qubit is like asking it a single yes/no question: \"Are you 0 or 1?\" The qubit has to answer with exactly one of them.",
-        "Before you measure, all you can talk about is probabilities - how likely each answer is. After you measure, you have one real, concrete result.",
+        "A qubit can hold a superposition of 0 and 1, but that superposition cannot be observed directly.",
+        "Measurement returns a single outcome, 0 or 1. It is the operation that converts a quantum state into a classical result.",
+        "Before measurement you can describe only probabilities. After measurement you have one definite outcome, and the original superposition is gone.",
       ],
       resources: [
         {
           label: "IBM Quantum Learning",
           url: "https://learning.quantum.ibm.com/",
-          description: "Free beginner-friendly courses, including measurement.",
+          description: "Introductory material, including measurement.",
           kind: "docs",
         },
       ],
@@ -221,52 +222,52 @@ const lesson2: Lesson = {
     {
       type: "prediction",
       id: "predict-before-measuring",
-      title: "Predict before measuring",
+      title: "Predict a single measurement",
       prompt:
-        "Here's a qubit ready to be measured: P(0) = 30% and P(1) = 70%. If you measure it just once, what can happen?",
+        "A qubit is prepared with P(0) = 30% and P(1) = 70%. If you measure it once, what can occur?",
       options: [
         {
           id: "must-one",
-          label: "It must return 1, because 70% is bigger.",
+          label: "It must return 1, since 70% is larger",
           feedback:
-            "Not quite. 70% means 1 is more likely, but not guaranteed. A single measurement can still come out 0 - about 30% of the time.",
+            "Not quite. 70% makes 1 more likely, not certain. A single measurement still returns 0 about 30% of the time.",
         },
         {
           id: "either",
-          label: "It can return either 0 or 1, but 1 is more likely.",
+          label: "Either 0 or 1, with 1 more likely",
           correct: true,
           feedback:
-            "Exactly right. A single measurement gives either 0 or 1. With P(1) = 70%, getting 1 is more likely, but 0 can absolutely happen.",
+            "Correct. A single measurement returns 0 or 1. With P(1) = 70%, 1 is more likely, but 0 can still occur.",
         },
         {
           id: "point-seven",
-          label: "It returns 0.7.",
+          label: "It returns 0.7",
           feedback:
-            "A measurement never returns a fraction. The 0.7 is the probability of getting 1 - the actual result is always a whole 0 or 1.",
+            "A measurement returns a whole outcome, never a fraction. The 0.7 is the probability of measuring 1, not the result itself.",
         },
       ],
     },
     {
       type: "single-measurement",
       id: "single-measurement",
-      title: "Measure the qubit once",
+      title: "Measure once",
       body:
-        "This qubit is prepared with a 70% chance of measuring 1. Right now it's uncertain - a blend of both answers. Tap \"Measure once\" and watch what happens.",
+        "This qubit is prepared with P(1) = 70%. Predict the outcome, then measure once and observe the result.",
       probabilityOfOne: 70,
       teaching:
-        "The moment you measured, the qubit collapsed to a single result. That result is completely real - but it does not, on its own, tell you the original 70/30 odds. One measurement is just one answer.",
+        "Measurement returned a single outcome and the superposition collapsed. One result alone does not reveal the original 70/30 probabilities.",
     },
     {
       type: "fresh-batch",
       id: "fresh-batch",
-      title: "Try again with fresh qubits",
+      title: "Measure fresh qubits",
       body:
-        "Each run prepares a brand-new qubit with the same 70% chance of measuring 1, then measures it. Run a batch and look at the sequence of results.",
-      prompt: "What pattern do you notice as you run it a few times?",
+        "Each run prepares a new qubit with P(1) = 70% and measures it once. Run several and observe the sequence of outcomes.",
+      prompt: "What pattern do you observe across runs?",
       probabilityOfOne: 70,
       sampleSize: 10,
       teaching:
-        "No single result is predictable, but 1 tends to show up more often than 0 - because 1 is more likely. The more qubits you measure, the clearer that pattern gets.",
+        "No single outcome is predictable, but 1 occurs more often than 0 because it is more probable. The pattern becomes clearer as you measure more qubits.",
     },
     {
       type: "informative",
@@ -274,91 +275,91 @@ const lesson2: Lesson = {
       title: "Collapse",
       emoji: "💥",
       body: [
-        "When you measure a qubit, its superposition collapses: the blend of possibilities turns into one observed result, 0 or 1.",
-        "Here's the key part: once a qubit has collapsed, it stays there. If you immediately measure that same qubit again, you get the exact same result - it's no longer uncertain.",
-        "So how do you ever see the probabilities? You prepare many fresh qubits with the same settings and measure each one. The collection of results reveals the pattern.",
+        "Measurement collapses a qubit's superposition into one observed outcome, 0 or 1.",
+        "Collapse is permanent for that qubit. Measure the same qubit again immediately and it returns the same outcome; the uncertainty is gone.",
+        "To recover the probabilities, prepare many identical qubits and measure each once. The set of outcomes reveals the distribution.",
       ],
     },
     {
       type: "collapse-check",
       id: "collapse-check",
-      title: "Collapse check",
+      title: "Predict after collapse",
       measuredResult: 1,
       prompt:
-        "You just measured a qubit and it returned 1, so it has collapsed. If you measure that same qubit again right away, what should happen?",
+        "A qubit was measured and returned 1, so it has collapsed. If you measure that same qubit again immediately, what occurs?",
       options: [
         {
           id: "same",
-          label: "It should return 1 again.",
+          label: "It returns 1 again",
           correct: true,
           feedback:
-            "Correct! Once a qubit collapses to 1, measuring it again immediately gives 1 every time. The uncertainty is gone for that qubit.",
+            "Correct. A collapsed qubit keeps its outcome, so an immediate re-measurement returns 1. The uncertainty is gone for that qubit.",
         },
         {
           id: "reset",
-          label: "It should go back to 70/30.",
+          label: "It returns to the 70/30 state",
           feedback:
-            "Not quite. Measuring doesn't reset the qubit. To see 70/30 again you'd need to prepare a fresh qubit, not re-measure this collapsed one.",
+            "Not quite. Measurement does not reset the qubit. Recovering the 70/30 distribution requires a freshly prepared qubit, not a re-measurement.",
         },
         {
           id: "balance",
-          label: "It must return 0 next to balance things out.",
+          label: "It returns 0 to balance the previous result",
           feedback:
-            "There's no \"balancing\" rule. The qubit has already collapsed to 1, so it simply stays 1 when measured again. Past results don't force future ones.",
+            "There is no balancing rule. The qubit has collapsed to 1 and returns 1 again. Past outcomes do not influence future ones.",
         },
       ],
       teaching:
-        "A collapsed qubit keeps its result. Probabilities only describe fresh, un-measured qubits.",
+        "A collapsed qubit keeps its outcome. Probabilities describe freshly prepared qubits, not measured ones.",
     },
     {
       type: "simulation",
       id: "many-measurements",
-      title: "Many measurements reveal the probabilities",
+      title: "Recover the distribution",
       prompt:
-        "Set any probability you like, then measure 100 fresh qubits. Try a few different settings and watch how the histogram follows your slider.",
+        "Set a probability, then measure 100 fresh qubits. Try several settings and compare the histograms.",
       teaching:
-        "With 100 fresh qubits, the counts of 0s and 1s closely match the probabilities you set. Measuring many freshly prepared qubits is how you reveal the underlying odds.",
+        "Across 100 fresh qubits, the counts of 0 and 1 approximate the probabilities you set. Measuring many prepared qubits is how a distribution is estimated.",
       defaultProbability: 70,
       sampleSize: 100,
     },
     {
       type: "prediction",
       id: "mastery-challenge",
-      title: "Final challenge",
+      title: "Apply the idea",
       prompt:
-        "A qubit is prepared with P(1) = 20%. You measure 100 fresh copies. Which result should appear more often?",
+        "A qubit is prepared with P(1) = 20% and measured across 100 fresh copies. Which outcome occurs more often?",
       options: [
         {
           id: "zero",
           label: "0",
           correct: true,
           feedback:
-            "Exactly. P(1) = 20% means P(0) = 80%, so 0 should appear far more often - roughly 80 times out of 100.",
+            "Correct. P(1) = 20% gives P(0) = 80%, so 0 occurs far more often — about 80 of 100 measurements.",
         },
         {
           id: "one",
           label: "1",
           feedback:
-            "Not this time. P(1) is only 20%, so 1 is the rarer result here. 0, at 80%, should appear much more often.",
+            "Not quite. P(1) is only 20%, so 1 is the rarer outcome. 0, at 80%, occurs much more often.",
         },
         {
           id: "equal",
-          label: "They must be exactly equal.",
+          label: "About equally",
           feedback:
-            "They'd only be roughly equal if both were near 50%. With P(1) = 20% and P(0) = 80%, 0 should clearly win.",
+            "Equal frequencies require both probabilities near 50%. With P(1) = 20% and P(0) = 80%, 0 occurs far more often.",
         },
       ],
     },
     {
       type: "reflection",
       id: "reflection",
-      title: "Measurement mastered!",
-      intro: "You now understand what measurement really does to a qubit:",
+      title: "Summary",
+      intro: "You examined measurement and observed:",
       points: [
-        "Measurement gives one concrete answer: 0 or 1.",
-        "Higher probability means more likely, not guaranteed.",
-        "Collapse means the measured qubit now matches what you observed.",
-        "To estimate probabilities, measure many freshly prepared qubits.",
+        "Measurement returns a single outcome, 0 or 1.",
+        "A higher probability makes an outcome more likely, not certain.",
+        "Collapse is permanent: re-measuring a collapsed qubit repeats its outcome.",
+        "Probabilities are recovered by measuring many freshly prepared qubits.",
       ],
     },
   ],
@@ -367,11 +368,11 @@ const lesson2: Lesson = {
 const lesson3: Lesson = {
   id: "quantum-gates",
   title: "Quantum Gates",
-  description: "Learn the actions that change a qubit before you measure it.",
+  description: "Use gates to transform a qubit's state before measurement.",
   badge: {
     id: QUANTUM_GATES_STARTER_BADGE,
     title: "Quantum Gates Starter",
-    subtitle: "Completed the Quantum Gates lesson",
+    subtitle: "Completed Quantum Gates",
   },
   steps: [
     {
@@ -380,16 +381,15 @@ const lesson3: Lesson = {
       title: "What is a quantum gate?",
       emoji: "🎛️",
       body: [
-        "A gate is simply an operation you apply to a qubit - an action that changes it.",
-        "In a regular computer, logic gates change bits. For example, a NOT gate turns a 0 into a 1.",
-        "In a quantum computer, gates change a qubit's probabilities - how likely it is to measure 0 or 1.",
-        "You apply gates first, to prepare the qubit, and then you measure it. Let's start with something familiar.",
+        "A quantum gate is an operation applied to a qubit. It transforms the qubit's state before measurement.",
+        "Classical logic gates transform bits — for example, a NOT gate maps 0 to 1.",
+        "Quantum gates transform a qubit's probabilities, the likelihood of each outcome. You apply gates first to prepare the qubit, then measure.",
       ],
       resources: [
         {
           label: "IBM Quantum Learning: gates",
           url: "https://learning.quantum.ibm.com/",
-          description: "Explore quantum gates in more depth when you're ready.",
+          description: "A deeper treatment of quantum gates.",
           kind: "docs",
         },
       ],
@@ -399,155 +399,153 @@ const lesson3: Lesson = {
       id: "classical-not",
       title: "The classical NOT gate",
       prompt:
-        "Tap the bit to apply a NOT gate a few times. Watch how it changes. What does the NOT gate do?",
+        "Apply the NOT gate to the bit several times and observe the effect. What does NOT do?",
       options: [
         {
           id: "flip",
-          label: "It flips the bit.",
+          label: "It flips the value",
           correct: true,
           feedback:
-            "Exactly. NOT flips the bit: 0 becomes 1, and 1 becomes 0. The quantum X gate does the same thing to a qubit.",
+            "Correct. NOT maps 0 to 1 and 1 to 0. The quantum X gate performs the same operation on a qubit.",
         },
         {
           id: "nothing",
-          label: "It leaves the bit unchanged.",
+          label: "It leaves the value unchanged",
           feedback:
-            "Not quite - look again. Each time you apply NOT, a 0 becomes 1 and a 1 becomes 0. It flips the value.",
+            "Look again. Each NOT maps 0 to 1 and 1 to 0 — it flips the value.",
         },
         {
           id: "random",
-          label: "It makes the bit random.",
+          label: "It randomizes the value",
           feedback:
-            "No - NOT is completely predictable. It always flips: 0 to 1, and 1 to 0. There's nothing random about it.",
+            "NOT is deterministic. It always maps 0 to 1 and 1 to 0, with no randomness.",
         },
       ],
     },
     {
       type: "informative",
       id: "meet-x-gate",
-      title: "Meet the X gate",
+      title: "The X gate",
       emoji: "🔁",
       body: [
-        "The quantum X gate is the qubit version of NOT.",
-        "If a qubit is definitely 0, applying X makes it definitely 1.",
-        "If a qubit is definitely 1, applying X makes it definitely 0.",
-        "In other words, X swaps the probabilities of measuring 0 and 1.",
+        "The X gate is the qubit counterpart of NOT.",
+        "Applied to a definite 0 it produces a definite 1; applied to a definite 1 it produces a definite 0.",
+        "Equivalently, X exchanges the probabilities of measuring 0 and 1.",
       ],
     },
     {
       type: "gate-playground",
       id: "x-gate-playground",
-      title: "X gate playground",
+      title: "The X gate",
       body:
-        "Pick a starting state, then apply the X gate and watch the probability bars flip. Try it from both 0 and 1.",
+        "Choose a starting state, predict the result, then apply X and compare. Try it from both 0 and 1.",
       initialPOne: 0,
       allowStateSelect: true,
       gates: ["X"],
       teaching:
-        "X flips a definite qubit: 0 becomes 1, and 1 becomes 0. The probability of measuring each value swaps.",
+        "X exchanges the 0 and 1 outcomes: a definite 0 becomes a definite 1, and the probabilities swap. Applying X twice returns the original state.",
     },
     {
       type: "prediction",
       id: "x-gate-prediction",
       title: "Predict the X gate",
       prompt:
-        "A qubit starts as a definite 0. You apply an X gate, then measure. What will the measurement return?",
+        "A qubit starts as a definite 0. You apply X, then measure. What does the measurement return?",
       options: [
         {
           id: "zero",
           label: "0",
           feedback:
-            "Not quite. X flips the qubit, so a starting 0 becomes 1. Measuring would return 1.",
+            "Not quite. X flips 0 to 1, so the measurement returns 1.",
         },
         {
           id: "one",
           label: "1",
           correct: true,
           feedback:
-            "Correct! X flips 0 to 1, so the qubit is now definitely 1 and measurement returns 1 every time.",
+            "Correct. X maps the definite 0 to a definite 1, so the measurement returns 1 every time.",
         },
         {
           id: "fifty",
-          label: "50/50 chance",
+          label: "0 or 1 with equal probability",
           feedback:
-            "No - X doesn't create uncertainty. It flips a definite 0 to a definite 1. (The gate that creates 50/50 is coming up next.)",
+            "X does not create a superposition. It maps a definite 0 to a definite 1. The gate that produces a 50/50 state appears next.",
         },
       ],
     },
     {
       type: "informative",
       id: "meet-h-gate",
-      title: "Meet the H gate",
+      title: "The H gate",
       emoji: "🌗",
       body: [
-        "H is short for Hadamard, named after a mathematician.",
-        "Applied to a definite 0, the H gate turns it into an even superposition.",
-        "That means measurement now gives 0 about half the time and 1 about half the time.",
-        "H is one of the most important gates because it creates uncertainty - the heart of quantum computing.",
+        "H is the Hadamard gate.",
+        "Applied to a definite 0, it produces an even superposition: measurement returns 0 about half the time and 1 about half the time.",
+        "H converts a definite state into a superposition, the operation most quantum algorithms rely on.",
       ],
     },
     {
       type: "gate-playground",
       id: "h-gate-playground",
-      title: "H gate playground",
+      title: "The H gate",
       body:
-        "This qubit starts as a definite 0. Apply the H gate to create an even superposition, then measure 20 fresh qubits to see the 50/50 pattern.",
+        "The qubit starts as a definite 0. Predict the result, apply H, then measure 20 fresh qubits and compare.",
       initialPOne: 0,
       gates: ["H"],
       measureSampleSize: 20,
       teaching:
-        "After H, P(0) and P(1) are both about 50%. Measuring many fresh qubits gives roughly half 0s and half 1s.",
+        "After H, P(0) and P(1) are each about 50%. Measuring many fresh qubits returns roughly half 0 and half 1.",
     },
     {
       type: "gate-sequence",
       id: "gate-sequence-challenge",
-      title: "Gate sequence challenge",
+      title: "Prepare a 50/50 state",
       prompt:
-        "Build a qubit with a 50/50 chance of measuring 0 or 1. The qubit starts as a definite 0. Apply gates, then check your answer.",
+        "Prepare a qubit that measures 0 or 1 with equal probability. The qubit starts as a definite 0. Apply gates, then check.",
       correctFeedback:
-        "Perfect! Applying H to a definite 0 creates an even 50/50 superposition. That's exactly the state we wanted.",
+        "Correct. Applying H to a definite 0 produces an even 50/50 superposition.",
       incorrectFeedback:
-        "Not yet. Your qubit is still definite (100% one value). X only flips 0 to 1 - it never creates a superposition. Reset and try the H gate.",
+        "Not yet. The qubit is still definite. X only flips 0 to 1; it does not create a superposition. Reset and apply H.",
       teaching:
-        "H is the gate that turns a definite state into a 50/50 superposition.",
+        "H converts a definite state into a 50/50 superposition.",
     },
     {
       type: "prediction",
       id: "gates-mastery",
-      title: "Final challenge",
-      prompt: "Which gate creates a 50/50 superposition from a definite 0?",
+      title: "Identify the gate",
+      prompt: "Which gate produces a 50/50 superposition from a definite 0?",
       options: [
         {
           id: "x",
-          label: "X gate",
+          label: "X",
           feedback:
-            "Not quite. X just flips 0 to 1 - both are still definite states. It doesn't create a 50/50 mix.",
+            "Not quite. X maps 0 to 1; both are definite states, not a superposition.",
         },
         {
           id: "h",
-          label: "H gate",
+          label: "H",
           correct: true,
           feedback:
-            "Correct! The H (Hadamard) gate turns a definite 0 into an even 50/50 superposition.",
+            "Correct. The H (Hadamard) gate converts a definite 0 into an even superposition.",
         },
         {
           id: "measurement",
           label: "Measurement",
           feedback:
-            "No - measurement doesn't prepare a qubit, it reads one out and collapses it. The H gate is what creates the superposition.",
+            "Measurement reads out a qubit and collapses it; it does not prepare a superposition. H produces the superposition.",
         },
       ],
     },
     {
       type: "reflection",
       id: "reflection",
-      title: "Gates unlocked!",
-      intro: "You now know how quantum programs shape a qubit before measuring it:",
+      title: "Summary",
+      intro: "You used gates to prepare qubit states and observed:",
       points: [
-        "Gates change qubits before measurement.",
-        "The X gate flips 0 and 1, like a NOT gate.",
-        "The H gate creates a 50/50 superposition from a definite state.",
-        "Quantum programs are built by applying gates, then measuring.",
+        "A gate transforms a qubit's state before measurement.",
+        "The X gate exchanges the 0 and 1 outcomes, like NOT.",
+        "The H gate converts a definite state into a 50/50 superposition.",
+        "A program applies gates to prepare a state, then measures it.",
       ],
     },
   ],
@@ -556,11 +554,11 @@ const lesson3: Lesson = {
 const lesson4: Lesson = {
   id: "quantum-circuits",
   title: "Quantum Circuits",
-  description: "Put gates in order to build your first quantum programs.",
+  description: "Order gates into circuits — the structure of a simple quantum program.",
   badge: {
     id: QUANTUM_CIRCUIT_BUILDER_BADGE,
     title: "Quantum Circuit Builder",
-    subtitle: "Completed the Quantum Circuits lesson",
+    subtitle: "Completed Quantum Circuits",
   },
   steps: [
     {
@@ -569,16 +567,15 @@ const lesson4: Lesson = {
       title: "What is a quantum circuit?",
       emoji: "🧩",
       body: [
-        "A quantum circuit is like a recipe for a qubit. It lists the steps to follow, in order.",
-        "Each gate is one instruction. As the qubit moves through the circuit, every gate changes it a little.",
-        "At the very end comes measurement, which gives you the final observed result: 0 or 1.",
-        "We read a circuit from left to right, just like reading a sentence.",
+        "A quantum circuit is an ordered sequence of gates applied to a qubit.",
+        "Each gate is one instruction. The qubit's state is transformed by each gate in turn, so order matters.",
+        "Measurement comes at the end and returns the final outcome. Circuits are read left to right, in the order the gates are applied.",
       ],
       resources: [
         {
           label: "IBM Quantum Learning: circuits",
           url: "https://learning.quantum.ibm.com/",
-          description: "See real quantum circuits when you're ready for more.",
+          description: "Examples of real quantum circuits.",
           kind: "docs",
         },
       ],
@@ -586,106 +583,106 @@ const lesson4: Lesson = {
     {
       type: "circuit-prediction",
       id: "circuit-order",
-      title: "Circuit order",
+      title: "Reading a circuit",
       prompt:
-        "Here's a circuit. We read it left to right. What happens first?",
+        "This circuit is read left to right. Which operation is applied first?",
       gates: ["X"],
       options: [
         {
           id: "measure",
           label: "Measurement",
           feedback:
-            "Not quite. Measurement is at the far right, so it happens last. We read circuits left to right.",
+            "Not quite. Measurement is on the right, so it is applied last.",
         },
         {
           id: "xgate",
           label: "The X gate",
           correct: true,
           feedback:
-            "Right! Reading left to right, the X gate is applied first. Measurement comes at the end.",
+            "Correct. Read left to right, X is applied first; measurement is last.",
         },
         {
           id: "result",
-          label: "The result appears before anything happens",
+          label: "The result, before any gate",
           feedback:
-            "No - you only get a result at the end, after every gate has been applied. Nothing appears before the gates run.",
+            "A result appears only at the end, after every gate has been applied.",
         },
       ],
     },
     {
       type: "circuit-builder",
       id: "build-guarantee-one",
-      title: "Build a simple circuit",
+      title: "Prepare a guaranteed 1",
       prompt:
-        "Build a circuit that guarantees a measurement result of 1. The qubit starts at |0>. Add gates, then measure to check.",
+        "Build a circuit that always measures 1. The qubit starts at |0⟩. Add gates, then measure to check.",
       targetPOne: 100,
       correctFeedback:
-        "Perfect! X flips |0> to |1>, so measuring is guaranteed to give 1 every time. That's X then Measure.",
+        "Correct. X maps |0⟩ to |1⟩, so the measurement returns 1 every time: X then measure.",
       feedbackMeasuredEmpty:
-        "You measured right away. Measuring |0> just gives 0 - you need to change the qubit first. Add a gate before measuring.",
+        "You measured without applying a gate. Measuring |0⟩ returns 0. Apply a gate first.",
       feedbackSuperposition:
-        "Close, but the H gate creates a 50/50 chance, not a guaranteed 1. Reset and try flipping |0> to |1> instead.",
+        "Close. H produces a 50/50 state, not a guaranteed 1. Reset and flip |0⟩ to |1⟩ instead.",
       incorrectFeedback:
-        "Not yet. To guarantee a 1, you need the qubit to end up definitely 1. Reset and try a single flip.",
+        "Not yet. A guaranteed 1 requires a definite |1⟩ state. Reset and apply a single flip.",
       teaching:
-        "A guaranteed result needs a definite state. X flips |0> to |1>, so measurement always returns 1.",
+        "A guaranteed outcome requires a definite state. X maps |0⟩ to |1⟩, so measurement always returns 1.",
     },
     {
       type: "circuit-playback",
       id: "circuit-playback",
-      title: "Circuit playback",
+      title: "Run a circuit",
       body:
-        "Press play to watch this circuit run. The qubit starts at |0>, then each gate changes its probabilities, and finally we measure one result.",
+        "Run this circuit step by step. The qubit starts at |0⟩, each gate transforms its probabilities, and measurement returns one outcome.",
       gates: ["X", "H"],
       teaching:
-        "After X the qubit is definitely 1, then H spreads it to a 50/50 superposition. Measurement then samples a single 0 or 1 from those odds.",
+        "X makes the qubit a definite 1, then H spreads it into a 50/50 superposition. Measurement returns a single 0 or 1 from that distribution.",
     },
     {
       type: "circuit-prediction",
       id: "predict-final-state",
-      title: "Predict the final state",
+      title: "Predict the outcome distribution",
       prompt:
-        "Read this circuit. If we run it on many fresh qubits and measure each one, what should we see?",
+        "Run this circuit on many fresh qubits and measure each. What distribution do you expect?",
       gates: ["H"],
       options: [
         {
           id: "always0",
           label: "Always 0",
           feedback:
-            "Not quite. H turns |0> into a 50/50 superposition, so you won't always get 0.",
+            "Not quite. H turns |0⟩ into a 50/50 superposition, so the result is not always 0.",
         },
         {
           id: "always1",
           label: "Always 1",
           feedback:
-            "No - H doesn't flip to a definite 1. It creates a 50/50 mix, so 1 isn't guaranteed.",
+            "Not quite. H does not produce a definite 1; it produces a 50/50 superposition.",
         },
         {
           id: "half",
           label: "About half 0 and half 1",
           correct: true,
           feedback:
-            "Exactly! H makes a 50/50 superposition, so across many fresh qubits you'd measure roughly half 0s and half 1s.",
+            "Correct. H produces a 50/50 superposition, so across many fresh qubits you measure roughly half 0 and half 1.",
         },
       ],
     },
     {
       type: "circuit-builder",
       id: "build-fifty-fifty",
-      title: "Build a 50/50 circuit",
+      title: "Prepare a 50/50 circuit",
       prompt:
-        "Build a circuit that gives a 50/50 chance of measuring 0 or 1. The qubit starts at |0>. Add gates, then measure to check.",
+        "Build a circuit that measures 0 or 1 with equal probability. The qubit starts at |0⟩. Add gates, then measure to check.",
       targetPOne: 50,
       correctFeedback:
-        "Nice work! H turns the definite |0> into an even 50/50 superposition, so measurement is equally likely to give 0 or 1.",
+        "Correct. H converts the definite |0⟩ into an even 50/50 superposition.",
       feedbackMeasuredEmpty:
-        "You measured before preparing the qubit. Measurement should come after your gates - add a gate first.",
+        "You measured before applying a gate. Measurement comes after preparation — add a gate first.",
       feedbackDefinite:
-        "That leaves the qubit definite (always one value). X just flips |0> to |1>; it doesn't create a 50/50 chance. Reset and try the H gate.",
+        "That leaves the qubit definite. X only flips |0⟩ to |1⟩; it does not create a 50/50 state. Reset and apply H.",
       incorrectFeedback:
-        "Not yet. For a 50/50 chance you need an even superposition. Reset and try the H gate.",
+        "Not yet. A 50/50 result requires an even superposition. Reset and apply H.",
       teaching:
-        "H is the gate that turns a definite state into a 50/50 superposition.",
+        "H converts a definite state into a 50/50 superposition.",
     },
     {
       type: "informative",
@@ -693,48 +690,48 @@ const lesson4: Lesson = {
       title: "Why circuits matter",
       emoji: "🚀",
       body: [
-        "Quantum algorithms are built out of circuits - ordered sequences of gates.",
-        "Even a few well-chosen gates can shape a qubit into a useful probability pattern.",
-        "Real quantum computers run the same circuit many times and tally the results to estimate the outcome probabilities.",
+        "A quantum algorithm is a circuit: an ordered sequence of gates acting on qubits.",
+        "A few well-chosen gates can shape a qubit into a specific distribution of outcomes.",
+        "Because measurement collapses the state, a circuit is run many times and its outcomes are tallied to estimate the probabilities.",
       ],
     },
     {
       type: "prediction",
       id: "circuits-mastery",
-      title: "Final challenge",
+      title: "Order of a program",
       prompt: "What is the basic order of a quantum program?",
       options: [
         {
           id: "measure-first",
-          label: "Measure, then prepare, then gates",
+          label: "Measure, then prepare, then apply gates",
           feedback:
-            "Not quite. Measurement reads the final result, so it can't come first. It always happens at the end.",
+            "Not quite. Measurement reads the final result, so it cannot come first.",
         },
         {
           id: "prepare-gates-measure",
           label: "Prepare the qubit, apply gates, then measure",
           correct: true,
           feedback:
-            "Correct! Every quantum program prepares a qubit, transforms it with gates, and then measures the result.",
+            "Correct. A quantum program prepares a qubit, transforms it with gates, then measures.",
         },
         {
           id: "gates-measure-prepare",
           label: "Apply gates, measure, then prepare",
           feedback:
-            "No - you must prepare the qubit before you can apply gates to it, and measurement comes last.",
+            "Not quite. A qubit must be prepared before gates can act on it, and measurement is last.",
         },
       ],
     },
     {
       type: "reflection",
       id: "reflection",
-      title: "Circuits complete!",
-      intro: "You can now read and build simple quantum programs:",
+      title: "Summary",
+      intro: "You read and built simple circuits and observed:",
       points: [
-        "Quantum circuits are ordered gate sequences.",
-        "Gates change the qubit before measurement.",
-        "Measurement happens at the end.",
-        "A quantum program prepares, transforms, then measures.",
+        "A circuit is an ordered sequence of gates acting on qubits.",
+        "Gates are applied left to right, each transforming the state.",
+        "Measurement is last and returns the final outcome.",
+        "A program prepares a state, transforms it with gates, then measures.",
       ],
     },
   ],
@@ -743,108 +740,107 @@ const lesson4: Lesson = {
 const lesson5: Lesson = {
   id: "interference",
   title: "Interference",
-  description: "Learn how quantum possibilities reinforce and cancel.",
+  description:
+    "See how probability amplitudes combine — reinforcing or cancelling — to shape measurement outcomes.",
   badge: {
     id: INTERFERENCE_EXPLORER_BADGE,
     title: "Interference Explorer",
-    subtitle: "Completed the Interference lesson",
+    subtitle: "Completed Interference",
   },
   steps: [
     {
       type: "wave-explorer",
       id: "story-setup",
-      title: "When possibilities meet",
+      title: "Combining waves",
       interactive: false,
       body: [
-        "Imagine two water waves moving toward each other.",
-        "When their peaks line up, they combine into one bigger wave. When a peak meets a valley, they flatten out and cancel.",
-        "Quantum possibilities behave in a similar way. Up next, you'll mix two waves yourself and watch them add up or cancel out.",
+        "Two waves can combine. Where their peaks align, they reinforce into a larger wave; where a peak meets a trough, they cancel.",
+        "Quantum amplitudes combine in the same way. Next, you'll add two waves and observe reinforcement and cancellation.",
       ],
     },
     {
       type: "wave-explorer",
       id: "wave-explorer",
-      title: "Wave explorer",
+      title: "Add two waves",
       interactive: true,
       body: [
-        "Drag the two sliders to set each wave's height (its amplitude). Watch the combined wave at the bottom.",
-        "Try making both waves point the same way, then try making one point up and the other down.",
+        "Adjust each wave's amplitude and observe the combined wave below.",
+        "Set both amplitudes to the same sign, then to opposite signs, and compare the results.",
       ],
       teaching:
-        "Two waves pointing the same way reinforce into a bigger wave. Pointing opposite ways, they cancel toward a flat line. That mixing is called interference.",
+        "Same-sign amplitudes reinforce into a larger wave (constructive interference); opposite-sign amplitudes cancel toward zero (destructive interference).",
     },
     {
       type: "prediction",
       id: "predict-interference",
       title: "Predict the combination",
       prompt:
-        "If two equal waves that both point upward combine, what happens?",
+        "Two equal waves with the same sign combine. What is the result?",
       options: [
         {
           id: "smaller",
           label: "A smaller wave",
           feedback:
-            "Not quite. Two waves pointing the same way don't shrink - they add together into something larger.",
+            "Not quite. Same-sign waves add together; they do not shrink.",
         },
         {
           id: "same",
-          label: "A wave the same size",
+          label: "A wave of the same size",
           feedback:
-            "Not this time. When both waves point the same way, they reinforce, so the result is taller than either one alone.",
+            "Not quite. Same-sign waves reinforce, producing a larger amplitude than either alone.",
         },
         {
           id: "bigger",
-          label: "A bigger wave",
+          label: "A larger wave",
           correct: true,
           feedback:
-            "Exactly! Two waves pointing the same way reinforce each other - this is constructive interference, and the combined wave is bigger.",
+            "Correct. Same-sign waves reinforce — constructive interference — producing a larger amplitude.",
         },
       ],
     },
     {
       type: "path-amplitudes",
       id: "quantum-paths",
-      title: "Quantum paths",
+      title: "Combining amplitudes",
       mode: "experiment",
       body:
-        "A quantum outcome can be reached by more than one path, and each path carries an amplitude that is either +1 or -1. Flip the signs and watch how the paths add up - and how the chance of hitting the target changes.",
+        "An outcome can be reached by more than one path, each carrying an amplitude of +1 or -1. Change the signs and observe how the amplitudes combine and how the outcome's probability changes.",
       teaching:
-        "When both amplitudes have the same sign they add up (+1 and +1 make +2). When they have opposite signs they cancel (+1 and -1 make 0), and the target becomes impossible.",
+        "Same-sign amplitudes add (+1 and +1 give +2); opposite-sign amplitudes cancel (+1 and -1 give 0), making the outcome impossible. The probability comes from the combined amplitude.",
     },
     {
       type: "interference-sim",
       id: "run-experiments",
-      title: "Run the experiments",
-      body:
-        "Run 100 measurements for each case. In the constructive case the two paths reinforce; in the destructive case they cancel. Run both and compare the histograms.",
+      title: "Run both cases",
+      body: "Run each case and compare how often the target is reached.",
       teaching:
-        "Constructive interference makes the target show up almost every time, while destructive interference makes it nearly vanish - even though both setups use the same two paths.",
+        "When the paths reinforce, the target is reached often; when they cancel, it is reached rarely. Run again and the exact counts change — interference shifts the probabilities rather than fixing a single result.",
     },
     {
       type: "prediction",
       id: "prediction-challenge",
-      title: "Prediction challenge",
+      title: "Predict the combined probability",
       prompt:
-        "Two paths reach the same target with amplitudes +1 and -1. What happens to the chance of measuring that target?",
+        "Two paths reach the same outcome with amplitudes +1 and -1. What happens to that outcome's probability?",
       options: [
         {
           id: "increases",
-          label: "The probability increases",
+          label: "It increases",
           feedback:
-            "Not quite. Opposite signs don't add up - they work against each other. The probability goes down, not up.",
+            "Not quite. Opposite signs work against each other, so the probability decreases.",
         },
         {
           id: "unchanged",
-          label: "The probability stays unchanged",
+          label: "It stays the same",
           feedback:
-            "No - the second path doesn't just sit there. A -1 amplitude actively cancels the +1, changing the result.",
+            "Not quite. A -1 amplitude cancels the +1, so the second path does change the result.",
         },
         {
           id: "cancel",
-          label: "They cancel out",
+          label: "It drops to zero",
           correct: true,
           feedback:
-            "Right! +1 and -1 add to 0, so the amplitudes cancel and the target becomes impossible to measure. That's destructive interference.",
+            "Correct. +1 and -1 sum to 0, so the amplitudes cancel and the outcome becomes impossible — destructive interference.",
         },
       ],
     },
@@ -854,13 +850,13 @@ const lesson5: Lesson = {
       title: "Build constructive interference",
       mode: "build-constructive",
       body:
-        "Set the two path amplitudes to create the strongest possible signal at the target, then check your answer.",
+        "Set the two amplitudes to produce the strongest possible signal at the target, then check.",
       correctFeedback:
-        "Perfect! Two amplitudes with the same sign (+1 and +1) add to +2, the largest combined amplitude - so the target is measured every time. That's constructive interference.",
+        "Correct. Same-sign amplitudes (+1 and +1) sum to +2, the largest combined amplitude, so the outcome is measured every time.",
       incorrectFeedback:
-        "Not the strongest yet. Opposite signs cancel. To get the biggest signal, make both paths point the same way (both +1).",
+        "Not the strongest yet. Opposite signs cancel. For the largest signal, give both paths the same sign.",
       teaching:
-        "Same-sign amplitudes reinforce into the strongest possible signal.",
+        "Same-sign amplitudes reinforce into the strongest signal.",
     },
     {
       type: "path-amplitudes",
@@ -868,29 +864,29 @@ const lesson5: Lesson = {
       title: "Build destructive interference",
       mode: "build-destructive",
       body:
-        "Now set the amplitudes so the target becomes impossible to measure - drive its probability to zero - then check.",
+        "Set the amplitudes so the target's probability drops to zero, then check.",
       correctFeedback:
-        "Exactly! +1 and -1 add to 0, so the amplitudes completely cancel and the target's probability drops to zero. That's destructive interference.",
+        "Correct. +1 and -1 sum to 0, so the amplitudes cancel and the target's probability is zero.",
       incorrectFeedback:
-        "Not zero yet. Two same-sign amplitudes reinforce instead of cancelling. To wipe out the target, make the paths point opposite ways (+1 and -1).",
+        "Not zero yet. Same-sign amplitudes reinforce. To cancel the outcome, give the paths opposite signs.",
       teaching:
-        "Opposite-sign amplitudes cancel, sending the target's probability to zero.",
+        "Opposite-sign amplitudes cancel, driving the target's probability to zero.",
     },
     {
       type: "informative",
       id: "why-this-matters",
-      title: "Why this matters",
+      title: "Why interference matters",
       emoji: "✨",
       body: [
-        "Here's the big idea: a quantum computer doesn't win by simply trying every answer at once.",
-        "It wins by using interference to boost the amplitudes of good answers and cancel the amplitudes of bad ones - so the right answer is the one you're most likely to measure.",
-        "This is the engine behind famous quantum algorithms like Grover's search and Shor's factoring algorithm.",
+        "A quantum computer does not gain its advantage by testing every answer at once.",
+        "It uses interference: circuits are designed so amplitudes for correct answers reinforce and amplitudes for incorrect answers cancel, making the correct outcome the most probable measurement.",
+        "This principle underlies algorithms such as Grover's search and Shor's factoring algorithm.",
       ],
       resources: [
         {
           label: "IBM Quantum Learning",
           url: "https://learning.quantum.ibm.com/",
-          description: "Explore quantum algorithms built on interference.",
+          description: "Algorithms that rely on interference.",
           kind: "docs",
         },
       ],
@@ -898,40 +894,40 @@ const lesson5: Lesson = {
     {
       type: "prediction",
       id: "interference-mastery",
-      title: "Mastery check",
+      title: "Define interference",
       prompt: "What is quantum interference?",
       options: [
         {
           id: "guessing",
-          label: "Random guessing between answers",
+          label: "Random guessing among answers",
           feedback:
-            "No - interference isn't random. It's a precise effect where amplitudes combine in a predictable way.",
+            "Interference is not random. Amplitudes combine in a precise, predictable way.",
         },
         {
           id: "amplitudes",
-          label: "Amplitudes adding together and cancelling",
+          label: "Amplitudes combining — reinforcing or cancelling",
           correct: true,
           feedback:
-            "Correct! Interference is amplitudes combining - reinforcing when they share a sign and cancelling when they don't.",
+            "Correct. Interference is the combination of amplitudes: reinforcing when signs match and cancelling when they differ.",
         },
         {
           id: "faster",
-          label: "A way to measure qubits faster",
+          label: "A faster way to measure qubits",
           feedback:
-            "Not quite. Interference isn't about speed of measurement - it's about how amplitudes add and cancel to shape probabilities.",
+            "Interference is not about measurement speed. It is how amplitudes add and cancel to shape outcome probabilities.",
         },
       ],
     },
     {
       type: "reflection",
       id: "reflection",
-      title: "Interference explored!",
-      intro: "You've uncovered the effect that powers quantum algorithms:",
+      title: "Summary",
+      intro: "You examined interference and observed:",
       points: [
         "Probabilities come from amplitudes, which can be positive or negative.",
-        "Amplitudes with the same sign reinforce each other.",
-        "Amplitudes with opposite signs cancel each other.",
-        "Interference shapes probabilities - boosting good answers and cancelling bad ones.",
+        "Same-sign amplitudes reinforce — constructive interference.",
+        "Opposite-sign amplitudes cancel — destructive interference.",
+        "Interference shapes outcome probabilities, increasing some and suppressing others.",
       ],
     },
   ],
@@ -940,7 +936,7 @@ const lesson5: Lesson = {
 export const quantumBasicsCourse: Course = {
   id: "quantum-basics",
   title: "Quantum Basics",
-  description: "Start your journey into quantum computing, one small step at a time.",
+  description: "Build intuition for quantum computing through short, interactive lessons.",
   lessons: [lesson1, lesson2, lesson3, lesson4, lesson5],
 };
 

@@ -70,9 +70,9 @@ function Recommendation({ profile }: { profile: UserProfile | null }) {
   if (!nextLesson) {
     return (
       <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-        <p className="text-sm font-medium text-slate-700">Next unit coming soon</p>
+        <p className="text-sm font-medium text-slate-700">More lessons coming soon</p>
         <p className="text-sm text-slate-500">
-          You&apos;ve completed every lesson available. More quantum adventures are on the way.
+          You&apos;ve completed every lesson currently available. New lessons are in development.
         </p>
       </div>
     );

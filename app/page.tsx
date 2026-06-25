@@ -19,14 +19,14 @@ export default function Home() {
     <main className="flex flex-1 items-center justify-center bg-gradient-to-b from-slate-50 to-indigo-50 px-6 py-16">
       <div className="w-full max-w-xl text-center">
         <span className="inline-block rounded-full bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-700">
-          Learn by doing
+          Interactive lessons
         </span>
         <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-          Quantum computing, made simple.
+          Understand quantum computing through experiments.
         </h1>
         <p className="mt-4 text-lg leading-8 text-slate-600">
-          Understand qubits and superposition through short, hands-on lessons. No heavy
-          math, no long videos. Just move a slider and watch it click.
+          Build intuition for qubits, superposition, measurement, and interference through
+          short, interactive lessons — no advanced mathematics required.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
