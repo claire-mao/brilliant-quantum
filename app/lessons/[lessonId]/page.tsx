@@ -222,6 +222,48 @@ function advanceHint(step: LessonStep): string {
         : "Build the target to continue.";
     case "interference-sim":
       return "Run both experiments to continue.";
+    case "bloch-explorer":
+      return "Drag the sliders to continue.";
+    case "two-qubit":
+      return "Run the circuit to continue.";
+    case "gate-lab":
+      return step.target ? "Reach the target state to continue." : "Apply a gate to continue.";
+    case "amplitude-explorer":
+      return "Drag the amplitude to continue.";
+    case "wave-interference":
+      return "Adjust the amplitudes to continue.";
+    case "path-diagram":
+      return "Flip the phase and interfere to continue.";
+    case "two-qubit-explorer":
+      return "Run the experiment to continue.";
+    case "bell-builder":
+      return "Build the target Bell state to continue.";
+    case "correlation":
+      return "Run the experiment to continue.";
+    case "circuit-runner":
+      return step.goalIndex !== undefined
+        ? "Build the target output to continue."
+        : "Run the circuit to continue.";
+    case "oracle-explorer":
+      return "Query the function to continue.";
+    case "search-explorer":
+      return "Search for the target to continue.";
+    case "amplitude-amplifier":
+      return "Apply an iteration to continue.";
+    case "pattern-explorer":
+      return "Find the period to continue.";
+    case "problem-classifier":
+      return "Classify each problem to continue.";
+    case "hardware-comparison":
+      return "Explore the platforms to continue.";
+    case "decoherence":
+      return "Adjust the noise to continue.";
+    case "error-correction":
+      return "Inject errors and recover to continue.";
+    case "app-classifier":
+      return "Classify each item to continue.";
+    case "tech-timeline":
+      return "Explore the timeline to continue.";
     case "challenge":
       return "Submit the correct probability to continue.";
     default:

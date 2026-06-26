@@ -1,18 +1,26 @@
 "use client";
 
-export default function ProbabilityVisual({ pOne }: { pOne: number }) {
+export default function ProbabilityVisual({
+  pOne,
+  zeroLabel = "0",
+  oneLabel = "1",
+}: {
+  pOne: number;
+  zeroLabel?: string;
+  oneLabel?: string;
+}) {
   const one = Math.round(pOne);
   const zero = 100 - one;
 
   return (
     <div className="w-full">
       <div className="flex items-end gap-4 sm:gap-8" aria-hidden="true">
-        <Bar label="0" value={zero} color="bg-sky-500" track="bg-sky-100" />
-        <Bar label="1" value={one} color="bg-indigo-600" track="bg-indigo-100" />
+        <Bar label={zeroLabel} value={zero} color="bg-sky-500" track="bg-sky-100" />
+        <Bar label={oneLabel} value={one} color="bg-indigo-600" track="bg-indigo-100" />
       </div>
       <p className="sr-only">
-        Probability of measuring 0 is {zero} percent. Probability of measuring 1 is {one}{" "}
-        percent.
+        Probability of measuring {zeroLabel} is {zero} percent. Probability of measuring{" "}
+        {oneLabel} is {one} percent.
       </p>
     </div>
   );

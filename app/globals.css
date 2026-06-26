@@ -17,3 +17,10 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Keep display equations from overflowing narrow cards on mobile. */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.25rem;
+}

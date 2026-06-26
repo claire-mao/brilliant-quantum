@@ -19,7 +19,28 @@ import WaveVisualizer from "./WaveVisualizer";
 import PathAmplitudeBuilder from "./PathAmplitudeBuilder";
 import InterferenceSimulator from "./InterferenceSimulator";
 import ReflectionCard from "./ReflectionCard";
-import ResourceCard from "./ResourceCard";
+import LearnMore from "./LearnMore";
+import MathText from "./MathText";
+import BlochExplorer from "./BlochExplorer";
+import TwoQubitSimulator from "./TwoQubitSimulator";
+import GateLab from "./GateLab";
+import AmplitudeExplorer from "./AmplitudeExplorer";
+import WaveInterference from "./WaveInterference";
+import PathAmplitudeDiagram from "./PathAmplitudeDiagram";
+import TwoQubitExplorer from "./TwoQubitExplorer";
+import BellStateBuilder from "./BellStateBuilder";
+import CorrelationVisualizer from "./CorrelationVisualizer";
+import QuantumCircuitRunner from "./QuantumCircuitRunner";
+import OracleExplorer from "./OracleExplorer";
+import SearchExplorer from "./SearchExplorer";
+import AmplitudeAmplifier from "./AmplitudeAmplifier";
+import PatternExplorer from "./PatternExplorer";
+import ProblemClassifier from "./ProblemClassifier";
+import HardwareComparison from "./HardwareComparison";
+import DecoherenceSimulator from "./DecoherenceSimulator";
+import ErrorCorrectionExplorer from "./ErrorCorrectionExplorer";
+import ApplicationClassifier from "./ApplicationClassifier";
+import TechnologyTimeline from "./TechnologyTimeline";
 
 /**
  * Renders a single lesson step. Interactive steps report when the learner may
@@ -63,35 +84,33 @@ function Body({
 }) {
   switch (step.type) {
     case "explanation":
-      return <p className="mt-3 text-base leading-7 text-slate-700">{step.body}</p>;
+      return (
+        <p className="mt-3 text-base leading-7 text-slate-700">
+          <MathText>{step.body}</MathText>
+        </p>
+      );
 
     case "informative":
       return (
         <div className="mt-4">
-          {step.emoji && (
-            <div className="mb-4 text-4xl" aria-hidden="true">
-              {step.emoji}
-            </div>
-          )}
           <div className="flex flex-col gap-3">
             {step.body.map((paragraph, i) => (
               <p key={i} className="text-base leading-7 text-slate-700">
-                {paragraph}
+                <MathText>{paragraph}</MathText>
               </p>
             ))}
           </div>
-          {step.resources && step.resources.length > 0 && (
-            <div className="mt-6">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Learn more
+          {step.misconception && (
+            <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                Common misconception
               </p>
-              <div className="flex flex-col gap-2">
-                {step.resources.map((resource) => (
-                  <ResourceCard key={resource.url + resource.label} resource={resource} />
-                ))}
-              </div>
+              <p className="mt-1 text-sm leading-6 text-amber-900">
+                <MathText>{step.misconception}</MathText>
+              </p>
             </div>
           )}
+          {step.resources && <LearnMore resources={step.resources} />}
         </div>
       );
 
@@ -101,7 +120,7 @@ function Body({
           <div className="my-6 flex justify-center">
             <ClassicalBitToggle />
           </div>
-          <p className="text-base leading-7 text-slate-700">{step.prompt}</p>
+          <p className="text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <PredictionChoice
             options={step.options}
             onCanAdvanceChange={onCanAdvanceChange}
@@ -113,7 +132,7 @@ function Body({
     case "prediction":
       return (
         <div className="mt-3">
-          <p className="text-base leading-7 text-slate-700">{step.prompt}</p>
+          <p className="text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <PredictionChoice
             options={step.options}
             teaching={step.teaching}
@@ -129,7 +148,7 @@ function Body({
     case "simulation":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">{step.prompt}</p>
+          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <MeasurementSimulator
             defaultProbability={step.defaultProbability}
             sampleSize={step.sampleSize}
@@ -142,7 +161,7 @@ function Body({
     case "single-measurement":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">{step.body}</p>
+          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
           <SingleMeasurementSimulator
             probabilityOfOne={step.probabilityOfOne}
             teaching={step.teaching}
@@ -154,7 +173,7 @@ function Body({
     case "fresh-batch":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">{step.body}</p>
+          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
           <FreshQubitBatchSimulator
             probabilityOfOne={step.probabilityOfOne}
             sampleSize={step.sampleSize}
@@ -169,7 +188,7 @@ function Body({
       return (
         <div className="mt-4">
           <CollapseCheckVisual result={step.measuredResult} />
-          <p className="mt-5 text-base leading-7 text-slate-700">{step.prompt}</p>
+          <p className="mt-5 text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <PredictionChoice
             options={step.options}
             teaching={step.teaching}
@@ -182,7 +201,7 @@ function Body({
     case "gate-playground":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">{step.body}</p>
+          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
           <GatePlayground
             initialPOne={step.initialPOne}
             allowStateSelect={step.allowStateSelect}
@@ -197,7 +216,7 @@ function Body({
     case "gate-sequence":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">{step.prompt}</p>
+          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <GateSequenceBuilder
             correctFeedback={step.correctFeedback}
             incorrectFeedback={step.incorrectFeedback}
@@ -214,7 +233,7 @@ function Body({
           <div className="mb-5">
             <CircuitWire gates={step.gates} />
           </div>
-          <p className="text-base leading-7 text-slate-700">{step.prompt}</p>
+          <p className="text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <PredictionChoice
             options={step.options}
             teaching={step.teaching}
@@ -227,7 +246,7 @@ function Body({
     case "circuit-playback":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">{step.body}</p>
+          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
           <CircuitPlayback
             gates={step.gates}
             teaching={step.teaching}
@@ -239,7 +258,7 @@ function Body({
     case "circuit-builder":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">{step.prompt}</p>
+          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <CircuitBuilder
             targetPOne={step.targetPOne}
             correctFeedback={step.correctFeedback}
@@ -260,7 +279,7 @@ function Body({
           <div className="mb-6 flex flex-col gap-3">
             {step.body.map((paragraph, i) => (
               <p key={i} className="text-base leading-7 text-slate-700">
-                {paragraph}
+                <MathText>{paragraph}</MathText>
               </p>
             ))}
           </div>
@@ -269,7 +288,9 @@ function Body({
             onInteracted={() => onCanAdvanceChange(true)}
           />
           {step.interactive && step.teaching && (
-            <p className="mt-4 text-sm leading-6 text-slate-500">{step.teaching}</p>
+            <p className="mt-4 text-sm leading-6 text-slate-500">
+              <MathText>{step.teaching}</MathText>
+            </p>
           )}
         </div>
       );
@@ -277,7 +298,7 @@ function Body({
     case "path-amplitudes":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">{step.body}</p>
+          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
           <PathAmplitudeBuilder
             mode={step.mode}
             correctFeedback={step.correctFeedback}
@@ -292,10 +313,299 @@ function Body({
     case "interference-sim":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">{step.body}</p>
+          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
           <InterferenceSimulator
             teaching={step.teaching}
             onBothRun={() => onCanAdvanceChange(true)}
+          />
+        </div>
+      );
+
+    case "bloch-explorer":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <BlochExplorer
+            showPhi={step.showPhi}
+            showXMeasurement={step.showXMeasurement}
+            teaching={step.teaching}
+            onInteracted={() => onCanAdvanceChange(true)}
+          />
+        </div>
+      );
+
+    case "two-qubit":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <TwoQubitSimulator teaching={step.teaching} onRun={() => onCanAdvanceChange(true)} />
+        </div>
+      );
+
+    case "gate-lab":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <GateLab
+            allowedGates={step.allowedGates}
+            start={step.start}
+            allowStartToggle={step.allowStartToggle}
+            preset={step.preset}
+            target={step.target}
+            measure={step.measure}
+            correctFeedback={step.correctFeedback}
+            incorrectFeedback={step.incorrectFeedback}
+            teaching={step.teaching}
+            onCanAdvanceChange={onCanAdvanceChange}
+            onAttempt={onGradedAttempt}
+          />
+        </div>
+      );
+
+    case "amplitude-explorer":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <AmplitudeExplorer teaching={step.teaching} onInteracted={() => onCanAdvanceChange(true)} />
+        </div>
+      );
+
+    case "wave-interference":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <WaveInterference teaching={step.teaching} onInteracted={() => onCanAdvanceChange(true)} />
+        </div>
+      );
+
+    case "path-diagram":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <PathAmplitudeDiagram teaching={step.teaching} onInteracted={() => onCanAdvanceChange(true)} />
+        </div>
+      );
+
+    case "two-qubit-explorer":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <TwoQubitExplorer
+            teaching={step.teaching}
+            preset={step.preset}
+            allowedGates={step.allowedGates}
+            showCnot={step.showCnot}
+            allowInitialChoice={step.allowInitialChoice}
+            lockCircuit={step.lockCircuit}
+            allowMeasureSingle={step.allowMeasureSingle}
+            allowMeasureBoth={step.allowMeasureBoth}
+            allowHistogram={step.allowHistogram}
+            showMarginals={step.showMarginals}
+            onInteracted={() => onCanAdvanceChange(true)}
+          />
+        </div>
+      );
+
+    case "bell-builder":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <BellStateBuilder
+            target={step.target}
+            correctFeedback={step.correctFeedback}
+            incorrectFeedback={step.incorrectFeedback}
+            teaching={step.teaching}
+            onCanAdvanceChange={onCanAdvanceChange}
+            onAttempt={onGradedAttempt}
+          />
+        </div>
+      );
+
+    case "correlation":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <CorrelationVisualizer
+            teaching={step.teaching}
+            onInteracted={() => onCanAdvanceChange(true)}
+          />
+        </div>
+      );
+
+    case "circuit-runner":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <QuantumCircuitRunner
+            teaching={step.teaching}
+            allowedGates={step.allowedGates}
+            showCnot={step.showCnot}
+            goalIndex={step.goalIndex}
+            correctFeedback={step.correctFeedback}
+            incorrectFeedback={step.incorrectFeedback}
+            onCanAdvanceChange={onCanAdvanceChange}
+            onAttempt={onGradedAttempt}
+          />
+        </div>
+      );
+
+    case "oracle-explorer":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <OracleExplorer teaching={step.teaching} onInteracted={() => onCanAdvanceChange(true)} />
+        </div>
+      );
+
+    case "search-explorer":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <SearchExplorer
+            teaching={step.teaching}
+            size={step.size}
+            onInteracted={() => onCanAdvanceChange(true)}
+          />
+        </div>
+      );
+
+    case "amplitude-amplifier":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <AmplitudeAmplifier
+            teaching={step.teaching}
+            size={step.size}
+            onInteracted={() => onCanAdvanceChange(true)}
+          />
+        </div>
+      );
+
+    case "pattern-explorer":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <PatternExplorer
+            teaching={step.teaching}
+            n={step.n}
+            cycle={step.cycle}
+            period={step.period}
+            factors={step.factors}
+            terms={step.terms}
+            onInteracted={() => onCanAdvanceChange(true)}
+          />
+        </div>
+      );
+
+    case "problem-classifier":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <ProblemClassifier
+            teaching={step.teaching}
+            onCanAdvanceChange={onCanAdvanceChange}
+            onAttempt={onGradedAttempt}
+          />
+        </div>
+      );
+
+    case "hardware-comparison":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <HardwareComparison
+            platforms={step.platforms}
+            teaching={step.teaching}
+            onInteracted={() => onCanAdvanceChange(true)}
+          />
+        </div>
+      );
+
+    case "decoherence":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <DecoherenceSimulator
+            teaching={step.teaching}
+            showGates={step.showGates}
+            onInteracted={() => onCanAdvanceChange(true)}
+          />
+        </div>
+      );
+
+    case "error-correction":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <ErrorCorrectionExplorer
+            teaching={step.teaching}
+            onInteracted={() => onCanAdvanceChange(true)}
+          />
+        </div>
+      );
+
+    case "app-classifier":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <ApplicationClassifier
+            categories={step.categories}
+            items={step.items}
+            teaching={step.teaching}
+            onCanAdvanceChange={onCanAdvanceChange}
+            onAttempt={onGradedAttempt}
+          />
+        </div>
+      );
+
+    case "tech-timeline":
+      return (
+        <div className="mt-3">
+          <p className="mb-6 text-base leading-7 text-slate-700">
+            <MathText>{step.body}</MathText>
+          </p>
+          <TechnologyTimeline
+            milestones={step.milestones}
+            teaching={step.teaching}
+            onInteracted={() => onCanAdvanceChange(true)}
           />
         </div>
       );
@@ -312,7 +622,7 @@ function Body({
     case "reflection":
       return (
         <div className="mt-4">
-          <ReflectionCard intro={step.intro} points={step.points} />
+          <ReflectionCard intro={step.intro} points={step.points} next={step.next} />
         </div>
       );
   }
@@ -441,7 +751,7 @@ function ChallengeView({
 
   return (
     <div className="mt-3">
-      <p className="text-base leading-7 text-slate-700">{step.prompt}</p>
+      <p className="text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
 
       <div className="mt-6">
         <ProbabilityVisual pOne={value} />
@@ -469,7 +779,9 @@ function ChallengeView({
               : "bg-amber-50 text-amber-800"
           }`}
         >
-          {result === "correct" ? step.correctFeedback : step.incorrectFeedback}
+          <MathText>
+            {result === "correct" ? step.correctFeedback : step.incorrectFeedback}
+          </MathText>
         </p>
       )}
       {result === "incorrect" && (

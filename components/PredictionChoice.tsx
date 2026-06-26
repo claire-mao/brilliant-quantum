@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { PredictionOption } from "@/lib/types";
+import MathText from "./MathText";
 
 /**
  * Predict-before-explain multiple choice.
@@ -73,7 +74,7 @@ export default function PredictionChoice({
               aria-pressed={isSelected}
               className={`rounded-xl border px-4 py-3 text-left text-base font-medium text-slate-800 transition-colors disabled:cursor-default ${tone}`}
             >
-              {option.label}
+              <MathText>{option.label}</MathText>
             </button>
           );
         })}
@@ -90,7 +91,7 @@ export default function PredictionChoice({
                 : "bg-indigo-50 text-indigo-800"
             }`}
           >
-            {selected.feedback}
+            <MathText>{selected.feedback}</MathText>
           </p>
           {wrongSelected && (
             <p className="mt-2 text-sm font-medium text-amber-700">
@@ -98,7 +99,9 @@ export default function PredictionChoice({
             </p>
           )}
           {(solved || !graded) && teaching && (
-            <p className="mt-3 text-sm leading-6 text-slate-600">{teaching}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              <MathText>{teaching}</MathText>
+            </p>
           )}
         </div>
       )}
