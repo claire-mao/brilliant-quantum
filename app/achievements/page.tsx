@@ -89,7 +89,7 @@ function AchievementsContent() {
   const startedLearning = streak >= 1 || completedLessons >= 1;
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
+    <main className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Achievements</h1>
         <Link href="/dashboard" className="shrink-0 text-sm font-medium text-indigo-600 hover:underline">

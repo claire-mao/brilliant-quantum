@@ -40,6 +40,7 @@ export type StepType =
   | "app-classifier"
   | "tech-timeline"
   | "challenge"
+  | "worked-example"
   | "reflection";
 
 export type GateId = "X" | "H";
@@ -476,6 +477,24 @@ export interface TechTimelineStep extends BaseStep {
   milestones: Milestone[];
 }
 
+/**
+ * Worked example: show expert reasoning step by step, hide the final step, then
+ * ask the learner to complete it (and give feedback). Accelerates novice
+ * learning before an independent challenge.
+ */
+export interface WorkedExampleStep extends BaseStep {
+  type: "worked-example";
+  /** The problem / setup being worked. */
+  intro: string;
+  /** Expert reasoning shown in order (the worked-out steps). */
+  steps: string[];
+  /** Prompt for the hidden final step the learner must complete. */
+  finalPrompt: string;
+  /** Choices for the final step; exactly one is correct. */
+  options: PredictionOption[];
+  teaching?: string;
+}
+
 /** Summary card shown at the end of the lesson. */
 export interface ReflectionStep extends BaseStep {
   type: "reflection";
@@ -524,6 +543,7 @@ export type LessonStep =
   | AppClassifierStep
   | TechTimelineStep
   | ChallengeStep
+  | WorkedExampleStep
   | ReflectionStep;
 
 export interface LessonBadge {

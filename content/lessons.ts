@@ -669,6 +669,37 @@ const lesson4: Lesson = {
       ],
     },
     {
+      type: "worked-example",
+      id: "worked-sequence",
+      title: "Worked example: reach a target",
+      intro: "Goal: starting from \\( |0\\rangle \\), use X and H to prepare \\( |-\\rangle \\).",
+      steps: [
+        "We begin at \\( |0\\rangle \\) and want to reach \\( |-\\rangle \\).",
+        "Recall that \\( H|1\\rangle = |-\\rangle \\): if we can first reach \\( |1\\rangle \\), one H finishes the job.",
+        "Apply X to \\( |0\\rangle \\): \\( X|0\\rangle = |1\\rangle \\).",
+      ],
+      finalPrompt: "Which gate should come next to reach \\( |-\\rangle \\)?",
+      options: [
+        {
+          id: "h",
+          label: "Apply H",
+          correct: true,
+          feedback: "Correct. \\( H|1\\rangle = |-\\rangle \\), so the sequence X then H reaches the target.",
+        },
+        {
+          id: "x",
+          label: "Apply X again",
+          feedback: "A second X returns you to \\( |0\\rangle \\). You still need to spread \\( |1\\rangle \\) into a superposition.",
+        },
+        {
+          id: "z",
+          label: "Apply Z",
+          feedback: "Z only flips the phase of \\( |1\\rangle \\); it cannot create the superposition you need.",
+        },
+      ],
+      teaching: "Read sequences left to right: each gate transforms the state the previous one produced.",
+    },
+    {
       type: "prediction",
       id: "q-hhx",
       title: "Predict the output",
@@ -2384,6 +2415,37 @@ const lessonConstructive: Lesson = {
           kind: "article",
         },
       ],
+    },
+    {
+      type: "worked-example",
+      id: "worked-constructive",
+      title: "Worked example: add two paths",
+      intro: "Goal: two paths reach the same outcome with amplitudes \\( A_1 = +0.5 \\) and \\( A_2 = +0.5 \\). Find the resulting probability.",
+      steps: [
+        "Amplitudes add as signed numbers first: \\( A_{\\text{total}} = A_1 + A_2 \\).",
+        "Here \\( A_{\\text{total}} = 0.5 + 0.5 = 1.0 \\).",
+        "Probability is the square of the total: \\( P = |A_{\\text{total}}|^2 \\).",
+      ],
+      finalPrompt: "What is the probability \\( P \\) for this outcome?",
+      options: [
+        {
+          id: "one",
+          label: "\\( P = 1.0 \\) (certain)",
+          correct: true,
+          feedback: "Correct. \\( A_{\\text{total}} = 1.0 \\), and \\( 1.0^2 = 1.0 \\): the amplitudes reinforced into certainty.",
+        },
+        {
+          id: "half",
+          label: "\\( P = 0.5 \\)",
+          feedback: "That adds probabilities (0.25 + 0.25). Amplitudes add first, then you square the total.",
+        },
+        {
+          id: "quarter",
+          label: "\\( P = 0.25 \\)",
+          feedback: "0.25 is one path alone (\\( 0.5^2 \\)). Add the amplitudes before squaring.",
+        },
+      ],
+      teaching: "Amplitudes add before squaring, so same-sign paths reinforce — constructive interference.",
     },
     {
       type: "prediction",

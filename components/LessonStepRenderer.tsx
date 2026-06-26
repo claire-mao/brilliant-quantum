@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { LessonStep } from "@/lib/types";
 import QubitSlider from "./QubitSlider";
 import ProbabilityVisual from "./ProbabilityVisual";
@@ -21,6 +22,11 @@ import InterferenceSimulator from "./InterferenceSimulator";
 import ReflectionCard from "./ReflectionCard";
 import LearnMore from "./LearnMore";
 import MathText from "./MathText";
+import WizardHelpPrompt from "./WizardHelpPrompt";
+import WorkedExample from "./WorkedExample";
+import { saveTowerHintContext } from "@/lib/companions/tower-context";
+import { primaryConcept, type ConceptTag } from "@/lib/learning/concepts";
+import { recordConceptResult } from "@/lib/learning/signals";
 import BlochExplorer from "./BlochExplorer";
 import TwoQubitSimulator from "./TwoQubitSimulator";
 import GateLab from "./GateLab";
@@ -56,10 +62,14 @@ export default function LessonStepRenderer({
   step,
   onCanAdvanceChange,
   onGradedAttempt,
+  lessonTitle,
+  lessonId,
 }: {
   step: LessonStep;
   onCanAdvanceChange: (canAdvance: boolean) => void;
   onGradedAttempt: () => void;
+  lessonTitle?: string;
+  lessonId?: string;
 }) {
   return (
     <div>
@@ -68,6 +78,8 @@ export default function LessonStepRenderer({
         step={step}
         onCanAdvanceChange={onCanAdvanceChange}
         onGradedAttempt={onGradedAttempt}
+        lessonTitle={lessonTitle}
+        lessonId={lessonId}
       />
     </div>
   );
@@ -77,15 +89,20 @@ function Body({
   step,
   onCanAdvanceChange,
   onGradedAttempt,
+  lessonTitle,
+  lessonId,
 }: {
   step: LessonStep;
   onCanAdvanceChange: (canAdvance: boolean) => void;
   onGradedAttempt: () => void;
+  lessonTitle?: string;
+  lessonId?: string;
 }) {
+  const conceptTag: ConceptTag | null = lessonId ? primaryConcept(lessonId) : null;
   switch (step.type) {
     case "explanation":
       return (
-        <p className="mt-3 text-base leading-7 text-slate-700">
+        <p className="mt-3 max-w-prose text-base leading-7 text-slate-700">
           <MathText>{step.body}</MathText>
         </p>
       );
@@ -95,7 +112,7 @@ function Body({
         <div className="mt-4">
           <div className="flex flex-col gap-3">
             {step.body.map((paragraph, i) => (
-              <p key={i} className="text-base leading-7 text-slate-700">
+              <p key={i} className="max-w-prose text-base leading-7 text-slate-700">
                 <MathText>{paragraph}</MathText>
               </p>
             ))}
@@ -120,11 +137,12 @@ function Body({
           <div className="my-6 flex justify-center">
             <ClassicalBitToggle />
           </div>
-          <p className="text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
+          <p className="max-w-prose text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <PredictionChoice
             options={step.options}
             onCanAdvanceChange={onCanAdvanceChange}
             onAttempt={onGradedAttempt}
+            conceptTag={conceptTag}
           />
         </div>
       );
@@ -132,12 +150,15 @@ function Body({
     case "prediction":
       return (
         <div className="mt-3">
-          <p className="text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
+          <p className="max-w-prose text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <PredictionChoice
             options={step.options}
             teaching={step.teaching}
             onCanAdvanceChange={onCanAdvanceChange}
             onAttempt={onGradedAttempt}
+            hintMeta={{ lessonId, lessonTitle, prompt: step.prompt }}
+            stepKey={step.id}
+            conceptTag={conceptTag}
           />
         </div>
       );
@@ -148,7 +169,7 @@ function Body({
     case "simulation":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <MeasurementSimulator
             defaultProbability={step.defaultProbability}
             sampleSize={step.sampleSize}
@@ -161,7 +182,7 @@ function Body({
     case "single-measurement":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
           <SingleMeasurementSimulator
             probabilityOfOne={step.probabilityOfOne}
             teaching={step.teaching}
@@ -173,7 +194,7 @@ function Body({
     case "fresh-batch":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
           <FreshQubitBatchSimulator
             probabilityOfOne={step.probabilityOfOne}
             sampleSize={step.sampleSize}
@@ -188,12 +209,13 @@ function Body({
       return (
         <div className="mt-4">
           <CollapseCheckVisual result={step.measuredResult} />
-          <p className="mt-5 text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
+          <p className="mt-5 max-w-prose text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <PredictionChoice
             options={step.options}
             teaching={step.teaching}
             onCanAdvanceChange={onCanAdvanceChange}
             onAttempt={onGradedAttempt}
+            conceptTag={conceptTag}
           />
         </div>
       );
@@ -201,7 +223,7 @@ function Body({
     case "gate-playground":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
           <GatePlayground
             initialPOne={step.initialPOne}
             allowStateSelect={step.allowStateSelect}
@@ -216,7 +238,7 @@ function Body({
     case "gate-sequence":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <GateSequenceBuilder
             correctFeedback={step.correctFeedback}
             incorrectFeedback={step.incorrectFeedback}
@@ -233,12 +255,13 @@ function Body({
           <div className="mb-5">
             <CircuitWire gates={step.gates} />
           </div>
-          <p className="text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
+          <p className="max-w-prose text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <PredictionChoice
             options={step.options}
             teaching={step.teaching}
             onCanAdvanceChange={onCanAdvanceChange}
             onAttempt={onGradedAttempt}
+            conceptTag={conceptTag}
           />
         </div>
       );
@@ -246,7 +269,7 @@ function Body({
     case "circuit-playback":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
           <CircuitPlayback
             gates={step.gates}
             teaching={step.teaching}
@@ -258,7 +281,7 @@ function Body({
     case "circuit-builder":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
           <CircuitBuilder
             targetPOne={step.targetPOne}
             correctFeedback={step.correctFeedback}
@@ -278,7 +301,7 @@ function Body({
         <div className="mt-3">
           <div className="mb-6 flex flex-col gap-3">
             {step.body.map((paragraph, i) => (
-              <p key={i} className="text-base leading-7 text-slate-700">
+              <p key={i} className="max-w-prose text-base leading-7 text-slate-700">
                 <MathText>{paragraph}</MathText>
               </p>
             ))}
@@ -298,7 +321,7 @@ function Body({
     case "path-amplitudes":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
           <PathAmplitudeBuilder
             mode={step.mode}
             correctFeedback={step.correctFeedback}
@@ -313,7 +336,7 @@ function Body({
     case "interference-sim":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700"><MathText>{step.body}</MathText></p>
           <InterferenceSimulator
             teaching={step.teaching}
             onBothRun={() => onCanAdvanceChange(true)}
@@ -324,7 +347,7 @@ function Body({
     case "bloch-explorer":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <BlochExplorer
@@ -339,7 +362,7 @@ function Body({
     case "two-qubit":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <TwoQubitSimulator teaching={step.teaching} onRun={() => onCanAdvanceChange(true)} />
@@ -349,7 +372,7 @@ function Body({
     case "gate-lab":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <GateLab
@@ -371,7 +394,7 @@ function Body({
     case "amplitude-explorer":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <AmplitudeExplorer teaching={step.teaching} onInteracted={() => onCanAdvanceChange(true)} />
@@ -381,7 +404,7 @@ function Body({
     case "wave-interference":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <WaveInterference teaching={step.teaching} onInteracted={() => onCanAdvanceChange(true)} />
@@ -391,7 +414,7 @@ function Body({
     case "path-diagram":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <PathAmplitudeDiagram teaching={step.teaching} onInteracted={() => onCanAdvanceChange(true)} />
@@ -401,7 +424,7 @@ function Body({
     case "two-qubit-explorer":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <TwoQubitExplorer
@@ -423,7 +446,7 @@ function Body({
     case "bell-builder":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <BellStateBuilder
@@ -440,7 +463,7 @@ function Body({
     case "correlation":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <CorrelationVisualizer
@@ -453,7 +476,7 @@ function Body({
     case "circuit-runner":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <QuantumCircuitRunner
@@ -472,7 +495,7 @@ function Body({
     case "oracle-explorer":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <OracleExplorer teaching={step.teaching} onInteracted={() => onCanAdvanceChange(true)} />
@@ -482,7 +505,7 @@ function Body({
     case "search-explorer":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <SearchExplorer
@@ -496,7 +519,7 @@ function Body({
     case "amplitude-amplifier":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <AmplitudeAmplifier
@@ -510,7 +533,7 @@ function Body({
     case "pattern-explorer":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <PatternExplorer
@@ -528,7 +551,7 @@ function Body({
     case "problem-classifier":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <ProblemClassifier
@@ -542,7 +565,7 @@ function Body({
     case "hardware-comparison":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <HardwareComparison
@@ -556,7 +579,7 @@ function Body({
     case "decoherence":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <DecoherenceSimulator
@@ -570,7 +593,7 @@ function Body({
     case "error-correction":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <ErrorCorrectionExplorer
@@ -583,7 +606,7 @@ function Body({
     case "app-classifier":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <ApplicationClassifier
@@ -599,7 +622,7 @@ function Body({
     case "tech-timeline":
       return (
         <div className="mt-3">
-          <p className="mb-6 text-base leading-7 text-slate-700">
+          <p className="mb-6 max-w-prose text-base leading-7 text-slate-700">
             <MathText>{step.body}</MathText>
           </p>
           <TechnologyTimeline
@@ -610,12 +633,29 @@ function Body({
         </div>
       );
 
+    case "worked-example":
+      return (
+        <WorkedExample
+          intro={step.intro}
+          steps={step.steps}
+          finalPrompt={step.finalPrompt}
+          options={step.options}
+          teaching={step.teaching}
+          conceptTag={conceptTag}
+          onCanAdvanceChange={onCanAdvanceChange}
+          onAttempt={onGradedAttempt}
+        />
+      );
+
     case "challenge":
       return (
         <ChallengeView
           step={step}
           onCanAdvanceChange={onCanAdvanceChange}
           onGradedAttempt={onGradedAttempt}
+          lessonTitle={lessonTitle}
+          lessonId={lessonId}
+          conceptTag={conceptTag}
         />
       );
 
@@ -661,7 +701,7 @@ function PlaygroundView({ body }: { body: string }) {
 
   return (
     <div className="mt-3">
-      <p className="text-base leading-7 text-slate-700">{body}</p>
+      <p className="max-w-prose text-base leading-7 text-slate-700">{body}</p>
       <div className="mt-6">
         <ProbabilityVisual pOne={pOne} />
       </div>
@@ -732,13 +772,20 @@ function ChallengeView({
   step,
   onCanAdvanceChange,
   onGradedAttempt,
+  lessonTitle,
+  lessonId,
+  conceptTag,
 }: {
   step: Extract<LessonStep, { type: "challenge" }>;
   onCanAdvanceChange: (canAdvance: boolean) => void;
   onGradedAttempt: () => void;
+  lessonTitle?: string;
+  lessonId?: string;
+  conceptTag?: ConceptTag | null;
 }) {
   const [value, setValue] = useState(50);
   const [result, setResult] = useState<"correct" | "incorrect" | null>(null);
+  const [wrongCount, setWrongCount] = useState(0);
   const solved = result === "correct";
 
   function check() {
@@ -747,11 +794,35 @@ function ChallengeView({
     const passed = Math.abs(value - step.targetProbability) <= step.tolerance;
     setResult(passed ? "correct" : "incorrect");
     onCanAdvanceChange(passed);
+    if (conceptTag) recordConceptResult(conceptTag, passed, { misconception: passed ? undefined : step.incorrectFeedback });
+    if (!passed) {
+      setWrongCount((c) => c + 1);
+      saveTowerHintContext({
+        lessonId,
+        lessonTitle,
+        prompt: step.prompt,
+        selectedWrong: `${value}%`,
+        correctAnswer: `${step.targetProbability}%`,
+        feedback: step.incorrectFeedback,
+      });
+    }
   }
+
+  const hintContext =
+    result === "incorrect"
+      ? {
+          lessonId,
+          lessonTitle,
+          prompt: step.prompt,
+          selectedWrong: `${value}%`,
+          correctAnswer: `${step.targetProbability}%`,
+          feedback: step.incorrectFeedback,
+        }
+      : null;
 
   return (
     <div className="mt-3">
-      <p className="text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
+      <p className="max-w-prose text-base leading-7 text-slate-700"><MathText>{step.prompt}</MathText></p>
 
       <div className="mt-6">
         <ProbabilityVisual pOne={value} />
@@ -786,8 +857,15 @@ function ChallengeView({
       )}
       {result === "incorrect" && (
         <p className="mt-2 text-sm font-medium text-amber-700">
-          Try again - adjust the slider and check once more.
+          Try again — adjust the slider and check once more. The guide may offer a nudge, or visit the{" "}
+          <Link href="/tower" className="text-indigo-600 underline underline-offset-2 hover:text-indigo-700">
+            Wizard Tower
+          </Link>
+          .
         </p>
+      )}
+      {hintContext && (
+        <WizardHelpPrompt context={hintContext} wrongCount={wrongCount} stepKey={step.id} />
       )}
     </div>
   );

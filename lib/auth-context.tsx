@@ -12,6 +12,8 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut,
   updateProfile,
   type User,
@@ -26,6 +28,7 @@ interface AuthContextValue {
   loading: boolean;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   logIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   logOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -71,13 +74,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   }, []);
 
+  // Works for both sign up and log in: Google returns an existing user as a
+  // simple sign-in. We only create a Firestore profile the first time, so
+  // existing progress is never overwritten.
+  const signInWithGoogle = useCallback(async () => {
+    const provider = new GoogleAuthProvider();
+    const cred = await signInWithPopup(auth, provider);
+    const u = cred.user;
+    const existing = await getUserProfile(u.uid);
+    if (!existing) {
+      await createUserProfile(u.uid, u.displayName ?? "Apprentice", u.email ?? "");
+    }
+    setProfile(await getUserProfile(u.uid));
+  }, []);
+
   const logOut = useCallback(async () => {
     await signOut(auth);
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, loading, signUp, logIn, logOut, refreshProfile }}
+      value={{ user, profile, loading, signUp, logIn, signInWithGoogle, logOut, refreshProfile }}
     >
       {children}
     </AuthContext.Provider>

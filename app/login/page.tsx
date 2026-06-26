@@ -1,9 +1,5 @@
-import AuthForm from "@/components/AuthForm";
+import AuthScene from "@/components/landing/AuthScene";
 
 export default function LoginPage() {
-  return (
-    <main className="flex flex-1 items-center justify-center bg-slate-50 px-6 py-12">
-      <AuthForm mode="login" />
-    </main>
-  );
+  return <AuthScene mode="login" />;
 }
