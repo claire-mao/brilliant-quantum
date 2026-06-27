@@ -23,8 +23,10 @@ import {
 import { CONCEPTS } from "@/lib/learning/concepts";
 import { getConceptSignals } from "@/lib/learning/signals";
 import { deriveTimeFacts, getLongestStreak, type TimeFacts } from "@/lib/profile/activity";
+import { getTowerSummary, type TowerSummary } from "@/lib/tower/progress";
+import { TOWER_BADGES } from "@/lib/tower/rewards";
 
-export type AchievementCategory = "learning" | "consistency" | "challenge" | "secrets";
+export type AchievementCategory = "learning" | "consistency" | "challenge" | "tower" | "secrets";
 
 /** Title + hint shown for a still-locked secret achievement. */
 export const SECRET_TITLE = "???";
@@ -58,6 +60,7 @@ export interface AchievementContext {
   neverGiveUp: boolean;
   explorerConcepts: number;
   time: TimeFacts;
+  tower: TowerSummary;
 }
 
 /** Unit-completion achievement metadata (shared with the achievements page). */
@@ -145,6 +148,7 @@ export function buildAchievementContext(profile: UserProfile | null): Achievemen
     neverGiveUp,
     explorerConcepts,
     time: deriveTimeFacts(extraTimes),
+    tower: getTowerSummary(),
   };
 }
 
@@ -308,6 +312,20 @@ function buildCatalog(): AchievementDef[] {
     }),
   });
 
+  // --- Tower (derived from local tower progress; ceremony reuses badge unlock) ---
+  for (const badge of TOWER_BADGES) {
+    defs.push({
+      id: badge.id,
+      category: "tower",
+      title: badge.title,
+      description: badge.description,
+      icon: badge.icon,
+      type: badge.type,
+      earnHint: badge.earnHint,
+      evaluate: (c) => badge.evaluate(c.tower),
+    });
+  }
+
   // --- Secrets (hidden until unlocked) ---
   defs.push({
     id: "secret-dawn-dusk",
@@ -341,6 +359,7 @@ export const CATEGORY_LABEL: Record<AchievementCategory, string> = {
   learning: "Learning",
   consistency: "Consistency",
   challenge: "Challenge",
+  tower: "Tower",
   secrets: "Secrets",
 };
 

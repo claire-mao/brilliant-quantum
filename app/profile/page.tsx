@@ -46,7 +46,7 @@ interface DerivedStats {
   estimatedHours: number;
 }
 
-const CATEGORY_ORDER: AchievementCategory[] = ["learning", "consistency", "challenge", "secrets"];
+const CATEGORY_ORDER: AchievementCategory[] = ["learning", "consistency", "challenge", "tower", "secrets"];
 
 function ProfileContent() {
   const { user, profile } = useAuth();
