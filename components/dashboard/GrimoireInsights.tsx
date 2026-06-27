@@ -66,8 +66,21 @@ export default function GrimoireInsights({
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Needs review</h3>
           {review.length > 0 && (
-            <Link href="/tower" className="text-[11px] font-medium text-violet-300 hover:text-violet-200">
-              Review →
+            <Link
+              href="/tower"
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-violet-300 hover:text-violet-200"
+            >
+              Review
+              <svg
+                viewBox="0 0 20 20"
+                className="h-3 w-3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden="true"
+              >
+                <path d="M4 10 H15 M11 6 L15 10 L11 14" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </Link>
           )}
         </div>
