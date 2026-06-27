@@ -20,7 +20,7 @@ Brilliant Quantum is a learn-by-doing web app that teaches introductory quantum 
 - **Interactive quantum lessons** — six units of bite-sized lessons taught through reusable, configurable visualizations and simulators (Bloch sphere, gate labs, circuit builders, amplitude/interference explorers, two-qubit and entanglement tools, search/oracle/period-finding, hardware comparisons, and more), built with React and inline SVG.
 - **Progress persistence** — current step, completion, attempts, and streaks are saved per user in Cloud Firestore, so learners can leave and resume exactly where they left off.
 - **AI wizard companion** — a floating Guide Wizard offers **hints**, **practice questions**, and **fun facts** through server-side OpenAI calls. All AI is additive and degrades gracefully: if the key is missing or a request fails, handwritten fallbacks keep every lesson fully usable with AI turned off.
-- **Tower practice game** — the Wizard Tower (`/tower`) is a retrieval-practice arena where learners battle concept "monsters" with quick recall questions.
+- **Tower dungeon** — the Wizard Tower (`/tower`) is a 60-floor pixel retrieval dungeon. Six climates (one per unit) of rooms and bosses adapt each battle to the learner model (retrieval practice, spaced review, interleaving, progressive hints, misconception correction), unlock by unit completion, award learning-centered badges, and persist locally — all with inline SVG/CSS art.
 - **Learning science engine** — a lightweight, client-side learner model tracks per-concept signals and drives **retrieval practice**, **spaced review**, **progressive (leveled) hints**, **worked examples**, prerequisite reminders, and **mastery** language. See [`LEARNING_SCIENCE.md`](./LEARNING_SCIENCE.md).
 - **Achievements, profile, and avatar customization** — an achievements catalog (learning, consistency, challenge, and secret categories) with a badge-unlock ceremony, plus a profile page with stats and a customizable pixel-wizard avatar (colors, wand, aura, familiar).
 - **Mobile responsiveness** — layouts, sliders, and visualizations are touch-friendly and adapt from phone to desktop; all animations honor `prefers-reduced-motion`.
@@ -44,7 +44,7 @@ brilliant-quantum/
 │   ├── api/ai/          # Server-only AI routes: hint, practice, fun-fact
 │   ├── dashboard/       # Course path, progress grimoire, tower entry
 │   ├── lessons/         # Lesson player (dynamic [lessonId] route)
-│   ├── tower/           # Wizard Tower practice arena
+│   ├── tower/           # Wizard Tower retrieval dungeon (60 floors)
 │   ├── profile/         # Profile + avatar customization
 │   ├── login/ signup/   # Auth pages
 │   └── layout.tsx       # Root layout, providers, companion mount
