@@ -9,14 +9,7 @@ import {
   physicsToStyle,
   type WizardPhysics,
 } from "@/lib/companions/physics";
-import {
-  getAnchorPixelPosition,
-  getNeighborAnchor,
-  nextWalkDelayMs,
-  WIZARD_SIZE,
-  MARGIN,
-  NAV_SAFE_TOP,
-} from "@/lib/companions/walking";
+import { getAnchorPixelPosition, WIZARD_SIZE, MARGIN, NAV_SAFE_TOP } from "@/lib/companions/walking";
 import { useCompanion } from "./CompanionProvider";
 import { SparkleBurst } from "../WizardCompanion";
 import SpeechBubble from "./SpeechBubble";
@@ -52,13 +45,12 @@ function useReducedMotion(): boolean {
 export default function DraggableCompanion({
   companion,
   onDismiss,
-  onUpdate,
-  isInteractionPaused,
 }: {
   companion: ActiveCompanion;
   onDismiss: (agent: AgentId) => void;
-  onUpdate: (agent: AgentId, update: CompanionUpdate) => void;
-  isInteractionPaused: () => boolean;
+  // Kept for API compatibility; idle walking is disabled so these are unused.
+  onUpdate?: (agent: AgentId, update: CompanionUpdate) => void;
+  isInteractionPaused?: () => boolean;
 }) {
   const anchor = ANCHORS[companion.anchorId];
   const Avatar = AGENT_AVATARS[companion.agent];
@@ -76,7 +68,6 @@ export default function DraggableCompanion({
   const [settling, setSettling] = useState(false);
   const [popping, setPopping] = useState(false);
   const [puff, setPuff] = useState(false);
-  const [walking, setWalking] = useState(false);
   const [physics, setPhysics] = useState<WizardPhysics>(PHYSICS_IDLE);
   const [settleStart, setSettleStart] = useState<WizardPhysics>(PHYSICS_IDLE);
   const [clickMsg, setClickMsg] = useState<string | null>(null);
@@ -97,70 +88,13 @@ export default function DraggableCompanion({
   const physicsRef = useRef(PHYSICS_IDLE);
   const rafRef = useRef<number | null>(null);
   const timers = useRef<number[]>([]);
-  const walkTimer = useRef<number | null>(null);
-  const stateRef = useRef({
-    dragging: false,
-    picked: false,
-    walking: false,
-    clickMsg: null as string | null,
-    companion,
-  });
-
-  useEffect(() => {
-    stateRef.current = { dragging, picked, walking, clickMsg, companion };
-  }, [dragging, picked, walking, clickMsg, companion]);
-
   useEffect(() => {
     const pending = timers.current;
     return () => {
       pending.forEach((t) => clearTimeout(t));
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-      if (walkTimer.current !== null) clearTimeout(walkTimer.current);
     };
   }, []);
-
-  useEffect(() => {
-    if (reduce || companion.phase !== "present") return;
-
-    function tryWalk() {
-      const s = stateRef.current;
-      const c = s.companion;
-      const bubbleOpen =
-        c.state === "thinking" ||
-        c.state === "speaking" ||
-        !!c.message ||
-        !!s.clickMsg ||
-        !!c.bubbleActions?.length;
-      if (s.dragging || s.picked || s.walking || bubbleOpen || isInteractionPaused()) {
-        return;
-      }
-      const nextAnchor = getNeighborAnchor(c.anchorId);
-      if (nextAnchor === c.anchorId) return;
-      const nextPos = getAnchorPixelPosition(nextAnchor);
-      setPos(nextPos);
-      setPlacement({
-        horizontal: nextPos.x + WIZARD_SIZE / 2 > window.innerWidth / 2 ? "right" : "left",
-        vertical: nextPos.y + WIZARD_SIZE / 2 < window.innerHeight / 2 ? "top" : "bottom",
-      });
-      setWalking(true);
-      onUpdate(c.agent, { anchorId: nextAnchor });
-      const id = window.setTimeout(() => setWalking(false), 900);
-      timers.current.push(id);
-    }
-
-    function scheduleWalk() {
-      walkTimer.current = window.setTimeout(() => {
-        walkTimer.current = null;
-        tryWalk();
-        scheduleWalk();
-      }, nextWalkDelayMs());
-    }
-
-    scheduleWalk();
-    return () => {
-      if (walkTimer.current !== null) clearTimeout(walkTimer.current);
-    };
-  }, [reduce, companion.phase, companion.runId, isInteractionPaused, onUpdate]);
 
   if (!Avatar) return null;
 
@@ -333,7 +267,7 @@ export default function DraggableCompanion({
         dragging ? "wizard-dragging cursor-grabbing" : "cursor-grab"
       } ${picked && !dragging ? "wizard-picked-up" : ""} ${landed ? "wizard-landed" : ""} ${
         settling ? "wizard-settle-floppy" : ""
-      } ${popping ? "wizard-pop" : ""} ${walking && !dragging ? "wizard-walking" : ""}`}
+      } ${popping ? "wizard-pop" : ""}`}
     >
       {(teleporting || puff) && <SparkleBurst />}
       <Avatar
@@ -356,11 +290,13 @@ export default function DraggableCompanion({
     />
   ) : null;
 
-  const positionStyle = {
-    left: pos.x,
-    top: pos.y,
-    transition: walking && !reduce ? "left 0.85s ease-in-out, top 0.85s ease-in-out" : undefined,
-  };
+  // For "bottom" placements, anchor by the viewport bottom so the speech bubble
+  // grows UPWARD (the wizard stays put) instead of pushing the wizard down.
+  const vh = typeof window !== "undefined" ? window.innerHeight : 0;
+  const positionStyle: CSSProperties =
+    vertical === "bottom"
+      ? { left: pos.x, bottom: Math.max(8, vh - pos.y - WIZARD_SIZE) }
+      : { left: pos.x, top: pos.y };
 
   return (
     <div

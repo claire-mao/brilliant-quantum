@@ -1,4 +1,3 @@
-import Link from "next/link";
 import AchievementBadge, { type AchievementIcon } from "@/components/AchievementBadge";
 import {
   getUnits,
@@ -58,12 +57,7 @@ export default function DashboardProgressPanel({ profile }: { profile: UserProfi
       </div>
 
       <div className="mt-5">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Relics</h3>
-          <Link href="/achievements" className="text-xs font-medium text-violet-300 hover:text-violet-200">
-            View all
-          </Link>
-        </div>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Relics</h3>
         {relics.length > 0 ? (
           <ul className="mt-3 flex flex-wrap gap-3">
             {relics.map((r) => (

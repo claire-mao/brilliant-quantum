@@ -1,4 +1,4 @@
-import type { AnchorId, ContextKind } from "./types";
+import type { AnchorId } from "./types";
 
 /**
  * Predefined floating anchor positions around the viewport. Each anchor is a
@@ -61,58 +61,11 @@ export const ANCHORS: Record<AnchorId, Anchor> = {
     horizontal: "right",
     vertical: "bottom",
   },
+  // Standing in front of the wizard's home (bottom-left cabin).
+  house: {
+    id: "house",
+    posClass: "left-16 bottom-7 sm:left-[5.5rem]",
+    horizontal: "left",
+    vertical: "bottom",
+  },
 };
-
-/**
- * Desktop candidates per context. Deliberately spread across BOTH sides and
- * corners (not just the left edge) so the wizard feels like it can appear
- * anywhere, while still favoring viewport margins that don't cover the centered
- * lesson content, the Next button, or the nav bar.
- */
-const DESKTOP_ANCHORS: Record<ContextKind, AnchorId[]> = {
-  // near the answer area — either side
-  hint: ["mid-left", "mid-right", "center-left", "center-right", "bottom-right", "bottom-left"],
-  // beside the generated exercise — lean right, but vary
-  practice: ["mid-right", "center-right", "top-right", "bottom-right", "mid-left"],
-  // near Learn More — lower area, either side
-  "fun-fact": ["bottom-left", "bottom-right", "mid-left", "mid-right", "center-left"],
-  // beside the badge — top region
-  badge: ["top-center", "top-right", "top-left", "center-right", "center-left"],
-  generic: [
-    "top-left",
-    "top-right",
-    "mid-left",
-    "mid-right",
-    "center-left",
-    "center-right",
-    "bottom-left",
-    "bottom-right",
-  ],
-};
-
-/**
- * Mobile-safe anchors. Phone content is full width, so side positions would sit
- * over the text. Restrict to the top of content, above the action buttons, and
- * the bottom corners.
- */
-export const MOBILE_SAFE: AnchorId[] = ["top-center", "bottom-center", "bottom-right", "bottom-left"];
-
-const MOBILE_BREAKPOINT = 640;
-
-function isMobileViewport(): boolean {
-  return typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT;
-}
-
-function randomFrom(ids: AnchorId[]): AnchorId {
-  return ids[Math.floor(Math.random() * ids.length)];
-}
-
-/**
- * Pick a random safe anchor for the wizard. Reads the viewport width (client
- * only — call after mount) to constrain mobile placement; on desktop it spreads
- * across margins on both sides so the companion can appear anywhere.
- */
-export function getRandomWizardAnchor(context: ContextKind): AnchorId {
-  if (isMobileViewport()) return randomFrom(MOBILE_SAFE);
-  return randomFrom(DESKTOP_ANCHORS[context] ?? DESKTOP_ANCHORS.generic);
-}

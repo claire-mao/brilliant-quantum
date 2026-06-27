@@ -1,7 +1,15 @@
-import type { HintRequest } from "@/components/WizardHint";
-
 const LESSON_KEY = "bq-tower-lesson";
 const HINT_KEY = "bq-tower-hint";
+
+/** Wrong-answer context sent to the AI hint route and stored for the tower. */
+export interface HintRequest {
+  lessonTitle?: string;
+  prompt: string;
+  selectedWrong?: string;
+  correctAnswer?: string;
+  feedback?: string;
+  conceptTag?: string;
+}
 
 export interface TowerLessonContext {
   lessonId: string;

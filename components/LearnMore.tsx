@@ -9,13 +9,7 @@ import ResourceCard from "./ResourceCard";
  * read cleanly; an inline underlined text link reveals the existing resource
  * cards and hides them again on a second click.
  */
-export default function LearnMore({
-  resources,
-}: {
-  resources: ResourceLink[];
-  /** @deprecated Fun facts moved to the Wizard Tower Lore Library. */
-  funFactTopic?: string;
-}) {
+export default function LearnMore({ resources }: { resources: ResourceLink[] }) {
   const [open, setOpen] = useState(false);
 
   if (resources.length === 0) return null;

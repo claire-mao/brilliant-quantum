@@ -18,7 +18,6 @@ import type {
   CompanionUpdate,
   SummonRequest,
 } from "@/lib/companions/types";
-import { getRandomWizardAnchor } from "@/lib/companions/anchors";
 import CompanionLayer from "./CompanionLayer";
 
 const ENTER_MS = 500;
@@ -29,6 +28,7 @@ const NOOP: CompanionApi = {
   summon: () => {},
   update: () => {},
   dismiss: () => {},
+  isActive: () => false,
   registerInteraction: () => {},
   isInteractionPaused: () => false,
   setBubbleActionHandler: () => {},
@@ -58,6 +58,7 @@ const BubbleHandlerContext = createContext<MutableRefObject<Record<string, () =>
  */
 export default function CompanionProvider({ children }: { children: ReactNode }) {
   const [companions, setCompanions] = useState<Record<string, ActiveCompanion>>({});
+  const companionsRef = useRef<Record<string, ActiveCompanion>>({});
   const runCounter = useRef(0);
   const runIds = useRef<Record<string, number>>({});
   const timers = useRef<Record<string, number[]>>({});
@@ -80,6 +81,15 @@ export default function CompanionProvider({ children }: { children: ReactNode })
   const isInteractionPaused = useCallback(() => {
     return Date.now() < interactionPausedUntil.current;
   }, []);
+
+  const isActive = useCallback((agent: AgentId = "wizard") => {
+    const c = companionsRef.current[agent];
+    return !!c && c.phase !== "leaving";
+  }, []);
+
+  useEffect(() => {
+    companionsRef.current = companions;
+  }, [companions]);
 
   const setBubbleActionHandler = useCallback((id: string, handler: () => void) => {
     bubbleHandlers.current[id] = handler;
@@ -112,7 +122,8 @@ export default function CompanionProvider({ children }: { children: ReactNode })
     (request: SummonRequest) => {
       const agent: AgentId = request.agent ?? "wizard";
       clearTimers(agent);
-      const anchorId = getRandomWizardAnchor(request.context);
+      // Deterministic: spawn in front of the wizard's home unless told otherwise.
+      const anchorId = request.anchorId ?? "house";
       runCounter.current += 1;
       const runId = runCounter.current;
       runIds.current[agent] = runId;
@@ -198,12 +209,13 @@ export default function CompanionProvider({ children }: { children: ReactNode })
       summon,
       update,
       dismiss,
+      isActive,
       registerInteraction,
       isInteractionPaused,
       setBubbleActionHandler,
       clearBubbleActionHandler,
     }),
-    [summon, update, dismiss, registerInteraction, isInteractionPaused, setBubbleActionHandler, clearBubbleActionHandler]
+    [summon, update, dismiss, isActive, registerInteraction, isInteractionPaused, setBubbleActionHandler, clearBubbleActionHandler]
   );
 
   return (

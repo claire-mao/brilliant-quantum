@@ -6,6 +6,7 @@ import RouteGuard from "@/components/RouteGuard";
 import NavBar from "@/components/NavBar";
 import QuantumWizardBackground from "@/components/dashboard/QuantumWizardBackground";
 import DashboardProgressPanel from "@/components/dashboard/DashboardProgressPanel";
+import TowerCard from "@/components/dashboard/TowerCard";
 import UnitSigil, { sigilForUnitId } from "@/components/dashboard/UnitSigil";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -33,14 +34,17 @@ export default function DashboardPage() {
 
 function DashboardContent() {
   const { profile } = useAuth();
-  const course = quantumBasicsCourse;
 
   return (
     <main className="relative z-10 mx-auto w-full max-w-[1100px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
-      <Hero title={course.title} description={course.description} streak={profile?.streak ?? 0} />
+      <Hero
+        title="Quantum Computation"
+        description="An interactive, experiment-first introduction to quantum computation."
+        streak={profile?.streak ?? 0}
+      />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="order-2 flex flex-col gap-6 lg:order-1">
+        <div className="order-1 flex flex-col gap-6">
           <Recommendation profile={profile} />
           <section>
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-violet-200/80">
@@ -54,10 +58,9 @@ function DashboardContent() {
           </section>
         </div>
 
-        <aside className="order-1 lg:order-2">
-          <div className="lg:sticky lg:top-6">
-            <DashboardProgressPanel profile={profile} />
-          </div>
+        <aside className="order-2">
+          <DashboardProgressPanel profile={profile} />
+          <TowerCard />
         </aside>
       </div>
     </main>
@@ -66,23 +69,9 @@ function DashboardContent() {
 
 function Hero({ title, description, streak }: { title: string; description: string; streak: number }) {
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 px-6 py-8 backdrop-blur-md sm:px-8 sm:py-10">
-      <div className="relative z-10 max-w-2xl">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-2 rounded-full border border-violet-300/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-100">
-            <SparkRune />
-            Quantum Wizard Academy
-          </span>
-          <Link
-            href="/achievements"
-            className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/40 bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-200 transition-colors hover:bg-amber-400/20"
-          >
-            <RelicGlyph />
-            Achievements
-          </Link>
-        </div>
-
-        <h1 className="mt-5 font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl">
+    <section className="hero-card relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 px-6 py-8 backdrop-blur-md sm:px-8 sm:py-10">
+      <div className="relative z-10">
+        <h1 className="font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl">
           {title}
         </h1>
         <p className="mt-3 text-base leading-7 text-slate-300">{description}</p>
@@ -273,22 +262,6 @@ function LessonCard({ lesson, profile }: { lesson: Lesson; profile: UserProfile 
 
 /* --- decorative glyphs (aria-hidden) --- */
 
-function SparkRune() {
-  return (
-    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-violet-300" fill="currentColor" aria-hidden="true">
-      <path d="M8 1 L9.2 6 L14 8 L9.2 10 L8 15 L6.8 10 L2 8 L6.8 6 Z" />
-    </svg>
-  );
-}
-
-function RelicGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
-      <path d="M12 3 L15 8 L21 9 L17 13 L18 19 L12 16 L6 19 L7 13 L3 9 L9 8 Z" />
-    </svg>
-  );
-}
-
 function FlameGlyph() {
   return (
     <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
@@ -320,22 +293,53 @@ function SpellbookIcon() {
   );
 }
 
+/**
+ * Atom with three differently colored electrons, each traveling its own orbit.
+ * Every electron is a round stroke-dash dot riding a normalized path
+ * (pathLength 100); the nucleus stays still. Hovering the hero card speeds the
+ * electrons up dramatically. All CSS-driven; frozen under reduced motion.
+ */
+const ORBIT_PATH = "M20 100 A80 30 0 1 0 180 100 A80 30 0 1 0 20 100 Z";
+const ELECTRONS = [
+  { rot: 0, color: "#60a5fa", glow: "96,165,250", delay: 0 },
+  { rot: 60, color: "#f472b6", glow: "244,114,182", delay: -1.7 },
+  { rot: 120, color: "#34d399", glow: "52,211,153", delay: -3.3 },
+];
+
 function OrbitalDiagram() {
   return (
     <svg
       viewBox="0 0 200 200"
-      className="orbit-rotate pointer-events-none absolute -right-10 top-1/2 -mt-28 hidden h-56 w-56 text-violet-300/30 lg:block"
+      className="pointer-events-none absolute -right-10 top-1/2 -mt-28 hidden h-56 w-56 lg:block"
       fill="none"
-      stroke="currentColor"
-      strokeWidth="1"
       aria-hidden="true"
     >
-      <ellipse cx="100" cy="100" rx="80" ry="30" />
-      <ellipse cx="100" cy="100" rx="80" ry="30" transform="rotate(60 100 100)" />
-      <ellipse cx="100" cy="100" rx="80" ry="30" transform="rotate(120 100 100)" />
-      <circle cx="100" cy="100" r="6" fill="#fbbf24" stroke="none" className="opacity-80" />
-      <circle cx="180" cy="100" r="3" fill="#a78bfa" stroke="none" />
-      <circle cx="60" cy="152" r="3" fill="#818cf8" stroke="none" />
+      {/* base orbits (purple) */}
+      <g stroke="#a78bfa" strokeOpacity="0.3" strokeWidth="1">
+        <path d={ORBIT_PATH} />
+        <path d={ORBIT_PATH} transform="rotate(60 100 100)" />
+        <path d={ORBIT_PATH} transform="rotate(120 100 100)" />
+      </g>
+
+      {/* nucleus (stationary) */}
+      <circle cx="100" cy="100" r="9" fill="#fbbf24" />
+      <circle cx="100" cy="100" r="9" fill="none" stroke="#fde68a" strokeOpacity="0.5" strokeWidth="1" />
+
+      {/* three colored electrons, each on its own orbit */}
+      {ELECTRONS.map((e, i) => (
+        <g key={i} transform={`rotate(${e.rot} 100 100)`}>
+          <path
+            d={ORBIT_PATH}
+            pathLength={100}
+            className="orbit-dot"
+            style={{
+              stroke: e.color,
+              filter: `drop-shadow(0 0 5px rgba(${e.glow}, 0.95))`,
+              animationDelay: `${e.delay}s`,
+            }}
+          />
+        </g>
+      ))}
     </svg>
   );
 }

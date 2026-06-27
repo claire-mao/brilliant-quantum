@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { HintRequest } from "@/components/WizardHint";
 import { useCompanion } from "@/components/companions/CompanionProvider";
-import { saveTowerHintContext } from "@/lib/companions/tower-context";
+import { saveTowerHintContext, type HintRequest } from "@/lib/companions/tower-context";
 
 /** Guide-style offers that escalate with each wrong attempt (never reveal). */
 const OFFER_MESSAGES = [

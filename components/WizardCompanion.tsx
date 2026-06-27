@@ -92,24 +92,29 @@ function QuantumWand({ mode, aimDeg = -35 }: { mode: WandMode; aimDeg?: number }
     >
       <rect x={11} y={10} width={1} height={6} fill={COLOR.wand} />
       <rect x={10} y={9} width={3} height={1} fill={COLOR.wandTip} />
+      {glowing && (
+        <g className="wand-sun" aria-hidden="true">
+          {/* light radiating outward like a small sun */}
+          <circle cx={11.5} cy={8.5} r={3.4} fill="url(#wand-sun-grad)" className="wand-sun-core" />
+          <circle cx={11.5} cy={8.5} r={3.4} fill="url(#wand-sun-grad)" className="wand-sun-core" style={{ animationDelay: "0.9s" }} />
+          <g className="wand-sun-rays" stroke="#fde68a" strokeWidth={0.35} strokeLinecap="round">
+            <line x1={11.5} y1={3.8} x2={11.5} y2={2.1} />
+            <line x1={11.5} y1={13.2} x2={11.5} y2={14.9} />
+            <line x1={6.8} y1={8.5} x2={5.1} y2={8.5} />
+            <line x1={16.2} y1={8.5} x2={17.0} y2={8.5} />
+            <line x1={8.3} y1={5.3} x2={7.2} y2={4.2} />
+            <line x1={14.7} y1={5.3} x2={15.8} y2={4.2} />
+            <line x1={8.3} y1={11.7} x2={7.2} y2={12.8} />
+            <line x1={14.7} y1={11.7} x2={15.8} y2={12.8} />
+          </g>
+        </g>
+      )}
       <circle cx={11.5} cy={8.5} r={1.2} fill={COLOR.orb} className={glowing ? "wand-orb-glow" : ""} />
       {glowing && (
         <>
           <circle cx={11.5} cy={8.5} r={2.5} fill="none" stroke="#c4b5fd" strokeWidth={0.4} className="wand-ring" />
           <WandParticles active intense={mode === "celebrate" || mode === "beam"} />
         </>
-      )}
-      {mode === "beam" && (
-        <line
-          x1={11.5}
-          y1={7}
-          x2={-2}
-          y2={2}
-          stroke="url(#wand-beam)"
-          strokeWidth={1.2}
-          strokeLinecap="round"
-          className="wand-beam-line pointer-events-none"
-        />
       )}
     </g>
   );
@@ -166,10 +171,11 @@ export default function WizardCompanion({
         shapeRendering="crispEdges"
       >
         <defs>
-          <linearGradient id="wand-beam" x1="1" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#fde68a" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
-          </linearGradient>
+          <radialGradient id="wand-sun-grad" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%" stopColor="#fff7ed" stopOpacity="0.95" />
+            <stop offset="45%" stopColor="#fde68a" stopOpacity="0.7" />
+            <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
+          </radialGradient>
         </defs>
 
         {withCat && (

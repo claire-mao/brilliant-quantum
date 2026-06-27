@@ -27,7 +27,9 @@ export type AnchorId =
   | "center-right"
   | "bottom-left"
   | "bottom-center"
-  | "bottom-right";
+  | "bottom-right"
+  /** In front of the wizard's home (bottom-left cabin). */
+  | "house";
 
 export interface BubbleAction {
   id: string;
@@ -40,6 +42,8 @@ export interface SummonRequest {
   agent?: AgentId;
   context: ContextKind;
   state: CompanionState;
+  /** Explicit spawn anchor. Defaults to the wizard's home (no random spawn). */
+  anchorId?: AnchorId;
   message?: string;
   /** If set, the companion teleports away automatically after this many ms. */
   autoDismissMs?: number;
@@ -79,6 +83,8 @@ export interface CompanionApi {
   summon(request: SummonRequest): void;
   update(agent: AgentId, update: CompanionUpdate): void;
   dismiss(agent?: AgentId): void;
+  /** True while the agent is currently summoned (and not leaving). */
+  isActive(agent?: AgentId): boolean;
   /** Pause idle walking while the learner interacts with lesson controls. */
   registerInteraction(): void;
   /** True while lesson interaction pause is active. */

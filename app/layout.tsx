@@ -4,8 +4,8 @@ import "katex/dist/katex.min.css";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import CompanionProvider from "@/components/companions/CompanionProvider";
-import WizardTowerButton from "@/components/WizardTowerButton";
 import SummonWizardButton from "@/components/SummonWizardButton";
+import CeremonyManager from "@/components/achievements/CeremonyManager";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +37,7 @@ export default function RootLayout({
           <CompanionProvider>
             {children}
             <SummonWizardButton />
-            <WizardTowerButton />
+            <CeremonyManager />
           </CompanionProvider>
         </AuthProvider>
       </body>

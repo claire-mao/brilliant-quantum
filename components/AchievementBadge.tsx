@@ -5,7 +5,7 @@
  * badges are a muted gray shield with a lock.
  */
 
-export type AchievementBadgeType = "streak" | "unit" | "course";
+export type AchievementBadgeType = "streak" | "unit" | "course" | "challenge" | "secret";
 export type AchievementIcon =
   | "spark"
   | "flame"
@@ -18,7 +18,17 @@ export type AchievementIcon =
   | "nodes"
   | "maze"
   | "chip"
-  | "staff";
+  | "staff"
+  | "gate"
+  | "crystal"
+  | "sunrise"
+  | "moon"
+  | "tower"
+  | "star"
+  | "wand"
+  | "shield"
+  | "compass"
+  | "rune";
 
 const SHIELD = "M24 3 L43 11 V28 C43 41 34 49 24 53 C14 49 5 41 5 28 V11 Z";
 
@@ -26,6 +36,8 @@ const UNLOCKED_STYLE: Record<AchievementBadgeType, { fill: string; stroke: strin
   streak: { fill: "fill-amber-500", stroke: "stroke-amber-600" },
   unit: { fill: "fill-indigo-500", stroke: "stroke-indigo-700" },
   course: { fill: "fill-amber-400", stroke: "stroke-amber-600" },
+  challenge: { fill: "fill-violet-500", stroke: "stroke-violet-700" },
+  secret: { fill: "fill-fuchsia-500", stroke: "stroke-fuchsia-700" },
 };
 
 export default function AchievementBadge({
@@ -173,6 +185,83 @@ function Mark({ icon }: { icon: AchievementIcon }) {
           <line x1={24} y1={39} x2={24} y2={22} className="stroke-white" strokeWidth={2} strokeLinecap="round" />
           <path d="M24 12 L28.5 18 L24 24 L19.5 18 Z" className="fill-white" />
           <circle cx={31} cy={15} r={1.3} className="fill-white opacity-80" />
+        </g>
+      );
+    case "gate":
+      return (
+        <g className="stroke-white" fill="none" strokeWidth={1.7} strokeLinecap="round">
+          <line x1={12} y1={22} x2={18} y2={22} />
+          <line x1={12} y1={32} x2={18} y2={32} />
+          <line x1={30} y1={22} x2={36} y2={22} />
+          <line x1={30} y1={32} x2={36} y2={32} />
+          <rect x={18} y={19} width={12} height={16} rx={2} />
+          <circle cx={24} cy={27} r={2} className="fill-white" stroke="none" />
+        </g>
+      );
+    case "crystal":
+      return (
+        <g className="fill-white">
+          <path d="M24 14 L31 23 L24 39 L17 23 Z" className="opacity-95" />
+          <path d="M24 14 L24 39 L31 23 Z" className="opacity-60" />
+          <circle cx={33} cy={18} r={1.1} className="opacity-80" />
+        </g>
+      );
+    case "sunrise":
+      return (
+        <g className="stroke-white" strokeWidth={1.7} strokeLinecap="round" fill="none">
+          <path d="M14 34 H34" />
+          <path d="M18 34 a6 6 0 0 1 12 0" className="fill-white" stroke="none" />
+          <line x1={24} y1={20} x2={24} y2={24} />
+          <line x1={15} y1={24} x2={17.5} y2={26.5} />
+          <line x1={33} y1={24} x2={30.5} y2={26.5} />
+        </g>
+      );
+    case "moon":
+      return <path d="M29 16 A11 11 0 1 0 29 38 A8.5 8.5 0 1 1 29 16 Z" className="fill-white" />;
+    case "tower":
+      return (
+        <g className="fill-white">
+          <path d="M18 22 L24 15 L30 22 Z" />
+          <rect x={19} y={22} width={10} height={16} />
+          <rect x={22} y={26} width={4} height={5} className="fill-indigo-700" />
+          <rect x={17} y={20} width={3} height={3} />
+          <rect x={28} y={20} width={3} height={3} />
+        </g>
+      );
+    case "star":
+      return (
+        <path
+          d="M24 14 L26.8 22 L35 22 L28.5 27 L31 35 L24 30 L17 35 L19.5 27 L13 22 L21.2 22 Z"
+          className="fill-white"
+        />
+      );
+    case "wand":
+      return (
+        <g>
+          <line x1={17} y1={37} x2={30} y2={20} className="stroke-white" strokeWidth={2.4} strokeLinecap="round" />
+          <path d="M31 15 L32.2 18 L35 19 L32.2 20 L31 23 L29.8 20 L27 19 L29.8 18 Z" className="fill-white" />
+        </g>
+      );
+    case "shield":
+      return (
+        <g className="fill-white">
+          <path d="M24 16 L32 19 V27 C32 33 28 36 24 38 C20 36 16 33 16 27 V19 Z" className="opacity-95" />
+          <path d="M24 16 V38 C28 36 32 33 32 27 V19 Z" className="opacity-60" />
+        </g>
+      );
+    case "compass":
+      return (
+        <g className="stroke-white" fill="none" strokeWidth={1.6}>
+          <circle cx={24} cy={27} r={9} />
+          <path d="M24 27 L28 19 L24 27 L20 35 Z" className="fill-white" />
+          <circle cx={24} cy={27} r={1.4} className="fill-white" stroke="none" />
+        </g>
+      );
+    case "rune":
+      return (
+        <g className="stroke-white" fill="none" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M24 16 V38 M24 22 L30 18 M24 28 L18 24 M24 28 L30 32" />
+          <circle cx={24} cy={27} r={9.5} strokeDasharray="2 4" strokeWidth={1.2} />
         </g>
       );
     case "atom":
