@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { PracticeQuestion } from "@/lib/ai/validators";
 import MathText from "@/components/MathText";
-import WizardCompanion from "@/components/WizardCompanion";
+import WizardCompanion, { SparkleBurst } from "@/components/WizardCompanion";
 import { useAuth } from "@/lib/auth-context";
 import { getTowerLessonContext } from "@/lib/companions/tower-context";
 import {
@@ -232,7 +232,7 @@ export default function TowerArena() {
               wandAim={28}
               floppy={false}
             />
-            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Guide Wizard</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Wizard</p>
             <FocusBar value={monster.maxHp - hp} max={monster.maxHp} />
           </div>
 
@@ -274,7 +274,7 @@ export default function TowerArena() {
         ) : (
           question &&
           (phase === "question" || phase === "feedback") && (
-            <div className="rounded-2xl border border-indigo-100 bg-white p-5 sm:p-6">
+            <div key={`q-${encounterIndex}`} className="arena-card-enter rounded-2xl border border-indigo-100 bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
                   {correctPicked ? "Concept weakened" : "Challenge"} · {question.difficulty}
@@ -425,8 +425,9 @@ function VictoryPanel({
   onNext: () => void;
 }) {
   return (
-    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center">
-      <p className="text-lg font-bold text-emerald-900">Concept defeated</p>
+    <div className="arena-victory relative overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center">
+      <SparkleBurst />
+      <p className="relative text-lg font-bold text-emerald-900">Concept defeated</p>
       <p className="mt-1 text-sm text-emerald-800">
         The {monsterName} dissolves into light — you strengthened your grasp of {conceptLabel}.
       </p>

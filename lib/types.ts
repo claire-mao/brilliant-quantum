@@ -77,6 +77,12 @@ export interface InformativeStep extends BaseStep {
   emoji?: string;
   /** Optional "Common misconception" callout, shown below the body. */
   misconception?: string;
+  /** Optional "Where you meet this" real-world connection callout. */
+  realWorld?: string;
+  /** Optional one-line "Why this matters" callout (what it unlocks next). */
+  whyMatters?: string;
+  /** Optional "Remember" callout linking back to an earlier idea. */
+  memoryConnection?: string;
   resources?: ResourceLink[];
 }
 

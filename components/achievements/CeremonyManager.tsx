@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { ACHIEVEMENTS, getUnlockedIds, type AchievementDef } from "@/lib/achievements/catalog";
 import { getCelebrated, setCelebrated } from "@/lib/achievements/celebrated";
+import { playSound } from "@/lib/sound/sounds";
 import BadgeCeremony from "./BadgeCeremony";
 
-const CEREMONY_MS = 2700;
+const CEREMONY_MS = 3000;
 
 function useReducedMotion(): boolean {
   const [reduce, setReduce] = useState(
@@ -71,6 +72,7 @@ export default function CeremonyManager() {
       const newly = unlocked.filter((u) => !seenSet.has(u));
       if (newly.length === 0) return;
       setCelebrated([...seen, ...newly]); // never replay
+      playSound("badge");
       if (reduce) return; // respect reduced motion: skip the animation
       const defs = newly
         .map((u) => ACHIEVEMENTS.find((d) => d.id === u))

@@ -18,7 +18,9 @@ export default function MagicalStatCard({
         {icon && <span className="text-violet-300">{icon}</span>}
         <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">{label}</p>
       </div>
-      <p className="mt-0.5 text-lg font-semibold tabular-nums text-white">{value}</p>
+      <p className="mt-0.5 truncate text-lg font-semibold tabular-nums text-white" title={value}>
+        {value}
+      </p>
       {hint && <p className="text-[11px] text-slate-500">{hint}</p>}
     </div>
   );

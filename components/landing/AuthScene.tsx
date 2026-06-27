@@ -19,7 +19,7 @@ export default function AuthScene({ mode }: { mode: "login" | "signup" }) {
               <Link href="/" className="text-sm font-semibold uppercase tracking-widest text-indigo-200 hover:text-white">
                 Brilliant Quantum
               </Link>
-              <h2 className="mt-6 text-2xl font-bold leading-snug">
+              <h2 className="mt-6 text-3xl font-bold leading-snug sm:text-4xl">
                 {isSignup ? "Step through the tower gate." : "Welcome back to the tower."}
               </h2>
               <p className="mt-3 text-sm leading-6 text-indigo-200">
@@ -27,7 +27,7 @@ export default function AuthScene({ mode }: { mode: "login" | "signup" }) {
                 companion.
               </p>
             </div>
-            <div className="pointer-events-none relative z-0 mx-auto mt-6 w-48">
+            <div className="pointer-events-none relative z-0 mx-auto mt-6 w-72">
               <WizardTowerArt className="aspect-[220/260] w-full opacity-95" />
             </div>
           </aside>

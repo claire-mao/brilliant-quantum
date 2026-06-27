@@ -15,12 +15,28 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   signOut,
+  deleteUser,
   updateProfile,
   type User,
 } from "firebase/auth";
 import { auth } from "./firebase";
-import { createUserProfile, getUserProfile } from "./progress";
-import type { UserProfile } from "./types";
+import { createUserProfile, getUserProfile, deleteUserData } from "./progress";
+import type { LessonProgress, UserProfile } from "./types";
+
+/** All app localStorage keys are namespaced "bq-" (signals, activity, avatar, tower, celebrated). */
+function clearLocalAppData(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("bq-")) keys.push(k);
+    }
+    keys.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    // ignore storage errors
+  }
+}
 
 interface AuthContextValue {
   user: User | null;
@@ -30,8 +46,28 @@ interface AuthContextValue {
   logIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   logOut: () => Promise<void>;
+  /**
+   * Permanently delete the current user: Firestore data first (while still
+   * authenticated), then the Firebase Auth account, then local app data. May
+   * reject with `auth/requires-recent-login` if the session is too old.
+   */
+  deleteAccount: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  /**
+   * Optimistically merge a patch into `profile.progress[lessonId]` in memory so
+   * UI (e.g. lesson resume) sees the new value immediately, without waiting for
+   * a Firestore refetch. Existing fields are preserved.
+   */
+  updateLocalLessonProgress: (lessonId: string, patch: Partial<LessonProgress>) => void;
 }
+
+const DEFAULT_LESSON_PROGRESS: LessonProgress = {
+  currentStep: 0,
+  completed: false,
+  completedAt: null,
+  attempts: 0,
+  bestChallengeAttempts: null,
+};
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -59,6 +95,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(await getUserProfile(auth.currentUser.uid));
     }
   }, []);
+
+  const updateLocalLessonProgress = useCallback(
+    (lessonId: string, patch: Partial<LessonProgress>) => {
+      setProfile((prev) => {
+        if (!prev) return prev;
+        const existing = prev.progress?.[lessonId] ?? DEFAULT_LESSON_PROGRESS;
+        return {
+          ...prev,
+          progress: { ...prev.progress, [lessonId]: { ...existing, ...patch } },
+        };
+      });
+    },
+    []
+  );
 
   const signUp = useCallback(
     async (email: string, password: string, displayName: string) => {
@@ -92,9 +142,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signOut(auth);
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    const current = auth.currentUser;
+    if (!current) throw new Error("No authenticated user to delete.");
+    // 1) Remove Firestore data while still authenticated (rules require the uid
+    //    match, so this must happen before the auth user is deleted).
+    await deleteUserData(current.uid);
+    // 2) Delete the Firebase Auth account (may throw auth/requires-recent-login).
+    await deleteUser(current);
+    // 3) Wipe local app data; the auth listener will also clear user/profile.
+    clearLocalAppData();
+    setProfile(null);
+    setUser(null);
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ user, profile, loading, signUp, logIn, signInWithGoogle, logOut, refreshProfile }}
+      value={{
+        user,
+        profile,
+        loading,
+        signUp,
+        logIn,
+        signInWithGoogle,
+        logOut,
+        deleteAccount,
+        refreshProfile,
+        updateLocalLessonProgress,
+      }}
     >
       {children}
     </AuthContext.Provider>

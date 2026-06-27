@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import type { ActiveCompanion, AgentId, CompanionUpdate } from "@/lib/companions/types";
 import { ANCHORS } from "@/lib/companions/anchors";
 import {
@@ -14,8 +21,21 @@ import { useCompanion } from "./CompanionProvider";
 import { SparkleBurst } from "../WizardCompanion";
 import SpeechBubble from "./SpeechBubble";
 import { AGENT_AVATARS } from "./agents";
+import SchrodingerCat, { type CatPhase } from "./SchrodingerCat";
+import { playCatMeow } from "@/lib/sound/sounds";
 
 const DRAG_THRESHOLD = 5;
+const CAT_SIZE = 48;
+
+/** Where the cat wants to be: just to the lower-left of the wizard, on screen. */
+function computeCatTarget(p: { x: number; y: number }): { x: number; y: number } {
+  const w = typeof window !== "undefined" ? window.innerWidth : 0;
+  const h = typeof window !== "undefined" ? window.innerHeight : 0;
+  return {
+    x: clamp(p.x - 22, MARGIN, Math.max(MARGIN, w - CAT_SIZE - MARGIN)),
+    y: clamp(p.y + WIZARD_SIZE - 46, NAV_SAFE_TOP, Math.max(NAV_SAFE_TOP, h - CAT_SIZE - 8)),
+  };
+}
 
 const CLICK_MESSAGES = [
   "Still here.",
@@ -72,6 +92,13 @@ export default function DraggableCompanion({
   const [settleStart, setSettleStart] = useState<WizardPhysics>(PHYSICS_IDLE);
   const [clickMsg, setClickMsg] = useState<string | null>(null);
   const [hasUserDragged, setHasUserDragged] = useState(false);
+  // The wizard's familiar. Rare on click: 1/10 to appear, 1/20 to be boxed away.
+  const [catState, setCatState] = useState<"hidden" | CatPhase>("hidden");
+  // Cat chase state (it trails the dragged wizard).
+  const [catRunning, setCatRunning] = useState(false);
+  const [catFlip, setCatFlip] = useState(false);
+  const [catMeow, setCatMeow] = useState(false);
+  const [catArrived, setCatArrived] = useState(false);
 
   const reduce = useReducedMotion();
   const drag = useRef({
@@ -88,19 +115,125 @@ export default function DraggableCompanion({
   const physicsRef = useRef(PHYSICS_IDLE);
   const rafRef = useRef<number | null>(null);
   const timers = useRef<number[]>([]);
+  const posRef = useRef(pos);
+  const draggingRef = useRef(false);
+  const catWrapRef = useRef<HTMLDivElement | null>(null);
+  const catPosRef = useRef<{ x: number; y: number } | null>(null);
+  const catRafRef = useRef<number | null>(null);
+  const arriveTimerRef = useRef<number | null>(null);
   useEffect(() => {
     const pending = timers.current;
     return () => {
       pending.forEach((t) => clearTimeout(t));
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      if (catRafRef.current !== null) cancelAnimationFrame(catRafRef.current);
+      if (arriveTimerRef.current !== null) clearTimeout(arriveTimerRef.current);
     };
   }, []);
+
+  // Keep the latest wizard position + drag state available to the cat-chase loop.
+  useEffect(() => {
+    posRef.current = pos;
+  }, [pos]);
+  useEffect(() => {
+    draggingRef.current = dragging;
+  }, [dragging]);
+
+  // The cat stays put while the wizard is being dragged. Once the wizard is
+  // released it notices and runs after it (with lag), then bounces + chirps on
+  // arrival. Dragging again mid-chase freezes the cat, so the next release just
+  // starts a fresh chase. Disabled (snapped) under reduced motion.
+  useEffect(() => {
+    if (reduce) return;
+    if (catState !== "present" && catState !== "appearing") return;
+    if (!catPosRef.current) catPosRef.current = computeCatTarget(posRef.current);
+    let runningNow = false;
+    let flipNow = false;
+    let wasRunning = false;
+    const tick = () => {
+      if (draggingRef.current) {
+        // Wizard is being carried: the cat waits where it is, no live follow.
+        if (runningNow) {
+          runningNow = false;
+          setCatRunning(false);
+        }
+        catRafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      const t = computeCatTarget(posRef.current);
+      const c = catPosRef.current!;
+      const dx = t.x - c.x;
+      const dy = t.y - c.y;
+      c.x += dx * 0.16;
+      c.y += dy * 0.16;
+      const moving = Math.hypot(dx, dy) > 5;
+      if (moving !== runningNow) {
+        runningNow = moving;
+        setCatRunning(moving);
+      }
+      if (moving) {
+        wasRunning = true;
+      } else if (wasRunning) {
+        // Arrived after a chase: a small bounce + chirp.
+        wasRunning = false;
+        setCatArrived(true);
+        playCatMeow();
+        if (arriveTimerRef.current !== null) clearTimeout(arriveTimerRef.current);
+        arriveTimerRef.current = window.setTimeout(() => setCatArrived(false), 480);
+      }
+      if (dx < -1.5 && !flipNow) {
+        flipNow = true;
+        setCatFlip(true);
+      } else if (dx > 1.5 && flipNow) {
+        flipNow = false;
+        setCatFlip(false);
+      }
+      if (catWrapRef.current) {
+        catWrapRef.current.style.transform = `translate3d(${c.x}px, ${c.y}px, 0)`;
+      }
+      catRafRef.current = requestAnimationFrame(tick);
+    };
+    catRafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (catRafRef.current !== null) cancelAnimationFrame(catRafRef.current);
+      catRafRef.current = null;
+    };
+  }, [catState, reduce]);
+
+  // Position the cat before paint (no flash). Under reduced motion it snaps to
+  // the wizard's side on every move; otherwise this only seeds the start point
+  // and the chase loop above takes over.
+  useLayoutEffect(() => {
+    const el = catWrapRef.current;
+    if (catState === "hidden" || !el) return;
+    if (reduce) {
+      // Reduced motion: stay put during the drag, then jump to the new spot.
+      if (dragging) return;
+      const t = computeCatTarget(pos);
+      el.style.transform = `translate3d(${t.x}px, ${t.y}px, 0)`;
+      return;
+    }
+    if (!catPosRef.current) {
+      catPosRef.current = computeCatTarget(pos);
+      const c = catPosRef.current;
+      el.style.transform = `translate3d(${c.x}px, ${c.y}px, 0)`;
+    }
+  }, [catState, reduce, pos, dragging]);
 
   if (!Avatar) return null;
 
   function later(fn: () => void, ms: number) {
     const id = window.setTimeout(fn, ms);
     timers.current.push(id);
+  }
+
+  // Clicking the cat (not the wizard): it meows with sound + visual lines, lifts
+  // its head and swishes its tail. The wizard is untouched.
+  function handleCatMeow() {
+    if (catState !== "present") return;
+    playCatMeow();
+    setCatMeow(true);
+    later(() => setCatMeow(false), 1100);
   }
 
   function stopSwingLoop() {
@@ -202,13 +335,40 @@ export default function DraggableCompanion({
       }
     } else {
       setPhysics(PHYSICS_IDLE);
-      const msg = CLICK_MESSAGES[Math.floor(Math.random() * CLICK_MESSAGES.length)];
+      const roll = Math.random();
+      let catMsg: string | null = null;
+      if (catState === "hidden" && roll < 0.1) {
+        // 1 in 10: the familiar pads out.
+        catMsg = "A curious familiar pads out of my sleeve.";
+        playCatMeow();
+        if (reduce) {
+          setCatState("present");
+        } else {
+          setCatState("appearing");
+          later(() => setCatState("present"), 520);
+        }
+      } else if (catState === "present" && roll < 0.05) {
+        // 1 in 20: into the cardboard box it goes, both here and not.
+        catMsg = "Into the box it goes. Now it is both here and not.";
+        playCatMeow();
+        if (reduce) {
+          setCatState("hidden");
+          catPosRef.current = null;
+        } else {
+          setCatState("leaving");
+          later(() => {
+            setCatState("hidden");
+            catPosRef.current = null; // re-spawn beside the wizard next time
+          }, 2500);
+        }
+      }
+      const msg = catMsg ?? CLICK_MESSAGES[Math.floor(Math.random() * CLICK_MESSAGES.length)];
       setClickMsg(msg);
       if (!reduce) {
         setPopping(true);
         later(() => setPopping(false), 360);
       }
-      later(() => setClickMsg(null), 5000);
+      later(() => setClickMsg(null), catMsg ? 6000 : 5000);
     }
   }
 
@@ -222,8 +382,6 @@ export default function DraggableCompanion({
 
   const horizontal = placement?.horizontal ?? anchor.horizontal;
   const vertical = placement?.vertical ?? anchor.vertical;
-  const align =
-    horizontal === "left" ? "items-start" : horizontal === "right" ? "items-end" : "items-center";
   const arrow = vertical === "top" ? "up" : "down";
 
   const phaseClass =
@@ -279,6 +437,16 @@ export default function DraggableCompanion({
     </span>
   );
 
+  const vw = typeof window !== "undefined" ? window.innerWidth : 0;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 0;
+
+  // The wizard stays put on click; only the bubble shifts to stay fully on
+  // screen, with its arrow still pointing at the wizard.
+  const bubbleW = vw > 0 ? Math.min(240, Math.max(160, vw - 16)) : 240;
+  const wizardCenterX = pos.x + WIZARD_SIZE / 2;
+  const bubbleLeftVp = clamp(wizardCenterX - bubbleW / 2, 8, Math.max(8, vw - bubbleW - 8));
+  const arrowLeft = clamp(wizardCenterX - bubbleLeftVp, 16, bubbleW - 16);
+
   const bubble = showBubble ? (
     <SpeechBubble
       state={bubbleState}
@@ -287,36 +455,55 @@ export default function DraggableCompanion({
       horizontal={horizontal}
       actions={bubbleActions}
       onClose={() => onDismiss(companion.agent)}
+      style={{ width: bubbleW, marginLeft: bubbleLeftVp - pos.x }}
+      arrowLeft={arrowLeft}
     />
   ) : null;
 
   // For "bottom" placements, anchor by the viewport bottom so the speech bubble
   // grows UPWARD (the wizard stays put) instead of pushing the wizard down.
-  const vh = typeof window !== "undefined" ? window.innerHeight : 0;
   const positionStyle: CSSProperties =
     vertical === "bottom"
       ? { left: pos.x, bottom: Math.max(8, vh - pos.y - WIZARD_SIZE) }
       : { left: pos.x, top: pos.y };
+  const useAnchorClass = companion.phase === "entering" && !hasUserDragged;
 
   return (
-    <div
-      className={`pointer-events-none fixed z-[70] ${companion.phase === "entering" && !hasUserDragged ? anchor.posClass : ""}`}
-      style={companion.phase === "entering" && !hasUserDragged ? undefined : positionStyle}
-      onPointerDownCapture={() => registerInteraction()}
-    >
-      <div className={`flex max-w-[16rem] flex-col gap-1 ${align} ${phaseClass}`}>
-        {vertical === "top" ? (
-          <>
-            {avatar}
-            {bubble}
-          </>
-        ) : (
-          <>
-            {bubble}
-            {avatar}
-          </>
-        )}
+    <>
+      <div
+        className={`pointer-events-none fixed z-[70] ${useAnchorClass ? anchor.posClass : ""}`}
+        style={useAnchorClass ? undefined : positionStyle}
+        onPointerDownCapture={() => registerInteraction()}
+      >
+        <div className={`flex max-w-[16rem] flex-col items-start gap-1 ${phaseClass}`}>
+          {vertical === "top" ? (
+            <>
+              {avatar}
+              {bubble}
+            </>
+          ) : (
+            <>
+              {bubble}
+              {avatar}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+
+      {catState !== "hidden" && (
+        <div ref={catWrapRef} className="pointer-events-none fixed left-0 top-0 z-[69]">
+          <div style={catFlip ? { transform: "scaleX(-1)" } : undefined}>
+            <SchrodingerCat
+              phase={catState}
+              running={catRunning}
+              meowing={catMeow}
+              bounce={catArrived}
+              reduce={reduce}
+              onMeow={handleCatMeow}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }

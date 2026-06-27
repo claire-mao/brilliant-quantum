@@ -24,7 +24,7 @@ export default function TowerCard() {
           <TowerArt active={hover} />
           <TowerMagic />
         </div>
-        <span className="-mt-1 inline-flex items-center gap-1.5 rounded-full border border-indigo-400/40 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-100 transition-colors group-hover:bg-indigo-500/20">
+        <span className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-indigo-400/40 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-100 transition-colors group-hover:bg-indigo-500/20">
           Enter the tower
           <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path d="M4 10 H15 M11 6 L15 10 L11 14" strokeLinecap="round" strokeLinejoin="round" />

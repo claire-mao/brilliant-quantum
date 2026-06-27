@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import RouteGuard from "@/components/RouteGuard";
 import NavBar from "@/components/NavBar";
@@ -8,6 +8,8 @@ import QuantumWizardBackground from "@/components/dashboard/QuantumWizardBackgro
 import MagicalStatCard from "@/components/dashboard/MagicalStatCard";
 import AvatarWizard from "@/components/profile/AvatarWizard";
 import AvatarBuilder from "@/components/profile/AvatarBuilder";
+import LearningProfile from "@/components/profile/LearningProfile";
+import DeleteAccountSection from "@/components/profile/DeleteAccountSection";
 import AchievementBadge from "@/components/AchievementBadge";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -17,8 +19,7 @@ import {
   getTotalUnitCount,
 } from "@/content/lessons";
 import { DEFAULT_AVATAR, loadAvatar, saveAvatar, type AvatarConfig } from "@/lib/profile/avatar";
-import { estimateLearningHours, getLongestStreak, recordStreakObservation } from "@/lib/profile/activity";
-import { getConceptSignals } from "@/lib/learning/signals";
+import { getLongestStreak, recordStreakObservation } from "@/lib/profile/activity";
 import {
   evaluateAchievements,
   CATEGORY_LABEL,
@@ -27,6 +28,8 @@ import {
   type AchievementCategory,
   type EvaluatedAchievement,
 } from "@/lib/achievements/catalog";
+
+const CATEGORY_ORDER: AchievementCategory[] = ["learning", "consistency", "challenge", "secrets"];
 
 export default function ProfilePage() {
   return (
@@ -40,14 +43,6 @@ export default function ProfilePage() {
   );
 }
 
-interface DerivedStats {
-  achievementsEarned: number;
-  longestStreak: number;
-  estimatedHours: number;
-}
-
-const CATEGORY_ORDER: AchievementCategory[] = ["learning", "consistency", "challenge", "secrets"];
-
 function ProfileContent() {
   const { user, profile } = useAuth();
 
@@ -60,31 +55,24 @@ function ProfileContent() {
 
   const [avatar, setAvatar] = useState<AvatarConfig>(DEFAULT_AVATAR);
   const [editing, setEditing] = useState(false);
-  const [stats, setStats] = useState<DerivedStats | null>(null);
+  const [longestStreak, setLongestStreak] = useState<number | null>(null);
   const [achievements, setAchievements] = useState<EvaluatedAchievement[] | null>(null);
+  const [spotlight, setSpotlight] = useState<EvaluatedAchievement | null>(null);
 
   useEffect(() => {
     const id = window.setTimeout(() => setAvatar(loadAvatar()), 0);
     return () => clearTimeout(id);
   }, []);
 
-  // Local-signal-derived stats + achievements are computed after mount (avoids
-  // hydration drift since they read localStorage learning signals).
+  // Streak + relics read localStorage / derive from progress, so compute after mount.
   useEffect(() => {
     const id = window.setTimeout(() => {
       recordStreakObservation(streak);
-      const signals = getConceptSignals();
-      const retrievals = Object.values(signals).reduce((sum, s) => sum + (s.seen ?? 0), 0);
-      const evaluated = evaluateAchievements(profile);
-      setAchievements(evaluated);
-      setStats({
-        achievementsEarned: evaluated.filter((a) => a.unlocked).length,
-        longestStreak: getLongestStreak(streak),
-        estimatedHours: estimateLearningHours(completedLessons, retrievals),
-      });
+      setLongestStreak(getLongestStreak(streak));
+      setAchievements(evaluateAchievements(profile));
     }, 0);
     return () => clearTimeout(id);
-  }, [profile, streak, completedLessons]);
+  }, [profile, streak]);
 
   function updateAvatar(next: AvatarConfig) {
     setAvatar(next);
@@ -129,19 +117,19 @@ function ProfileContent() {
         )}
       </section>
 
-      {/* Stats */}
-      <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      {/* Progress stats */}
+      <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <MagicalStatCard label="Lessons" value={`${completedLessons}/${totalLessons}`} hint="completed" />
         <MagicalStatCard label="Units" value={`${completedUnits}/${totalUnits}`} hint="completed" />
-        <MagicalStatCard label="Achievements" value={`${stats?.achievementsEarned ?? 0}`} hint="earned" />
         <MagicalStatCard label="Current streak" value={`${streak}`} hint={streak === 1 ? "day" : "days"} />
-        <MagicalStatCard label="Longest streak" value={`${stats?.longestStreak ?? streak}`} hint="days" />
-        <MagicalStatCard label="Learning time" value={`${stats?.estimatedHours ?? 0}h`} hint="estimated" />
+        <MagicalStatCard label="Longest streak" value={`${longestStreak ?? streak}`} hint="days" />
       </section>
 
-      {/* Achievements (integrated, compact, self-contained) */}
+      <LearningProfile profile={profile} />
+
+      {/* Relics (integrated, compact, self-contained) */}
       <section className="mt-8">
-        <h3 className="font-serif text-xl font-bold text-white">Achievements</h3>
+        <h3 className="font-serif text-xl font-bold text-white">Relics</h3>
 
         {achievements === null ? (
           <p className="mt-3 text-sm text-slate-500">Reading your grimoire…</p>
@@ -157,7 +145,7 @@ function ProfileContent() {
                   </h4>
                   <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {items.map((a) => (
-                      <ProfileAchievementTile key={a.def.id} item={a} />
+                      <ProfileAchievementTile key={a.def.id} item={a} onSelect={setSpotlight} />
                     ))}
                   </div>
                 </div>
@@ -166,23 +154,31 @@ function ProfileContent() {
           </div>
         )}
       </section>
+
+      <DeleteAccountSection />
+
+      {spotlight && <BadgeSpotlight item={spotlight} onClose={() => setSpotlight(null)} />}
     </main>
   );
 }
 
-function ProfileAchievementTile({ item }: { item: EvaluatedAchievement }) {
+function ProfileAchievementTile({
+  item,
+  onSelect,
+}: {
+  item: EvaluatedAchievement;
+  onSelect: (item: EvaluatedAchievement) => void;
+}) {
   const hideSecret = item.def.secret && !item.unlocked;
   const title = hideSecret ? SECRET_TITLE : item.def.title;
   const icon = hideSecret ? "rune" : item.def.icon;
   const status = item.unlocked ? "Unlocked" : hideSecret ? "Locked" : item.progressLabel;
-  const hint = hideSecret ? SECRET_HINT : item.def.earnHint;
-  const tipId = useId();
 
   return (
-    <div
-      tabIndex={0}
-      aria-describedby={tipId}
-      className={`group relative flex items-center gap-3 rounded-xl border p-3 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-400 ${
+    <button
+      type="button"
+      onClick={() => onSelect(item)}
+      className={`group relative flex w-full items-center gap-3 rounded-xl border p-3 text-left outline-none transition-colors hover:border-violet-400/50 focus-visible:ring-2 focus-visible:ring-violet-400 ${
         item.unlocked ? "border-violet-400/30 bg-white/5" : "border-white/10 bg-white/[0.03]"
       }`}
     >
@@ -191,13 +187,67 @@ function ProfileAchievementTile({ item }: { item: EvaluatedAchievement }) {
         <p className={`truncate text-sm font-semibold ${item.unlocked ? "text-white" : "text-slate-300"}`}>{title}</p>
         <p className={`truncate text-xs ${item.unlocked ? "text-violet-300" : "text-slate-500"}`}>{status}</p>
       </div>
-      <span
-        id={tipId}
-        role="tooltip"
-        className="pointer-events-none absolute left-2 right-2 top-full z-20 mt-1 rounded-lg bg-slate-950 px-3 py-1.5 text-xs leading-snug text-slate-100 opacity-0 shadow-lg ring-1 ring-white/10 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+    </button>
+  );
+}
+
+/** Click a relic to bring it into the spotlight (frameless) with the way to earn it as a subtitle. */
+function BadgeSpotlight({
+  item,
+  onClose,
+}: {
+  item: EvaluatedAchievement;
+  onClose: () => void;
+}) {
+  const hideSecret = item.def.secret && !item.unlocked;
+  const title = hideSecret ? SECRET_TITLE : item.def.title;
+  const icon = hideSecret ? "rune" : item.def.icon;
+  const hint = hideSecret ? SECRET_HINT : item.def.earnHint;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${title} relic`}
+      onClick={onClose}
+      className="fixed inset-0 z-[90] flex items-center justify-center p-6"
+    >
+      <div className="badge-spotlight-backdrop absolute inset-0 bg-slate-950/85 backdrop-blur-sm" />
+
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close"
+        className="absolute right-4 top-4 z-20 rounded-full p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
       >
-        {item.unlocked ? `Earned by: ${hint}` : hint}
-      </span>
+        <svg viewBox="0 0 20 20" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2}>
+          <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="badge-spotlight-card relative z-10 flex flex-col items-center text-center"
+      >
+        <span className="relative block h-[min(30rem,82vw,72vh)] w-[min(30rem,82vw,72vh)]">
+          <span
+            className="badge-spotlight-glow absolute -inset-[6%] rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(167,139,250,0.5), transparent 70%)" }}
+          />
+          <AchievementBadge unlocked={item.unlocked} type={item.def.type} icon={icon} className="relative h-full w-full" />
+        </span>
+
+        <h3 className="mt-3 font-serif text-3xl font-bold text-white sm:text-4xl">{title}</h3>
+        <p className="mt-2 max-w-sm text-base leading-7 text-slate-300">{hint}</p>
+      </div>
     </div>
   );
 }

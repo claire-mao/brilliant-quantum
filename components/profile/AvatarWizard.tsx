@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import type { AuraStyle, AvatarConfig } from "@/lib/profile/avatar";
+import { playAura, playCatMeow, startAuraLoop, stopAuraLoop } from "@/lib/sound/sounds";
 
 const CX = 60;
 const CY = 68;
@@ -24,12 +26,28 @@ export default function AvatarWizard({
   meow?: boolean;
 }) {
   const { hat, robe, aura, wand, familiar, auraStyle } = config;
+
+  // Stop any aura sound loop if this avatar unmounts while still hovered.
+  useEffect(() => () => stopAuraLoop(), []);
+
   return (
     <svg
       viewBox="0 0 120 140"
       className={`avatar-wizard overflow-visible ${className}`}
       role="img"
       aria-label="Your wizard avatar"
+      onPointerEnter={(e) => {
+        if (e.pointerType === "mouse") startAuraLoop(auraStyle);
+      }}
+      onPointerLeave={(e) => {
+        if (e.pointerType === "mouse") stopAuraLoop();
+      }}
+      onPointerCancel={() => stopAuraLoop()}
+      onPointerDown={(e) => {
+        if (e.pointerType === "mouse") return;
+        playAura(auraStyle);
+        if (familiar) playCatMeow();
+      }}
     >
       <g className="aura-cast">
         <Aura style={auraStyle} color={aura} />
@@ -92,7 +110,11 @@ function FamiliarCat({ meow }: { meow: boolean }) {
     <g className={`cat ${meow ? "meow-active" : ""}`} aria-hidden="true">
       <ellipse cx="22" cy="122" rx="11" ry="7" fill="#64748b" />
       <path className="meow-tail" d="M32 120 Q42 111 37 125" stroke="#475569" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      <g className="meow-head">
+      <g
+        className="meow-head"
+        onAnimationStart={() => playCatMeow()}
+        onAnimationIteration={() => playCatMeow()}
+      >
         <circle cx="13" cy="115" r="5.5" fill="#64748b" />
         <path d="M9 110 L12 115 L15 112 Z" fill="#64748b" />
         <path d="M16 110 L18 115 L21 111 Z" fill="#64748b" />

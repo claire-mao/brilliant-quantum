@@ -2,6 +2,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  deleteDoc,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -9,6 +10,16 @@ import type { UserProfile } from "./types";
 
 function userRef(uid: string) {
   return doc(db, "users", uid);
+}
+
+/**
+ * Permanently delete a user's app data in Firestore. All app data lives in the
+ * single `users/{uid}` document (progress, streak, badges are fields on it — no
+ * subcollections), so deleting that document removes everything. Must be called
+ * while the user is still authenticated (security rules require uid match).
+ */
+export async function deleteUserData(uid: string): Promise<void> {
+  await deleteDoc(userRef(uid));
 }
 
 export async function createUserProfile(

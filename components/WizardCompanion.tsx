@@ -55,13 +55,14 @@ const BODY: Pixel[] = [
   { x: 7, y: 11, w: 2, h: 1, c: COLOR.beard },
 ];
 
+// Symmetric about x=8 (the face/beard center) so the hat sits centered.
 const HAT: Pixel[] = [
-  { x: 3, y: 5, w: 9, h: 1, c: COLOR.hatDark },
-  { x: 4, y: 4, w: 7, h: 1, c: COLOR.hat },
-  { x: 5, y: 3, w: 5, h: 1, c: COLOR.hat },
-  { x: 6, y: 2, w: 3, h: 1, c: COLOR.hat },
-  { x: 7, y: 1, w: 1, h: 1, c: COLOR.hat },
-  { x: 7, y: 3, w: 1, h: 1, c: COLOR.star },
+  { x: 3, y: 5, w: 10, h: 1, c: COLOR.hatDark },
+  { x: 4, y: 4, w: 8, h: 1, c: COLOR.hat },
+  { x: 5, y: 3, w: 6, h: 1, c: COLOR.hat },
+  { x: 6, y: 2, w: 4, h: 1, c: COLOR.hat },
+  { x: 7, y: 1, w: 2, h: 1, c: COLOR.hat },
+  { x: 7, y: 3, w: 2, h: 1, c: COLOR.star },
 ];
 
 const CAT: Pixel[] = [
@@ -202,7 +203,7 @@ export default function WizardCompanion({
           <PixelGroup pixels={ARMS} />
         </g>
 
-        <g className="wizard-hat-group" style={{ transformOrigin: "7px 5px" }}>
+        <g className="wizard-hat-group" style={{ transformOrigin: "8px 5px" }}>
           <PixelGroup pixels={HAT} />
         </g>
 

@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import AchievementBadge, { type AchievementIcon } from "@/components/AchievementBadge";
 import {
   getUnits,
@@ -8,8 +11,9 @@ import {
   getTotalUnitCount,
 } from "@/content/lessons";
 import type { UserProfile } from "@/lib/types";
+import { getCourseMastery, type CourseMastery } from "@/lib/learning/insights";
 import MagicalStatCard from "./MagicalStatCard";
-import ConceptMasteryPanel from "./ConceptMasteryPanel";
+import MemoryGrimoire from "./MemoryGrimoire";
 
 /** Unit-completion relics (kept in sync with the achievements page). */
 const UNIT_RELICS: Record<string, { title: string; icon: AchievementIcon }> = {
@@ -31,7 +35,16 @@ export default function DashboardProgressPanel({ profile }: { profile: UserProfi
   const completedUnits = getCompletedUnitCount(profile);
   const totalUnits = getTotalUnitCount();
   const streak = profile?.streak ?? 0;
-  const pct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+  const completionPct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
+  // Weighted mastery reads local signals, so compute after mount; until then
+  // show plain completion to keep the first paint deterministic.
+  const [mastery, setMastery] = useState<CourseMastery | null>(null);
+  useEffect(() => {
+    const id = window.setTimeout(() => setMastery(getCourseMastery(profile, completedLessons, totalLessons)), 0);
+    return () => clearTimeout(id);
+  }, [profile, completedLessons, totalLessons]);
+  const pct = mastery?.percent ?? completionPct;
 
   const relics = getUnits()
     .filter((u) => isUnitComplete(u, profile) && UNIT_RELICS[u.id])
@@ -46,7 +59,7 @@ export default function DashboardProgressPanel({ profile }: { profile: UserProfi
         <ProgressRing pct={pct} />
         <div>
           <p className="text-3xl font-bold tabular-nums text-white">{pct}%</p>
-          <p className="text-xs text-slate-400">of the course mastered</p>
+          <p className="text-xs text-slate-400">knowledge mastered</p>
         </div>
       </div>
 
@@ -74,7 +87,7 @@ export default function DashboardProgressPanel({ profile }: { profile: UserProfi
         )}
       </div>
 
-      <ConceptMasteryPanel profile={profile} />
+      <MemoryGrimoire profile={profile} />
     </div>
   );
 }

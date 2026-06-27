@@ -9,7 +9,7 @@ import WizardCompanion from "@/components/WizardCompanion";
  */
 export default function WizardTowerArt({ className = "" }: { className?: string }) {
   return (
-    <div className={`relative ${className}`} aria-hidden="true">
+    <div className={`tower-scene relative rounded-3xl ${className}`} aria-hidden="true">
       <svg viewBox="0 0 220 260" className="h-full w-full" role="presentation">
         <defs>
           <linearGradient id="hero-sky" x1="0" y1="0" x2="0" y2="1">
@@ -34,7 +34,7 @@ export default function WizardTowerArt({ className = "" }: { className?: string 
         <rect x="0" y="0" width="220" height="260" rx="24" fill="url(#hero-sky)" />
 
         {/* moon glow */}
-        <circle cx="158" cy="56" r="40" fill="url(#hero-moon)" />
+        <circle cx="158" cy="56" r="40" fill="url(#hero-moon)" className="hero-moon" />
         <circle cx="158" cy="56" r="18" fill="#fde68a" opacity="0.85" className="tower-spire" />
 
         {/* floating runes */}
@@ -50,7 +50,7 @@ export default function WizardTowerArt({ className = "" }: { className?: string 
         </g>
 
         {/* light beam from the spire */}
-        <path d="M110 30 L92 250 L128 250 Z" fill="url(#hero-beam)" className="tower-beam-active" opacity="0.4" />
+        <path d="M110 30 L92 250 L128 250 Z" fill="url(#hero-beam)" className="tower-beam-active hero-beam" opacity="0.4" />
 
         {/* ground */}
         <ellipse cx="110" cy="246" rx="78" ry="10" fill="#6366f1" opacity="0.18" className="tower-base-glow" />
@@ -75,6 +75,20 @@ export default function WizardTowerArt({ className = "" }: { className?: string 
         <path d="M102 214 Q110 206 118 214 V230 H102 Z" fill="#312e81" opacity="0.4" />
         {/* spire */}
         <circle cx="110" cy="42" r="4.5" fill="#fbbf24" className="tower-spire" />
+
+        {/* sparkles that twinkle when the scene is hovered */}
+        <g className="hero-spark" fill="#fde68a">
+          <circle cx="158" cy="28" r="2" />
+          <circle cx="188" cy="58" r="1.6" style={{ animationDelay: "0.3s" }} />
+          <circle cx="130" cy="44" r="1.6" style={{ animationDelay: "0.6s" }} />
+          <circle cx="110" cy="18" r="1.8" style={{ animationDelay: "0.45s" }} />
+          <circle cx="176" cy="86" r="1.4" style={{ animationDelay: "0.8s" }} />
+        </g>
+
+        {/* on hover, wizards soar across the scene on brooms (right to left) */}
+        <BroomWizard x={206} y={76} delay={0} />
+        <BroomWizard x={216} y={130} delay={1.1} />
+        <BroomWizard x={202} y={186} delay={2.2} />
       </svg>
 
       {/* tiny guide wizard at the tower base */}
@@ -82,5 +96,30 @@ export default function WizardTowerArt({ className = "" }: { className?: string 
         <WizardCompanion mood="idle" className="h-12 w-12" wandMode="glow" wandAim={-32} floppy={false} />
       </div>
     </div>
+  );
+}
+
+/**
+ * A broom-riding wizard, facing left. Idle/invisible until the scene is hovered,
+ * then it soars right to left across the sky. The outer group sets the start
+ * position, the middle group carries the flight animation, and the inner group
+ * mirrors the (right-facing) sprite so it faces its direction of travel.
+ */
+function BroomWizard({ x, y, delay }: { x: number; y: number; delay: number }) {
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <g className="hero-broom" style={{ animationDelay: `${delay}s` }}>
+        <g transform="scale(-1 1)">
+          {/* broom */}
+          <line x1="-13" y1="4" x2="13" y2="-3" stroke="#7c3aed" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M-13 4 l-5 1 M-13 4 l-4 3 M-13 4 l-2 5" stroke="#b45309" strokeWidth="1.6" strokeLinecap="round" />
+          {/* rider */}
+          <circle cx="1" cy="-3" r="4.2" fill="#6366f1" />
+          <circle cx="5" cy="-7.5" r="2.6" fill="#f3c9a4" />
+          <path d="M1.5 -8.5 L8.5 -8.5 L5 -14 Z" fill="#4338ca" />
+          <circle cx="5" cy="-14" r="1" fill="#fbbf24" />
+        </g>
+      </g>
+    </g>
   );
 }

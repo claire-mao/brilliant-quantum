@@ -117,16 +117,7 @@ function Body({
               </p>
             ))}
           </div>
-          {step.misconception && (
-            <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
-                Common misconception
-              </p>
-              <p className="mt-1 text-sm leading-6 text-amber-900">
-                <MathText>{step.misconception}</MathText>
-              </p>
-            </div>
-          )}
+          <PrimaryCallout step={step} />
           {step.resources && <LearnMore resources={step.resources} />}
         </div>
       );
@@ -666,6 +657,53 @@ function Body({
         </div>
       );
   }
+}
+
+/** Small learning-science callout (misconception, real-world, why, memory). */
+const CALLOUT_TONE = {
+  amber: "border-amber-200 bg-amber-50 text-amber-700",
+  sky: "border-sky-200 bg-sky-50 text-sky-700",
+  violet: "border-violet-200 bg-violet-50 text-violet-700",
+  indigo: "border-indigo-200 bg-indigo-50 text-indigo-700",
+} as const;
+
+const CALLOUT_BODY = {
+  amber: "text-amber-900",
+  sky: "text-sky-900",
+  violet: "text-violet-900",
+  indigo: "text-indigo-900",
+} as const;
+
+function Callout({
+  tone,
+  label,
+  text,
+}: {
+  tone: keyof typeof CALLOUT_TONE;
+  label: string;
+  text: string;
+}) {
+  return (
+    <div className={`mt-4 rounded-xl border px-4 py-3 ${CALLOUT_TONE[tone]}`}>
+      <p className="text-xs font-semibold uppercase tracking-wide">{label}</p>
+      <p className={`mt-1 text-sm leading-6 ${CALLOUT_BODY[tone]}`}>
+        <MathText>{text}</MathText>
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Show at most ONE callout per step to keep the screen calm. Priority favors the
+ * most useful: a misconception to correct, then a real-world hook, then why it
+ * matters, then a memory link back to an earlier idea.
+ */
+function PrimaryCallout({ step }: { step: Extract<LessonStep, { type: "informative" }> }) {
+  if (step.misconception) return <Callout tone="amber" label="Common misconception" text={step.misconception} />;
+  if (step.realWorld) return <Callout tone="sky" label="Where you meet this" text={step.realWorld} />;
+  if (step.whyMatters) return <Callout tone="violet" label="Why this matters" text={step.whyMatters} />;
+  if (step.memoryConnection) return <Callout tone="indigo" label="Remember" text={step.memoryConnection} />;
+  return null;
 }
 
 /** Sample one playground measurement: 1 with `probPercent`% chance, else 0. */

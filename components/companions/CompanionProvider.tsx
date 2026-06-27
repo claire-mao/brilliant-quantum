@@ -19,6 +19,7 @@ import type {
   SummonRequest,
 } from "@/lib/companions/types";
 import CompanionLayer from "./CompanionLayer";
+import { playSound } from "@/lib/sound/sounds";
 
 const ENTER_MS = 500;
 const LEAVE_MS = 360;
@@ -122,6 +123,7 @@ export default function CompanionProvider({ children }: { children: ReactNode })
     (request: SummonRequest) => {
       const agent: AgentId = request.agent ?? "wizard";
       clearTimers(agent);
+      playSound("wizard");
       // Deterministic: spawn in front of the wizard's home unless told otherwise.
       const anchorId = request.anchorId ?? "house";
       runCounter.current += 1;

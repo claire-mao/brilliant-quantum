@@ -1,11 +1,14 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import type { BubbleAction, CompanionState } from "@/lib/companions/types";
 import { useBubbleActionHandlers } from "./CompanionProvider";
 import MathText from "../MathText";
 
 /**
  * Speech bubble with optional action buttons (e.g. help offer on the lesson page).
+ * `style` lets the caller clamp width/offset to keep it in the viewport, and
+ * `arrowLeft` points the tail at the wizard regardless of where the bubble sits.
  */
 export default function SpeechBubble({
   state,
@@ -14,6 +17,8 @@ export default function SpeechBubble({
   horizontal,
   actions,
   onClose,
+  style,
+  arrowLeft,
 }: {
   state: CompanionState;
   message?: string;
@@ -21,16 +26,29 @@ export default function SpeechBubble({
   horizontal: "left" | "center" | "right";
   actions?: BubbleAction[];
   onClose: () => void;
+  style?: CSSProperties;
+  arrowLeft?: number;
 }) {
   const handlers = useBubbleActionHandlers();
-  const arrowX =
-    horizontal === "left" ? "left-4" : horizontal === "right" ? "right-4" : "left-1/2 -translate-x-1/2";
+  const arrowClass =
+    arrowLeft !== undefined
+      ? ""
+      : horizontal === "left"
+        ? "left-4"
+        : horizontal === "right"
+          ? "right-4"
+          : "left-1/2 -translate-x-1/2";
   const arrowPos = arrow === "up" ? "-top-1" : "-bottom-1";
+  const arrowStyle: CSSProperties = arrowLeft !== undefined ? { left: arrowLeft, marginLeft: -5 } : {};
 
   return (
-    <div className="pointer-events-auto relative max-w-[16rem] rounded-2xl border border-indigo-200 bg-white px-3 py-2 text-sm leading-5 text-slate-700 shadow-lg">
+    <div
+      style={style}
+      className="pointer-events-auto relative max-w-[16rem] rounded-2xl border border-indigo-200 bg-white px-3 py-2 text-sm leading-5 text-slate-700 shadow-lg"
+    >
       <span
-        className={`absolute h-2.5 w-2.5 rotate-45 border border-indigo-200 bg-white ${arrowPos} ${arrowX} ${
+        style={arrowStyle}
+        className={`absolute h-2.5 w-2.5 rotate-45 border border-indigo-200 bg-white ${arrowPos} ${arrowClass} ${
           arrow === "up" ? "border-b-0 border-r-0" : "border-l-0 border-t-0"
         }`}
         aria-hidden="true"
