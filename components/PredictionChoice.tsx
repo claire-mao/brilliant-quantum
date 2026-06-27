@@ -1,30 +1,38 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { PredictionOption } from "@/lib/types";
+import MathText from "./MathText";
+import { saveTowerHintContext } from "@/lib/companions/tower-context";
+import { recordConceptResult } from "@/lib/learning/signals";
+import type { ConceptTag } from "@/lib/learning/concepts";
+import WizardHelpPrompt from "./WizardHelpPrompt";
 
 /**
  * Predict-before-explain multiple choice.
- *
- * - Graded (options include a `correct` one): a wrong pick shows handwritten
- *   feedback and a "Try again" state but keeps Next locked; only the correct
- *   pick unlocks Next and freezes the choices. Every pick counts as an attempt.
- * - Ungraded (no correct option): any pick reveals feedback and unlocks Next.
  */
 export default function PredictionChoice({
   options,
   teaching,
   onCanAdvanceChange,
   onAttempt,
+  hintMeta,
+  stepKey,
+  conceptTag,
 }: {
   options: PredictionOption[];
   teaching?: string;
   onCanAdvanceChange: (canAdvance: boolean) => void;
   onAttempt: () => void;
+  hintMeta?: { lessonId?: string; lessonTitle?: string; prompt: string };
+  stepKey?: string;
+  conceptTag?: ConceptTag | null;
 }) {
   const graded = options.some((o) => o.correct);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [solved, setSolved] = useState(false);
+  const [wrongCount, setWrongCount] = useState(0);
   const selected = options.find((o) => o.id === selectedId) ?? null;
 
   function choose(id: string) {
@@ -42,12 +50,37 @@ export default function PredictionChoice({
     if (option.correct) {
       setSolved(true);
       onCanAdvanceChange(true);
+      if (conceptTag) recordConceptResult(conceptTag, true);
     } else {
       onCanAdvanceChange(false);
+      setWrongCount((c) => c + 1);
+      if (conceptTag) recordConceptResult(conceptTag, false, { misconception: option.feedback });
+      if (hintMeta) {
+        saveTowerHintContext({
+          lessonId: hintMeta.lessonId,
+          lessonTitle: hintMeta.lessonTitle,
+          prompt: hintMeta.prompt,
+          selectedWrong: option.label,
+          correctAnswer: options.find((o) => o.correct)?.label,
+          feedback: option.feedback,
+        });
+      }
     }
   }
 
   const wrongSelected = graded && !!selected && !selected.correct && !solved;
+  const hintContext =
+    hintMeta && selected && wrongSelected
+      ? {
+          lessonId: hintMeta.lessonId,
+          lessonTitle: hintMeta.lessonTitle,
+          prompt: hintMeta.prompt,
+          selectedWrong: selected.label,
+          correctAnswer: options.find((o) => o.correct)?.label,
+          feedback: selected.feedback,
+          conceptTag: conceptTag ?? undefined,
+        }
+      : null;
 
   return (
     <div className="mt-5">
@@ -71,9 +104,10 @@ export default function PredictionChoice({
               onClick={() => choose(option.id)}
               disabled={solved}
               aria-pressed={isSelected}
+              data-lesson-choice
               className={`rounded-xl border px-4 py-3 text-left text-base font-medium text-slate-800 transition-colors disabled:cursor-default ${tone}`}
             >
-              {option.label}
+              <MathText>{option.label}</MathText>
             </button>
           );
         })}
@@ -90,15 +124,24 @@ export default function PredictionChoice({
                 : "bg-indigo-50 text-indigo-800"
             }`}
           >
-            {selected.feedback}
+            <MathText>{selected.feedback}</MathText>
           </p>
           {wrongSelected && (
             <p className="mt-2 text-sm font-medium text-amber-700">
-              Try again - pick another answer.
+              Try again — pick another answer. The guide may offer a nudge, or visit the{" "}
+              <Link href="/tower" className="text-indigo-600 underline underline-offset-2 hover:text-indigo-700">
+                Wizard Tower
+              </Link>
+              .
             </p>
           )}
+          {hintContext && stepKey && (
+            <WizardHelpPrompt context={hintContext} wrongCount={wrongCount} stepKey={stepKey} />
+          )}
           {(solved || !graded) && teaching && (
-            <p className="mt-3 text-sm leading-6 text-slate-600">{teaching}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              <MathText>{teaching}</MathText>
+            </p>
           )}
         </div>
       )}

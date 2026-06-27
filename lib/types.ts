@@ -1,4 +1,5 @@
 import type { Timestamp } from "firebase/firestore";
+import type { BellId, TwoQubitOp } from "./twoqubit";
 
 export type StepType =
   | "explanation"
@@ -18,7 +19,28 @@ export type StepType =
   | "wave-explorer"
   | "path-amplitudes"
   | "interference-sim"
+  | "bloch-explorer"
+  | "two-qubit"
+  | "gate-lab"
+  | "amplitude-explorer"
+  | "wave-interference"
+  | "path-diagram"
+  | "two-qubit-explorer"
+  | "bell-builder"
+  | "correlation"
+  | "circuit-runner"
+  | "oracle-explorer"
+  | "search-explorer"
+  | "amplitude-amplifier"
+  | "pattern-explorer"
+  | "problem-classifier"
+  | "hardware-comparison"
+  | "decoherence"
+  | "error-correction"
+  | "app-classifier"
+  | "tech-timeline"
   | "challenge"
+  | "worked-example"
   | "reflection";
 
 export type GateId = "X" | "H";
@@ -51,7 +73,10 @@ export interface ExplanationStep extends BaseStep {
 export interface InformativeStep extends BaseStep {
   type: "informative";
   body: string[];
+  /** Deprecated decorative emoji (no longer rendered); kept for back-compat. */
   emoji?: string;
+  /** Optional "Common misconception" callout, shown below the body. */
+  misconception?: string;
   resources?: ResourceLink[];
 }
 
@@ -211,11 +236,272 @@ export interface ChallengeStep extends BaseStep {
   incorrectFeedback: string;
 }
 
+/**
+ * Interactive Bloch sphere. The learner drags theta (polar angle) and optionally
+ * phi (azimuth / relative phase) and watches the measurement probabilities update.
+ */
+export interface BlochExplorerStep extends BaseStep {
+  type: "bloch-explorer";
+  body: string;
+  /** Expose the phi (relative phase) control. */
+  showPhi: boolean;
+  /** Add a "measure in the X basis" toggle to expose relative-phase effects. */
+  showXMeasurement?: boolean;
+  teaching: string;
+}
+
+/** Two-qubit circuit + measurement-correlation simulator (H, X, Z, CNOT). */
+export interface TwoQubitStep extends BaseStep {
+  type: "two-qubit";
+  body: string;
+  teaching: string;
+}
+
+/**
+ * Single-qubit gate lab over {|0>,|1>,|+>,|->} with X/H/Z. In exploration mode
+ * the learner applies gates and measures; in graded mode (a `target` state is
+ * set) they must drive the qubit to the target, e.g. to undo a circuit.
+ */
+export interface GateLabStep extends BaseStep {
+  type: "gate-lab";
+  body: string;
+  allowedGates: ("X" | "H" | "Z")[];
+  /** Starting state (default "0"). */
+  start?: "0" | "1" | "+" | "-";
+  /** Let the learner switch the start between |0> and |1>. */
+  allowStartToggle?: boolean;
+  /** Gates pre-applied before the learner acts (e.g. a circuit to undo). */
+  preset?: ("X" | "H" | "Z")[];
+  /** Graded mode: the state the learner must reach. */
+  target?: "0" | "1" | "+" | "-";
+  /** Exploration mode: show a "measure N" histogram. */
+  measure?: boolean;
+  correctFeedback?: string;
+  incorrectFeedback?: string;
+  teaching: string;
+}
+
+/** One quantum path: amplitude slider in [-1, 1] with P = |amplitude|^2. */
+export interface AmplitudeExplorerStep extends BaseStep {
+  type: "amplitude-explorer";
+  body: string;
+  teaching: string;
+}
+
+/** Two amplitudes added as signed contributions; P = |A1 + A2|^2. */
+export interface WaveInterferenceStep extends BaseStep {
+  type: "wave-interference";
+  body: string;
+  teaching: string;
+}
+
+/** Several computational paths: flip a phase and interfere to reshape amplitudes. */
+export interface PathDiagramStep extends BaseStep {
+  type: "path-diagram";
+  body: string;
+  teaching: string;
+}
+
+/**
+ * Reusable two-qubit interaction engine. Props mirror TwoQubitExplorer: choose
+ * an initial state, apply gates / CNOT, measure one or both qubits, run a
+ * histogram, and optionally show per-qubit marginals.
+ */
+export interface TwoQubitExplorerStep extends BaseStep {
+  type: "two-qubit-explorer";
+  body: string;
+  teaching: string;
+  /** Gates pre-applied from |00> before the learner acts. */
+  preset?: TwoQubitOp[];
+  allowedGates?: ("X" | "H" | "Z")[];
+  showCnot?: boolean;
+  allowInitialChoice?: boolean;
+  /** Hide the gate palette (measurement-only experiments). */
+  lockCircuit?: boolean;
+  allowMeasureSingle?: boolean;
+  allowMeasureBoth?: boolean;
+  allowHistogram?: boolean;
+  /** Show per-qubit marginal probabilities P(q=1). */
+  showMarginals?: boolean;
+}
+
+/** Graded build challenge: assemble gates from |00> to reach a target Bell state. */
+export interface BellBuilderStep extends BaseStep {
+  type: "bell-builder";
+  body: string;
+  target: BellId;
+  correctFeedback: string;
+  incorrectFeedback: string;
+  teaching: string;
+}
+
+/** Classical correlation sandbox: correlated vs independent bit pairs. */
+export interface CorrelationStep extends BaseStep {
+  type: "correlation";
+  body: string;
+  teaching: string;
+}
+
+/**
+ * Two-qubit "program" runner: build a gate sequence and run it. Free mode
+ * unlocks on a run; graded mode (a `goalIndex` is set) requires the circuit's
+ * output to be that basis state.
+ */
+export interface CircuitRunnerStep extends BaseStep {
+  type: "circuit-runner";
+  body: string;
+  teaching: string;
+  allowedGates?: ("X" | "H" | "Z")[];
+  showCnot?: boolean;
+  /** 0..3 (|00>,|01>,|10>,|11>); set to make the step a graded build challenge. */
+  goalIndex?: number;
+  correctFeedback?: string;
+  incorrectFeedback?: string;
+}
+
+/** Deutsch-Jozsa intuition: query a hidden function classically vs once quantumly. */
+export interface OracleExplorerStep extends BaseStep {
+  type: "oracle-explorer";
+  body: string;
+  teaching: string;
+}
+
+/** Classical unstructured search over N boxes. */
+export interface SearchExplorerStep extends BaseStep {
+  type: "search-explorer";
+  body: string;
+  teaching: string;
+  size?: number;
+}
+
+/** Grover amplitude amplification across N answers. */
+export interface AmplitudeAmplifierStep extends BaseStep {
+  type: "amplitude-amplifier";
+  body: string;
+  teaching: string;
+  size?: number;
+}
+
+/** Shor period-finding intuition over a repeating pattern. */
+export interface PatternExplorerStep extends BaseStep {
+  type: "pattern-explorer";
+  body: string;
+  teaching: string;
+  n?: number;
+  cycle?: number[];
+  period?: number;
+  factors?: [number, number];
+  terms?: number;
+}
+
+/** Graded classification of problems by quantum speedup. */
+export interface ProblemClassifierStep extends BaseStep {
+  type: "problem-classifier";
+  body: string;
+  teaching: string;
+}
+
+/** A hardware platform for the HardwareComparison engine. */
+export interface HardwarePlatform {
+  id: string;
+  name: string;
+  temperature: string;
+  strengths: string;
+  limitations: string;
+  metrics: {
+    gateSpeed: number;
+    coherence: number;
+    scalability: number;
+    fidelity: number;
+    compactness: number;
+  };
+}
+
+/** A category and an item for the generic classifier engine. */
+export interface ClassifierCategory {
+  key: string;
+  label: string;
+}
+export interface ClassifierItem {
+  id: string;
+  label: string;
+  answer: string;
+  note: string;
+}
+
+/** A milestone for the TechnologyTimeline engine. */
+export interface Milestone {
+  id: string;
+  period: string;
+  title: string;
+  detail: string;
+}
+
+/** Hardware gallery / head-to-head comparison of qubit platforms. */
+export interface HardwareComparisonStep extends BaseStep {
+  type: "hardware-comparison";
+  body: string;
+  teaching: string;
+  platforms: HardwarePlatform[];
+}
+
+/** Decoherence visualizer: a shrinking Bloch vector under noise/time/gates. */
+export interface DecoherenceStep extends BaseStep {
+  type: "decoherence";
+  body: string;
+  teaching: string;
+  showGates?: boolean;
+}
+
+/** Repetition-code error-correction sandbox. */
+export interface ErrorCorrectionStep extends BaseStep {
+  type: "error-correction";
+  body: string;
+  teaching: string;
+}
+
+/** Generic graded classifier (applications, platforms, traits, ...). */
+export interface AppClassifierStep extends BaseStep {
+  type: "app-classifier";
+  body: string;
+  teaching: string;
+  categories: ClassifierCategory[];
+  items: ClassifierItem[];
+}
+
+/** Interactive timeline of technology eras. */
+export interface TechTimelineStep extends BaseStep {
+  type: "tech-timeline";
+  body: string;
+  teaching: string;
+  milestones: Milestone[];
+}
+
+/**
+ * Worked example: show expert reasoning step by step, hide the final step, then
+ * ask the learner to complete it (and give feedback). Accelerates novice
+ * learning before an independent challenge.
+ */
+export interface WorkedExampleStep extends BaseStep {
+  type: "worked-example";
+  /** The problem / setup being worked. */
+  intro: string;
+  /** Expert reasoning shown in order (the worked-out steps). */
+  steps: string[];
+  /** Prompt for the hidden final step the learner must complete. */
+  finalPrompt: string;
+  /** Choices for the final step; exactly one is correct. */
+  options: PredictionOption[];
+  teaching?: string;
+}
+
 /** Summary card shown at the end of the lesson. */
 export interface ReflectionStep extends BaseStep {
   type: "reflection";
   intro: string;
   points: string[];
+  /** Optional one-line pointer to the next lesson, for narrative continuity. */
+  next?: string;
 }
 
 export type LessonStep =
@@ -236,7 +522,28 @@ export type LessonStep =
   | WaveExplorerStep
   | PathAmplitudesStep
   | InterferenceSimStep
+  | BlochExplorerStep
+  | TwoQubitStep
+  | GateLabStep
+  | AmplitudeExplorerStep
+  | WaveInterferenceStep
+  | PathDiagramStep
+  | TwoQubitExplorerStep
+  | BellBuilderStep
+  | CorrelationStep
+  | CircuitRunnerStep
+  | OracleExplorerStep
+  | SearchExplorerStep
+  | AmplitudeAmplifierStep
+  | PatternExplorerStep
+  | ProblemClassifierStep
+  | HardwareComparisonStep
+  | DecoherenceStep
+  | ErrorCorrectionStep
+  | AppClassifierStep
+  | TechTimelineStep
   | ChallengeStep
+  | WorkedExampleStep
   | ReflectionStep;
 
 export interface LessonBadge {
@@ -253,10 +560,21 @@ export interface Lesson {
   badge?: LessonBadge;
 }
 
+/** A chapter: a titled group of lessons (referenced by ID, in order). */
+export interface Unit {
+  id: string;
+  title: string;
+  description: string;
+  /** Lesson IDs in order. Empty means the chapter is not built yet. */
+  lessonIds: string[];
+}
+
 export interface Course {
   id: string;
   title: string;
   description: string;
+  units: Unit[];
+  /** Flat, ordered list of all lessons (kept for compatibility with helpers). */
   lessons: Lesson[];
 }
 

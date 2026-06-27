@@ -1,9 +1,5 @@
-import AuthForm from "@/components/AuthForm";
+import AuthScene from "@/components/landing/AuthScene";
 
 export default function SignupPage() {
-  return (
-    <main className="flex flex-1 items-center justify-center bg-slate-50 px-6 py-12">
-      <AuthForm mode="signup" />
-    </main>
-  );
+  return <AuthScene mode="signup" />;
 }

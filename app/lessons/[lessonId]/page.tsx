@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import RouteGuard from "@/components/RouteGuard";
 import NavBar from "@/components/NavBar";
 import Badge from "@/components/Badge";
 import LessonStepRenderer from "@/components/LessonStepRenderer";
+import { SparkleBurst } from "@/components/WizardCompanion";
+import { useCompanion } from "@/components/companions/CompanionProvider";
+import { saveTowerLessonContext } from "@/lib/companions/tower-context";
 import { useAuth } from "@/lib/auth-context";
 import {
   getLesson,
@@ -16,6 +19,11 @@ import {
 } from "@/content/lessons";
 import { saveLessonStep, completeLesson } from "@/lib/progress";
 import type { Lesson, LessonStep } from "@/lib/types";
+import PrerequisiteReminder from "@/components/learning/PrerequisiteReminder";
+import RetrievalPrompt from "@/components/learning/RetrievalPrompt";
+import { conceptsForLesson, primaryConcept } from "@/lib/learning/concepts";
+import { recordLessonPracticed } from "@/lib/learning/signals";
+import { getNextRetrievalPrompt, type RetrievalPromptResult } from "@/lib/learning/learner-model";
 
 export default function LessonPage() {
   return (
@@ -47,8 +55,13 @@ function LessonPlayer() {
   const params = useParams<{ lessonId: string }>();
   const lessonId = params.lessonId;
   const { user, profile, refreshProfile } = useAuth();
+  const { registerInteraction } = useCompanion();
 
   const lesson = useMemo(() => getLesson(lessonId), [lessonId]);
+
+  useEffect(() => {
+    if (lesson) saveTowerLessonContext(lessonId, lesson.title);
+  }, [lessonId, lesson]);
 
   const savedProgress = profile?.progress?.[lessonId];
 
@@ -79,7 +92,7 @@ function LessonPlayer() {
 
   if (!lesson || lesson.steps.length === 0 || !isLessonUnlocked(lessonId, profile)) {
     return (
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
+      <main className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-10 sm:px-6 lg:px-8">
         <p className="text-slate-600">This lesson isn&apos;t available yet.</p>
         <p className="mt-1 text-sm text-slate-400">
           Finish the previous lesson to unlock it.
@@ -140,7 +153,11 @@ function LessonPlayer() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">
+    <main
+      className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-8 sm:px-6 lg:px-8"
+      data-lesson-main
+      onPointerDownCapture={registerInteraction}
+    >
       <div className="flex items-center justify-between text-sm text-slate-500">
         <Link href="/dashboard" className="hover:underline">
           ← {lesson.title}
@@ -166,12 +183,16 @@ function LessonPlayer() {
         />
       </div>
 
+      {stepIndex === 0 && <PrerequisiteReminder lessonId={lessonId} />}
+
       <div className="mt-8">
         <LessonStepRenderer
           key={`${runKey}-${step.id}`}
           step={step}
           onCanAdvanceChange={handleCanAdvanceChange}
           onGradedAttempt={handleGradedAttempt}
+          lessonTitle={lesson.title}
+          lessonId={lessonId}
         />
       </div>
 
@@ -222,8 +243,52 @@ function advanceHint(step: LessonStep): string {
         : "Build the target to continue.";
     case "interference-sim":
       return "Run both experiments to continue.";
+    case "bloch-explorer":
+      return "Drag the sliders to continue.";
+    case "two-qubit":
+      return "Run the circuit to continue.";
+    case "gate-lab":
+      return step.target ? "Reach the target state to continue." : "Apply a gate to continue.";
+    case "amplitude-explorer":
+      return "Drag the amplitude to continue.";
+    case "wave-interference":
+      return "Adjust the amplitudes to continue.";
+    case "path-diagram":
+      return "Flip the phase and interfere to continue.";
+    case "two-qubit-explorer":
+      return "Run the experiment to continue.";
+    case "bell-builder":
+      return "Build the target Bell state to continue.";
+    case "correlation":
+      return "Run the experiment to continue.";
+    case "circuit-runner":
+      return step.goalIndex !== undefined
+        ? "Build the target output to continue."
+        : "Run the circuit to continue.";
+    case "oracle-explorer":
+      return "Query the function to continue.";
+    case "search-explorer":
+      return "Search for the target to continue.";
+    case "amplitude-amplifier":
+      return "Apply an iteration to continue.";
+    case "pattern-explorer":
+      return "Find the period to continue.";
+    case "problem-classifier":
+      return "Classify each problem to continue.";
+    case "hardware-comparison":
+      return "Explore the platforms to continue.";
+    case "decoherence":
+      return "Adjust the noise to continue.";
+    case "error-correction":
+      return "Inject errors and recover to continue.";
+    case "app-classifier":
+      return "Classify each item to continue.";
+    case "tech-timeline":
+      return "Explore the timeline to continue.";
     case "challenge":
       return "Submit the correct probability to continue.";
+    case "worked-example":
+      return "Finish the worked example to continue.";
     default:
       return "";
   }
@@ -237,16 +302,44 @@ function CompletionView({
   onRestart: () => void;
 }) {
   const { profile } = useAuth();
+  const { summon, dismiss } = useCompanion();
   const nextLesson = getNextLesson(lesson.id);
   const progress = profile?.progress?.[lesson.id];
   const attempts = progress?.attempts ?? 1;
+  const recordedRef = useRef(false);
+  const [retrieval, setRetrieval] = useState<RetrievalPromptResult | null>(null);
+
+  // The guide teleports beside the freshly earned badge to celebrate, then leaves.
+  useEffect(() => {
+    summon({
+      context: "badge",
+      state: "celebrating",
+      message: "Well earned! Explore the tower when you want extra practice.",
+      autoDismissMs: 5000,
+    });
+    return () => dismiss("wizard");
+  }, [summon, dismiss]);
+
+  // Mark this lesson's concepts as practiced (seeds spaced review) once, and
+  // surface a "can you still remember?" retrieval from an older/struggled concept.
+  useEffect(() => {
+    if (!recordedRef.current) {
+      recordLessonPracticed(conceptsForLesson(lesson.id));
+      recordedRef.current = true;
+    }
+    const id = window.setTimeout(
+      () => setRetrieval(getNextRetrievalPrompt(profile, { exclude: primaryConcept(lesson.id) ?? undefined })),
+      0
+    );
+    return () => clearTimeout(id);
+  }, [lesson.id, profile]);
   const nextUnlocked =
     !!nextLesson &&
     nextLesson.steps.length > 0 &&
     isLessonUnlocked(nextLesson.id, profile);
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12 text-center">
+    <main className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-12 text-center sm:px-6 lg:px-8">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl">
         <span aria-hidden="true">🎉</span>
       </div>
@@ -255,7 +348,10 @@ function CompletionView({
 
       {lesson.badge && (
         <div className="mt-6 flex justify-center">
-          <Badge title={lesson.badge.title} subtitle={lesson.badge.subtitle} />
+          <div className="relative">
+            <SparkleBurst />
+            <Badge title={lesson.badge.title} subtitle={lesson.badge.subtitle} />
+          </div>
         </div>
       )}
 
@@ -265,6 +361,16 @@ function CompletionView({
         </span>
       </div>
 
+      {retrieval && (
+        <div className="mx-auto mt-6 max-w-xl">
+          <RetrievalPrompt
+            question={retrieval.question}
+            conceptTag={retrieval.tag}
+            heading="Can you still remember?"
+          />
+        </div>
+      )}
+
       {nextLesson && (
         <div className="mt-6 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-left">
           <p className="text-sm font-medium text-indigo-900">Up next: {nextLesson.title}</p>
@@ -273,6 +379,14 @@ function CompletionView({
           </p>
         </div>
       )}
+
+      <p className="mt-6 text-sm text-slate-500">
+        Want extra practice or lore?{" "}
+        <Link href="/tower" className="font-medium text-indigo-600 underline underline-offset-2 hover:text-indigo-700">
+          Explore the Wizard Tower
+        </Link>
+        .
+      </p>
 
       <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <Link
