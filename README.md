@@ -115,8 +115,3 @@ Deployed on **Vercel**:
    - Because the `NEXT_PUBLIC_` Firebase vars are inlined at build time, they must exist **before** the build runs.
 3. Deploy from GitHub (push to the production branch, or click **Deploy**).
 4. Add the Vercel domain to **Firebase Authentication → Settings → Authorized domains**, or sign-in will be rejected on the deployed site.
-
-## Security
-
-- **Never commit `.env.local`** (or any real keys). It is already covered by `.gitignore` (`.env*`).
-- **`OPENAI_API_KEY` must stay server-side — do NOT prefix it with `NEXT_PUBLIC_`.** It is read only inside `app/api/ai/*` routes via `lib/ai/client.ts`, so the key is never shipped to the browser. The `NEXT_PUBLIC_FIREBASE_*` values are safe to expose (they're client config and protected by Firestore security rules).
