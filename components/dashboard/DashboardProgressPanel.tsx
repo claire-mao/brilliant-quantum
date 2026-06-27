@@ -1,4 +1,5 @@
-import AchievementBadge, { type AchievementIcon } from "@/components/AchievementBadge";
+import Link from "next/link";
+import { type AchievementIcon } from "@/components/AchievementBadge";
 import {
   getUnits,
   isUnitComplete,
@@ -6,10 +7,11 @@ import {
   getTotalLessonCount,
   getCompletedUnitCount,
   getTotalUnitCount,
+  quantumBasicsCourse,
 } from "@/content/lessons";
 import type { UserProfile } from "@/lib/types";
 import MagicalStatCard from "./MagicalStatCard";
-import ConceptMasteryPanel from "./ConceptMasteryPanel";
+import GrimoireInsights, { type GrimoireRelic } from "./GrimoireInsights";
 
 /** Unit-completion relics (kept in sync with the achievements page). */
 const UNIT_RELICS: Record<string, { title: string; icon: AchievementIcon }> = {
@@ -22,8 +24,10 @@ const UNIT_RELICS: Record<string, { title: string; icon: AchievementIcon }> = {
 };
 
 /**
- * Right-side progress panel for the dashboard: course progress ring, key stats,
- * and recently earned relics. Reads existing pure progress helpers only.
+ * Right-side progress panel for the dashboard. Designed to answer three
+ * questions at a glance: how far am I (ring + stats), what should I do next
+ * (next challenge), and what should I review (insights). Heavier detail —
+ * relics and the full concept list — lives behind a "Details" toggle.
  */
 export default function DashboardProgressPanel({ profile }: { profile: UserProfile | null }) {
   const completedLessons = getCompletedLessonCount(profile);
@@ -33,10 +37,18 @@ export default function DashboardProgressPanel({ profile }: { profile: UserProfi
   const streak = profile?.streak ?? 0;
   const pct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
-  const relics = getUnits()
+  const relics: GrimoireRelic[] = getUnits()
     .filter((u) => isUnitComplete(u, profile) && UNIT_RELICS[u.id])
     .map((u) => ({ id: u.id, ...UNIT_RELICS[u.id] }))
     .slice(-3);
+
+  const nextLesson =
+    quantumBasicsCourse.lessons.find(
+      (l) => l.steps.length > 0 && !profile?.progress?.[l.id]?.completed
+    ) ?? null;
+  const nextStarted = nextLesson
+    ? (profile?.progress?.[nextLesson.id]?.currentStep ?? 0) > 0
+    : false;
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md shadow-[0_0_40px_rgba(76,29,149,0.25)]">
@@ -56,25 +68,35 @@ export default function DashboardProgressPanel({ profile }: { profile: UserProfi
         <MagicalStatCard label="Streak" value={`${streak}`} hint={streak === 1 ? "day" : "days"} />
       </div>
 
-      <div className="mt-5">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Relics</h3>
-        {relics.length > 0 ? (
-          <ul className="mt-3 flex flex-wrap gap-3">
-            {relics.map((r) => (
-              <li key={r.id} className="flex flex-col items-center gap-1 text-center" title={r.title}>
-                <AchievementBadge unlocked type="unit" icon={r.icon} className="h-11 w-11 drop-shadow-[0_0_8px_rgba(167,139,250,0.5)]" />
-                <span className="max-w-[4.5rem] text-[10px] leading-tight text-slate-400">{r.title}</span>
-              </li>
-            ))}
-          </ul>
+      {/* What should I do next? */}
+      <div className="mt-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Next challenge</h3>
+        {nextLesson ? (
+          <Link
+            href={`/lessons/${nextLesson.id}`}
+            className="group mt-2 flex items-center justify-between gap-3 rounded-xl border border-violet-400/30 bg-violet-500/10 px-3.5 py-2.5 transition-colors hover:border-violet-400/60 hover:bg-violet-500/20"
+          >
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-medium text-white">{nextLesson.title}</span>
+              <span className="block text-[11px] text-violet-200/80">{nextStarted ? "Continue" : "Start"}</span>
+            </span>
+            <svg
+              viewBox="0 0 20 20"
+              className="h-4 w-4 shrink-0 text-violet-200 transition-transform group-hover:translate-x-0.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden="true"
+            >
+              <path d="M4 10 H15 M11 6 L15 10 L11 14" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
         ) : (
-          <p className="mt-2 text-xs leading-5 text-slate-500">
-            Complete a full unit to earn your first relic.
-          </p>
+          <p className="mt-2 text-xs text-slate-500">All lessons complete — new units are being inscribed.</p>
         )}
       </div>
 
-      <ConceptMasteryPanel profile={profile} />
+      <GrimoireInsights profile={profile} relics={relics} />
     </div>
   );
 }
