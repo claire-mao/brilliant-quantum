@@ -15,10 +15,12 @@ import type {
   ActiveCompanion,
   AgentId,
   CompanionApi,
+  CompanionPose,
   CompanionUpdate,
   SummonRequest,
 } from "@/lib/companions/types";
 import CompanionLayer from "./CompanionLayer";
+import CatFamiliar from "./CatFamiliar";
 
 const ENTER_MS = 500;
 const LEAVE_MS = 360;
@@ -40,6 +42,33 @@ const CompanionContext = createContext<CompanionApi>(NOOP);
 /** Summon / update / dismiss floating companions from anywhere in the app. */
 export function useCompanion(): CompanionApi {
   return useContext(CompanionContext);
+}
+
+/**
+ * Side channel for the wizard's live pixel pose so the cat familiar can follow
+ * it. The draggable layer reports the pose into a ref (no re-renders), and the
+ * cat reads that ref inside its own animation frame. `registerWake` lets the cat
+ * restart its rAF loop only when the pose actually changes — it idles otherwise.
+ */
+export interface CompanionPoseChannel {
+  report(pose: CompanionPose): void;
+  clear(runId: number): void;
+  poseRef: MutableRefObject<CompanionPose | null>;
+  registerWake(fn: () => void): void;
+}
+
+const POSE_NOOP: CompanionPoseChannel = {
+  report: () => {},
+  clear: () => {},
+  poseRef: { current: null },
+  registerWake: () => {},
+};
+
+const CompanionPoseContext = createContext<CompanionPoseChannel>(POSE_NOOP);
+
+/** Read/write the wizard pose channel (used by the draggable layer and cat). */
+export function useCompanionPose(): CompanionPoseChannel {
+  return useContext(CompanionPoseContext);
 }
 
 /** Read bubble-action handlers registered on the provider. */
@@ -64,6 +93,28 @@ export default function CompanionProvider({ children }: { children: ReactNode })
   const timers = useRef<Record<string, number[]>>({});
   const interactionPausedUntil = useRef(0);
   const bubbleHandlers = useRef<Record<string, () => void>>({});
+  const poseRef = useRef<CompanionPose | null>(null);
+  const wakeRef = useRef<() => void>(() => {});
+
+  const poseChannel = useMemo<CompanionPoseChannel>(
+    () => ({
+      report: (pose: CompanionPose) => {
+        poseRef.current = pose;
+        wakeRef.current();
+      },
+      clear: (runId: number) => {
+        if (poseRef.current?.runId === runId) {
+          poseRef.current = null;
+          wakeRef.current();
+        }
+      },
+      poseRef,
+      registerWake: (fn: () => void) => {
+        wakeRef.current = fn;
+      },
+    }),
+    []
+  );
 
   const clearTimers = useCallback((agent: AgentId) => {
     (timers.current[agent] ?? []).forEach((t) => clearTimeout(t));
@@ -220,15 +271,18 @@ export default function CompanionProvider({ children }: { children: ReactNode })
 
   return (
     <BubbleHandlerContext.Provider value={bubbleHandlers}>
-      <CompanionContext.Provider value={api}>
-        {children}
-        <CompanionLayer
-          companions={Object.values(companions)}
-          onDismiss={dismiss}
-          onUpdate={update}
-          isInteractionPaused={isInteractionPaused}
-        />
-      </CompanionContext.Provider>
+      <CompanionPoseContext.Provider value={poseChannel}>
+        <CompanionContext.Provider value={api}>
+          {children}
+          <CompanionLayer
+            companions={Object.values(companions)}
+            onDismiss={dismiss}
+            onUpdate={update}
+            isInteractionPaused={isInteractionPaused}
+          />
+          <CatFamiliar />
+        </CompanionContext.Provider>
+      </CompanionPoseContext.Provider>
     </BubbleHandlerContext.Provider>
   );
 }

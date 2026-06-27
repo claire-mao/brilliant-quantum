@@ -79,6 +79,22 @@ export interface ActiveCompanion {
   showMotes?: boolean;
 }
 
+/**
+ * Live pixel pose of a companion, published by the draggable layer so a familiar
+ * (the cat) can follow it. Coordinates are the top-left of the companion box in
+ * viewport (top-based) pixels. Purely additive; never persisted.
+ */
+export interface CompanionPose {
+  agent: AgentId;
+  runId: number;
+  x: number;
+  y: number;
+  size: number;
+  dragging: boolean;
+  phase: CompanionPhase;
+  hasUserDragged: boolean;
+}
+
 export interface CompanionApi {
   summon(request: SummonRequest): void;
   update(agent: AgentId, update: CompanionUpdate): void;

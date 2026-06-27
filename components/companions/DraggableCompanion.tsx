@@ -10,7 +10,7 @@ import {
   type WizardPhysics,
 } from "@/lib/companions/physics";
 import { getAnchorPixelPosition, WIZARD_SIZE, MARGIN, NAV_SAFE_TOP } from "@/lib/companions/walking";
-import { useCompanion } from "./CompanionProvider";
+import { useCompanion, useCompanionPose } from "./CompanionProvider";
 import { SparkleBurst } from "../WizardCompanion";
 import SpeechBubble from "./SpeechBubble";
 import { AGENT_AVATARS } from "./agents";
@@ -55,6 +55,7 @@ export default function DraggableCompanion({
   const anchor = ANCHORS[companion.anchorId];
   const Avatar = AGENT_AVATARS[companion.agent];
   const { registerInteraction } = useCompanion();
+  const { report, clear } = useCompanionPose();
 
   const [pos, setPos] = useState<{ x: number; y: number }>(() =>
     typeof window !== "undefined" ? getAnchorPixelPosition(companion.anchorId) : { x: 0, y: 0 }
@@ -95,6 +96,27 @@ export default function DraggableCompanion({
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
   }, []);
+
+  // Publish the wizard's live pose so the cat familiar can follow it.
+  useEffect(() => {
+    if (companion.agent !== "wizard") return;
+    report({
+      agent: companion.agent,
+      runId: companion.runId,
+      x: pos.x,
+      y: pos.y,
+      size: WIZARD_SIZE,
+      dragging,
+      phase: companion.phase,
+      hasUserDragged,
+    });
+  }, [report, companion.agent, companion.runId, companion.phase, pos.x, pos.y, dragging, hasUserDragged]);
+
+  useEffect(() => {
+    if (companion.agent !== "wizard") return;
+    const runId = companion.runId;
+    return () => clear(runId);
+  }, [clear, companion.agent, companion.runId]);
 
   if (!Avatar) return null;
 
