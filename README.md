@@ -4,9 +4,6 @@
 
 Brilliant Quantum is a learn-by-doing web app that teaches introductory quantum computing through short, interactive lessons instead of videos or long readings. Across six units, learners build intuition for qubits, superposition, measurement, gates, circuits, interference, entanglement, algorithms, and hardware by manipulating live visualizations, predicting outcomes, and getting immediate feedback. A learning-science engine and an AI "wizard" companion adapt practice and hints to each learner — no advanced mathematics required.
 
-- **Live app:** _<add your deployed URL here, e.g. https://brilliant-quantum.vercel.app>_
-- **Demo account:** _<email>_ / _<password>_ _(replace with a real demo login, or sign up)_
-
 ## Tech stack
 
 - **Next.js** (App Router)
