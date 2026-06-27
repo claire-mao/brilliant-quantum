@@ -6,8 +6,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useCompanion } from "@/components/companions/CompanionProvider";
 import type { BubbleAction, ContextKind } from "@/lib/companions/types";
 import { getTowerHintContext, getTowerTopic } from "@/lib/companions/tower-context";
+import { getRecommendedReview } from "@/lib/learning/learner-model";
 import { quantumBasicsCourse } from "@/content/lessons";
-import type { UserProfile } from "@/lib/types";
+import type { Lesson, UserProfile } from "@/lib/types";
 
 const HINT_FALLBACK = "Look back at the experiment first — what changed right before the answer appeared?";
 const FACT_FALLBACK = "The guide's spellbook is resting. Your lessons are unaffected — try again later.";
@@ -23,11 +24,71 @@ function isAppPage(pathname: string): boolean {
   );
 }
 
-function nextLessonHref(profile: UserProfile | null): string {
-  const lesson = quantumBasicsCourse.lessons.find(
-    (l) => l.steps.length > 0 && !profile?.progress?.[l.id]?.completed
+function findNextLesson(profile: UserProfile | null): Lesson | null {
+  return (
+    quantumBasicsCourse.lessons.find(
+      (l) => l.steps.length > 0 && !profile?.progress?.[l.id]?.completed
+    ) ?? null
   );
+}
+
+function nextLessonHref(profile: UserProfile | null): string {
+  const lesson = findNextLesson(profile);
   return lesson ? `/lessons/${lesson.id}` : "/dashboard";
+}
+
+/** Most recent lesson-completion time (ms), or 0 if none. Read-only. */
+function lastCompletionMs(profile: UserProfile | null): number {
+  if (!profile?.progress) return 0;
+  let latest = 0;
+  for (const p of Object.values(profile.progress)) {
+    const ts = p?.completedAt as { toMillis?: () => number } | null | undefined;
+    if (ts && typeof ts.toMillis === "function") {
+      const ms = ts.toMillis();
+      if (ms > latest) latest = ms;
+    }
+  }
+  return latest;
+}
+
+const JUST_COMPLETED_MS = 20 * 60 * 1000;
+
+/**
+ * Local, deterministic pool of friendly, learning-science-flavored home-page
+ * lines. The wizard stays a guide (not a teacher): each line is short and
+ * contextual. No AI — copy is picked locally based on the learner's state, then
+ * one line is chosen at random so it rotates between visits.
+ */
+const HOME_COPY = {
+  review: [
+    "A little recall before the next lesson makes the magic stick.",
+    "The tower remembers what you struggled with.",
+    "One clear prediction is worth a page of rereading.",
+    "Review first, then climb higher.",
+  ],
+  reflect: [
+    "Nicely cast. A moment of reflection seals the spell.",
+    "Recall what surprised you just now — that's where it sticks.",
+  ],
+  streak: [
+    "Showing up daily is the real magic. Keep the streak alive.",
+    "Consistency compounds — your streak is doing quiet work.",
+  ],
+  nextNew: [
+    "Your next spell is waiting.",
+    "The next lesson will be easier if your old spells are fresh.",
+  ],
+  nextResume: [
+    "Pick up where you left off — the spell is half-cast.",
+    "Your next spell is waiting.",
+  ],
+  generic: [
+    "You're building quantum intuition one experiment at a time.",
+  ],
+} as const;
+
+function pick(pool: readonly string[]): string {
+  return pool[Math.floor(Math.random() * pool.length)] ?? pool[0];
 }
 
 interface SceneCopy {
@@ -36,7 +97,41 @@ interface SceneCopy {
   actions: BubbleAction[];
 }
 
-function sceneFor(pathname: string): SceneCopy {
+/**
+ * Build the dashboard speech-bubble copy from local learner state. Mentions
+ * review when something is due, reflection just after a lesson, consistency when
+ * a streak is running, and otherwise points at the next lesson — always short.
+ */
+function dashboardScene(profile: UserProfile | null): SceneCopy {
+  const review = getRecommendedReview(profile);
+  const reviewDue = review.some((r) => r.reason === "struggled" || r.reason === "due");
+  const next = findNextLesson(profile);
+  const started = next ? (profile?.progress?.[next.id]?.currentStep ?? 0) > 0 : false;
+  const streak = profile?.streak ?? 0;
+  const justCompleted = Date.now() - lastCompletionMs(profile) < JUST_COMPLETED_MS;
+
+  const pool: string[] = [];
+  if (reviewDue) pool.push(...HOME_COPY.review);
+  if (justCompleted) pool.push(...HOME_COPY.reflect);
+  if (streak >= 2) pool.push(...HOME_COPY.streak);
+  if (next) pool.push(...(started ? HOME_COPY.nextResume : HOME_COPY.nextNew));
+  pool.push(...HOME_COPY.generic);
+
+  const actions: BubbleAction[] = [];
+  if (next) {
+    actions.push({ id: "summon-continue", label: started ? "Continue" : "Start", variant: "primary" });
+  }
+  if (reviewDue) {
+    actions.push({ id: "summon-tower", label: "Review", variant: next ? "ghost" : "primary" });
+  }
+  if (actions.length === 0) {
+    actions.push({ id: "summon-tower", label: "Practice", variant: "primary" });
+  }
+
+  return { context: "generic", message: pick(pool), actions };
+}
+
+function sceneFor(pathname: string, profile: UserProfile | null): SceneCopy {
   if (pathname.startsWith("/lessons")) {
     return {
       context: "hint",
@@ -52,11 +147,7 @@ function sceneFor(pathname: string): SceneCopy {
     return { context: "generic", message: "Choose your next challenge.", actions: [] };
   }
   // dashboard (default app page)
-  return {
-    context: "generic",
-    message: "Ready for the next lesson?",
-    actions: [{ id: "summon-continue", label: "Continue", variant: "primary" }],
-  };
+  return dashboardScene(profile);
 }
 
 /**
@@ -141,7 +232,7 @@ export default function SummonWizardButton() {
       dismiss("wizard");
       return;
     }
-    const scene = sceneFor(pathname);
+    const scene = sceneFor(pathname, profile);
     // Always spawn the companion in front of its home (no random anchor).
     summon({
       context: scene.context,
