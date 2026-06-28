@@ -10,10 +10,9 @@ import { getWizardMessage, getLearnerState } from "@/lib/companions/messages";
 import { quantumBasicsCourse } from "@/content/lessons";
 import type { Lesson, UserProfile } from "@/lib/types";
 
-const HINT_FALLBACK = "Look back at the experiment first — what changed right before the answer appeared?";
-const FACT_FALLBACK = "The guide's spellbook is resting. Your lessons are unaffected — try again later.";
-const NO_CONTEXT_HINT =
-  "Open a lesson and attempt a challenge — then I can point at the useful clue.";
+const HINT_FALLBACK = "Look back at the experiment. What changed?";
+const FACT_FALLBACK = "The spellbook is quiet right now. Try again later.";
+const NO_CONTEXT_HINT = "Open a lesson and try a challenge first.";
 
 /** App pages where the summon control should appear. */
 function isAppPage(pathname: string): boolean {
@@ -153,10 +152,10 @@ export default function SummonWizardButton() {
     }
 
     setBubbleActionHandler("summon-hint", () => void askHint());
-    setBubbleActionHandler("summon-practice", () => go("/tower", "To the arena — let's practice."));
+    setBubbleActionHandler("summon-practice", () => go("/tower", "To practice."));
     setBubbleActionHandler("summon-funfact", () => void askFunFact());
-    setBubbleActionHandler("summon-continue", () => go(nextLessonHref(profile), "Onward, apprentice."));
-    setBubbleActionHandler("summon-tower", () => go("/tower", "To the tower."));
+    setBubbleActionHandler("summon-continue", () => go(nextLessonHref(profile), "Onward."));
+    setBubbleActionHandler("summon-tower", () => go("/tower", "To the Tower."));
     setBubbleActionHandler("summon-dashboard", () => go("/dashboard", "Back to the course."));
 
     return () => ids.forEach(clearBubbleActionHandler);

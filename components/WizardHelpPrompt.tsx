@@ -10,28 +10,26 @@ import { saveTowerHintContext, type HintRequest } from "@/lib/companions/tower-c
  * the local "after wrong answer" lines.
  */
 const OFFER_MESSAGES = [
-  "A miss is just data. Want to retrieve what you already saw?",
-  "Want me to point at what changed?",
-  "Shall I name the idea at play?",
-  "Want me to walk the reasoning with you?",
+  "Not quite. What do you remember?",
+  "Want me to point to the change?",
+  "Want the key idea?",
+  "Want the reasoning step by step?",
 ];
 
 /**
  * Handwritten scaffolded hints used when AI is unavailable. They follow the same
  * four levels as the AI so the learning loop works fully AI-off.
  */
-function fallbackForLevel(level: number, ctx: HintRequest): string {
+function fallbackForLevel(level: number): string {
   switch (level) {
     case 1:
-      return "What did the previous experiment or step show? Recall that first.";
+      return "Recall the last experiment. What changed?";
     case 2:
-      return "Look closely at what changed right before the result — focus your attention there.";
+      return "Look at the step just before the result.";
     case 3:
-      return "Think about the core idea at play here — how the amplitudes or phase behave.";
+      return "Name the main idea first.";
     default:
-      return ctx.feedback
-        ? `${ctx.feedback} Re-read that note, then finish the final step yourself.`
-        : "Re-read the lesson's explanation of this idea, then complete the final step yourself.";
+      return "Read the explanation once, then try again.";
   }
 }
 
@@ -92,12 +90,12 @@ export default function WizardHelpPrompt({
           body: JSON.stringify({ ...ctx, level }),
         });
         const data = (await res.json().catch(() => null)) as { hint?: string } | null;
-        const hint = res.ok && data?.hint ? data.hint : fallbackForLevel(level, ctx);
+        const hint = res.ok && data?.hint ? data.hint : fallbackForLevel(level);
         update("wizard", { state: "speaking", message: hint, bubbleActions: undefined, wandAim: 15, autoDismissMs: 24000 });
       } catch {
         update("wizard", {
           state: "speaking",
-          message: fallbackForLevel(level, ctx),
+          message: fallbackForLevel(level),
           bubbleActions: undefined,
           wandAim: 15,
           autoDismissMs: 24000,

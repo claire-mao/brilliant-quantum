@@ -1,13 +1,12 @@
 /**
- * Local, deterministic wizard flavor text. These are short UI lines — never AI.
+ * Local, deterministic wizard flavor text. These are short UI lines, never AI.
  *
  * AI is reserved for the things that genuinely benefit from it (personalized
  * hints, generated practice, fun facts, deeper guidance). Simple companion
  * flavor is kept local on purpose: it is instant, free, consistent, and works
  * with AI turned off. Each call returns one line chosen at random (biased by
  * learner state for the dashboard) so the wizard never repeats one canned
- * default. Tone: warm, brief, wizard-like, learning-science informed, never
- * condescending.
+ * default. Tone: calm, kind, concise, with light warmth, never condescending.
  */
 
 import { getRecommendedReview } from "@/lib/learning/learner-model";
@@ -70,87 +69,93 @@ export function getLearnerState(profile: UserProfile | null): LearnerState {
 /** Dashboard sub-pools, combined contextually so the bubble stays varied. */
 const DASHBOARD = {
   greet: [
-    "Back at the tower. Where shall we point the wand?",
-    "The spellbook is open and waiting.",
-    "Good to see you. Ready to tinker?",
-    "Let's make a little magic today.",
-    "The wand's warmed up whenever you are.",
+    "Good to see you.",
+    "Welcome back.",
+    "Ready when you are.",
+    "Let's begin gently.",
+    "The page is open.",
   ],
   generic: [
-    "You're building quantum intuition one experiment at a time.",
-    "One prediction before reading. That is how intuition grows.",
-    "Ready to test one idea before moving on?",
-    "Curiosity is the only prerequisite here.",
+    "Make a guess, then test it.",
+    "Try one idea and watch what changes.",
+    "Small steps build real intuition.",
+    "Start with what you already know.",
+    "One clear prediction is enough.",
   ],
   review: [
-    "A quick review makes old magic stronger.",
-    "The Tower remembers what needs practice.",
-    "A small recall now saves confusion later.",
-    "Your old spells are part of today's lesson.",
+    "A quick review would help.",
+    "Something old is ready to recall.",
+    "Let's refresh one idea first.",
+    "The Tower has something worth practicing.",
   ],
   next: [
-    "Your next spell is waiting.",
-    "The next challenge is easier when yesterday's magic is fresh.",
-    "Ready to test one idea before moving on?",
+    "Your next lesson is ready.",
+    "There's a new idea waiting.",
+    "You can start the next lesson.",
+    "One more step forward.",
   ],
   resume: [
-    "Pick up where you left off — the spell is half-cast.",
-    "Your next spell is waiting.",
+    "You can pick up where you paused.",
+    "This lesson is still open.",
+    "Ready to continue?",
+    "Let's return to the next step.",
   ],
   streak: [
-    "Showing up daily is the real magic. Keep the streak alive.",
-    "Consistency compounds — your streak is doing quiet work.",
+    "You came back. That matters.",
+    "Consistency is doing quiet work.",
+    "Another day, another small gain.",
   ],
   reflect: [
-    "Nicely cast. A moment of reflection seals the spell.",
-    "Recall what surprised you just now — that's where it sticks.",
+    "Nice work. Let it settle for a moment.",
+    "Before moving on, recall what changed.",
+    "That idea is starting to stick.",
   ],
   start: [
-    "Every wizard starts with a single spark. Shall we begin?",
-    "One prediction before reading. That is how intuition grows.",
-    "Your first spell is a click away.",
+    "Start with one prediction.",
+    "Your first lesson is waiting.",
+    "One small step is enough.",
   ],
 } as const;
 
 /** Simple per-context pools (no learner-state weighting needed). */
 const POOLS: Record<Exclude<WizardContext, "dashboard">, readonly string[]> = {
   lesson: [
-    "Predict first, then peek. I can nudge if you're stuck.",
-    "Name your guess before you check it.",
-    "Try the experiment — I'm here if you want a hint.",
-    "One idea at a time. Want a hand?",
+    "Predict first. I can nudge if needed.",
+    "Try the experiment before reading ahead.",
+    "Name your guess, then test it.",
+    "One idea at a time.",
   ],
   tower: [
-    "Choose your next challenge.",
-    "The Tower remembers what needs practice.",
-    "Quick recall sharpens the blade — pick a foe.",
-    "Practice is how spells become reflexes.",
+    "Choose a room.",
+    "Pick a challenge.",
+    "Recall what you know.",
+    "Practice makes the idea easier to find.",
   ],
   correct: [
-    "Clean cast! Notice what made it click.",
-    "Right — tuck the reason away for later.",
-    "That's the one. Now you own it.",
+    "Good. Notice why it worked.",
+    "Right. Keep the reason in mind.",
+    "That one is yours.",
   ],
   wrong: [
-    "Close. Let's retrieve what you already saw.",
-    "Not quite — what changed right before the result?",
-    "A miss is just data. Want to think it through?",
+    "Close. Recall what changed.",
+    "Not yet. Look one step earlier.",
+    "A miss gives useful information.",
   ],
   hint: [
-    "A thread to pull, not the whole spell.",
-    "Here's a nudge toward the idea.",
-    "Small clue, big door. Give it a try.",
+    "Here is a small nudge.",
+    "A clue, not the answer.",
+    "Try this thread.",
   ],
   completion: [
-    "Lesson sealed. Well cast!",
-    "Another spell mastered — rest, then return.",
-    "That one's yours now. The Tower will help keep it.",
+    "Lesson complete. Nicely done.",
+    "That idea is yours now.",
+    "Rest a moment. Review will keep it fresh.",
   ],
   idle: [
-    "Still here when you need me.",
-    "Take your time — the runes aren't going anywhere.",
-    "Poke the experiment; that's where intuition hides.",
-    "Curious about something? I can help you think it through.",
+    "I'm here.",
+    "Take your time.",
+    "Try the experiment first.",
+    "Let's think it through.",
   ],
 } as const;
 
