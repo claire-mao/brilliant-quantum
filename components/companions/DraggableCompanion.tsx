@@ -223,7 +223,8 @@ export default function DraggableCompanion({
       setPhysics(PHYSICS_IDLE);
       // On the dashboard the tap reflects the learner's state; elsewhere it's a
       // light idle line. Both come from the local pool (never AI).
-      const msg = pathname.startsWith("/dashboard")
+      const onDashboard = pathname.startsWith("/dashboard");
+      const msg = onDashboard
         ? getWizardMessage("dashboard", getLearnerState(profile))
         : getWizardMessage("idle");
       setClickMsg(msg);
@@ -231,7 +232,10 @@ export default function DraggableCompanion({
         setPopping(true);
         later(() => setPopping(false), 360);
       }
-      later(() => setClickMsg(null), 5000);
+      // Dashboard messages stay put until the next user action (another tap, a
+      // drag, or dismiss) so an intentional click isn't auto-overwritten by the
+      // underlying summon line. Elsewhere the idle line fades after a while.
+      if (!onDashboard) later(() => setClickMsg(null), 5000);
     }
   }
 
