@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { usePathname } from "next/navigation";
 import type { ActiveCompanion, AgentId, CompanionUpdate } from "@/lib/companions/types";
+import { useAuth } from "@/lib/auth-context";
+import { getWizardMessage, getLearnerState } from "@/lib/companions/messages";
 import { ANCHORS } from "@/lib/companions/anchors";
 import {
   computeWizardPhysics,
@@ -16,14 +19,6 @@ import SpeechBubble from "./SpeechBubble";
 import { AGENT_AVATARS } from "./agents";
 
 const DRAG_THRESHOLD = 5;
-
-const CLICK_MESSAGES = [
-  "Still here.",
-  "Need a nudge?",
-  "That rune looked suspicious.",
-  "Try the experiment first.",
-  "Explore the tower when you're ready.",
-];
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -56,6 +51,8 @@ export default function DraggableCompanion({
   const Avatar = AGENT_AVATARS[companion.agent];
   const { registerInteraction } = useCompanion();
   const { report, clear } = useCompanionPose();
+  const pathname = usePathname();
+  const { profile } = useAuth();
 
   const [pos, setPos] = useState<{ x: number; y: number }>(() =>
     typeof window !== "undefined" ? getAnchorPixelPosition(companion.anchorId) : { x: 0, y: 0 }
@@ -224,7 +221,11 @@ export default function DraggableCompanion({
       }
     } else {
       setPhysics(PHYSICS_IDLE);
-      const msg = CLICK_MESSAGES[Math.floor(Math.random() * CLICK_MESSAGES.length)];
+      // On the dashboard the tap reflects the learner's state; elsewhere it's a
+      // light idle line. Both come from the local pool (never AI).
+      const msg = pathname.startsWith("/dashboard")
+        ? getWizardMessage("dashboard", getLearnerState(profile))
+        : getWizardMessage("idle");
       setClickMsg(msg);
       if (!reduce) {
         setPopping(true);

@@ -4,9 +4,13 @@ import { useEffect, useRef } from "react";
 import { useCompanion } from "@/components/companions/CompanionProvider";
 import { saveTowerHintContext, type HintRequest } from "@/lib/companions/tower-context";
 
-/** Guide-style offers that escalate with each wrong attempt (never reveal). */
+/**
+ * Guide-style offers that escalate with each wrong attempt (never reveal). Kept
+ * level-indexed (not randomized) so the scaffolding stays progressive; these are
+ * the local "after wrong answer" lines.
+ */
 const OFFER_MESSAGES = [
-  "Need a nudge? Let's retrieve what you already saw.",
+  "A miss is just data. Want to retrieve what you already saw?",
   "Want me to point at what changed?",
   "Shall I name the idea at play?",
   "Want me to walk the reasoning with you?",

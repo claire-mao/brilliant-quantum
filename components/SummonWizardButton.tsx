@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useCompanion } from "@/components/companions/CompanionProvider";
 import type { BubbleAction, ContextKind } from "@/lib/companions/types";
 import { getTowerHintContext, getTowerTopic } from "@/lib/companions/tower-context";
-import { getRecommendedReview } from "@/lib/learning/learner-model";
+import { getWizardMessage, getLearnerState } from "@/lib/companions/messages";
 import { quantumBasicsCourse } from "@/content/lessons";
 import type { Lesson, UserProfile } from "@/lib/types";
 
@@ -37,71 +37,6 @@ function nextLessonHref(profile: UserProfile | null): string {
   return lesson ? `/lessons/${lesson.id}` : "/dashboard";
 }
 
-/** Most recent lesson-completion time (ms), or 0 if none. Read-only. */
-function lastCompletionMs(profile: UserProfile | null): number {
-  if (!profile?.progress) return 0;
-  let latest = 0;
-  for (const p of Object.values(profile.progress)) {
-    const ts = p?.completedAt as { toMillis?: () => number } | null | undefined;
-    if (ts && typeof ts.toMillis === "function") {
-      const ms = ts.toMillis();
-      if (ms > latest) latest = ms;
-    }
-  }
-  return latest;
-}
-
-const JUST_COMPLETED_MS = 20 * 60 * 1000;
-
-/**
- * Local, deterministic pool of friendly, learning-science-flavored home-page
- * lines. The wizard stays a guide (not a teacher): each line is short and
- * contextual. No AI — copy is picked locally based on the learner's state, then
- * one line is chosen at random so it rotates between visits. There is no single
- * default greeting: a warm "greet" line and the "generic" lines are always in
- * the pool, so the bubble varies every time it opens.
- */
-const HOME_COPY = {
-  greet: [
-    "Back at the tower. Where shall we point the wand?",
-    "The spellbook is open and waiting.",
-    "Good to see you. Ready to tinker?",
-    "Let's make a little magic today.",
-    "The wand's warmed up whenever you are.",
-  ],
-  review: [
-    "A little recall before the next lesson makes the magic stick.",
-    "The tower remembers what you struggled with.",
-    "One clear prediction is worth a page of rereading.",
-    "Review first, then climb higher.",
-  ],
-  reflect: [
-    "Nicely cast. A moment of reflection seals the spell.",
-    "Recall what surprised you just now — that's where it sticks.",
-  ],
-  streak: [
-    "Showing up daily is the real magic. Keep the streak alive.",
-    "Consistency compounds — your streak is doing quiet work.",
-  ],
-  nextNew: [
-    "Your next spell is waiting.",
-    "The next lesson will be easier if your old spells are fresh.",
-  ],
-  nextResume: [
-    "Pick up where you left off — the spell is half-cast.",
-    "Your next spell is waiting.",
-  ],
-  generic: [
-    "You're building quantum intuition one experiment at a time.",
-    "Small experiments, big intuition. Let's continue.",
-    "Curiosity is the only prerequisite here.",
-  ],
-} as const;
-
-function pick(pool: readonly string[]): string {
-  return pool[Math.floor(Math.random() * pool.length)] ?? pool[0];
-}
-
 interface SceneCopy {
   context: ContextKind;
   message: string;
@@ -109,45 +44,36 @@ interface SceneCopy {
 }
 
 /**
- * Build the dashboard speech-bubble copy from local learner state. Mentions
- * review when something is due, reflection just after a lesson, consistency when
- * a streak is running, and otherwise points at the next lesson — always short.
+ * Dashboard speech-bubble copy. The message comes from the local wizard-message
+ * helper (state-aware, never AI), and the action buttons reflect the same state:
+ * continue/start the next lesson, and review in the Tower when something is due.
  */
 function dashboardScene(profile: UserProfile | null): SceneCopy {
-  const review = getRecommendedReview(profile);
-  const reviewDue = review.some((r) => r.reason === "struggled" || r.reason === "due");
-  const next = findNextLesson(profile);
-  const started = next ? (profile?.progress?.[next.id]?.currentStep ?? 0) > 0 : false;
-  const streak = profile?.streak ?? 0;
-  const justCompleted = Date.now() - lastCompletionMs(profile) < JUST_COMPLETED_MS;
-
-  // Always seed the pool with a warm greeting + generic lines (so the bubble
-  // never settles on one canned default), then add whatever the state warrants.
-  const pool: string[] = [...HOME_COPY.greet, ...HOME_COPY.generic];
-  if (reviewDue) pool.push(...HOME_COPY.review);
-  if (justCompleted) pool.push(...HOME_COPY.reflect);
-  if (streak >= 2) pool.push(...HOME_COPY.streak);
-  if (next) pool.push(...(started ? HOME_COPY.nextResume : HOME_COPY.nextNew));
+  const state = getLearnerState(profile);
 
   const actions: BubbleAction[] = [];
-  if (next) {
-    actions.push({ id: "summon-continue", label: started ? "Continue" : "Start", variant: "primary" });
+  if (state.hasNext) {
+    actions.push({
+      id: "summon-continue",
+      label: state.nextStarted ? "Continue" : "Start",
+      variant: "primary",
+    });
   }
-  if (reviewDue) {
-    actions.push({ id: "summon-tower", label: "Review", variant: next ? "ghost" : "primary" });
+  if (state.reviewDue) {
+    actions.push({ id: "summon-tower", label: "Review", variant: state.hasNext ? "ghost" : "primary" });
   }
   if (actions.length === 0) {
     actions.push({ id: "summon-tower", label: "Practice", variant: "primary" });
   }
 
-  return { context: "generic", message: pick(pool), actions };
+  return { context: "generic", message: getWizardMessage("dashboard", state), actions };
 }
 
 function sceneFor(pathname: string, profile: UserProfile | null): SceneCopy {
   if (pathname.startsWith("/lessons")) {
     return {
       context: "hint",
-      message: "Need a nudge?",
+      message: getWizardMessage("lesson"),
       actions: [
         { id: "summon-hint", label: "Hint", variant: "primary" },
         { id: "summon-practice", label: "Practice", variant: "ghost" },
@@ -156,7 +82,7 @@ function sceneFor(pathname: string, profile: UserProfile | null): SceneCopy {
     };
   }
   if (pathname.startsWith("/tower")) {
-    return { context: "generic", message: "Choose your next challenge.", actions: [] };
+    return { context: "generic", message: getWizardMessage("tower"), actions: [] };
   }
   // dashboard (default app page)
   return dashboardScene(profile);
