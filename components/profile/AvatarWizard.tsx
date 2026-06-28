@@ -91,6 +91,9 @@ function FamiliarCat({ meow }: { meow: boolean }) {
   return (
     <g className={`cat ${meow ? "meow-active" : ""}`} aria-hidden="true">
       <ellipse cx="22" cy="122" rx="11" ry="7" fill="#64748b" />
+      {/* static neck/chest bridge: keeps the head fused to the body even as the
+          head tilts during a meow, so they never separate visually */}
+      <ellipse cx="16" cy="119" rx="6.5" ry="5.5" fill="#64748b" />
       <path className="meow-tail" d="M32 120 Q42 111 37 125" stroke="#475569" strokeWidth="2.5" fill="none" strokeLinecap="round" />
       <g className="meow-head">
         <circle cx="13" cy="115" r="5.5" fill="#64748b" />

@@ -982,7 +982,9 @@ body {
 /* cat meow */
 .cat .meow-head {
   transform-box: view-box;
-  transform-origin: 16px 119px;
+  /* Pivot at the base of the head (where it meets the neck/body) so a meow
+     tilts the head without lifting it away from the body. */
+  transform-origin: 14px 120px;
 }
 .cat .meow-mouth {
   transform-box: view-box;
@@ -1000,11 +1002,11 @@ body {
   0%,
   55%,
   100% {
-    transform: translateY(0) rotate(0deg);
+    transform: rotate(0deg);
   }
   18%,
   40% {
-    transform: translateY(-2px) rotate(-8deg);
+    transform: rotate(-6deg);
   }
 }
 @keyframes cat-meow-mouth {
@@ -1309,6 +1311,36 @@ body {
   }
 }
 
+/* Small, calm caption above the cat when it appears or tucks into its box. */
+.cat-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 500;
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 3px 8px;
+  border-radius: 9999px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+  transform: translateX(-50%);
+  animation: cat-caption-in 0.3s ease-out both;
+}
+@keyframes cat-caption-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 /* Horizontal facing (flip toward the wizard); pivots on the cat's feet. */
 .cat-facing {
   transform: scaleX(var(--cat-flip, 1));
@@ -1522,6 +1554,10 @@ body {
   }
   .cat-box-flap-r {
     transform: rotate(0deg);
+  }
+  .cat-caption {
+    animation: none;
+    opacity: 1;
   }
   /* Cat fades out first, then the box fades a beat later. */
   .cat-box-cat {

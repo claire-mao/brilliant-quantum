@@ -23,6 +23,24 @@ const MAX_MS = 2500;
 const ARRIVE_EPS = 6;
 const BOX_MS = 2200;
 const BOX_REDUCED_MS = 760;
+const CAPTION_MS = 2600;
+
+/** Short, calm, local cat captions (never AI). */
+const APPEAR_LINES = [
+  "The cat peeks out.",
+  "The cat is watching.",
+  "The cat pads in quietly.",
+];
+const DISAPPEAR_LINES = [
+  "The cat slips into the box.",
+  "The box rustles.",
+  "A tiny mew from inside.",
+  "The cat found a quiet corner.",
+];
+
+function pickLine(pool: readonly string[]): string {
+  return pool[Math.floor(Math.random() * pool.length)] ?? pool[0] ?? "";
+}
 
 type Phase = "hidden" | "active" | "boxing";
 interface Vec {
@@ -81,6 +99,7 @@ export default function CatFamiliar() {
   const [pos, setPos] = useState<Vec>({ x: 0, y: 0 });
   const [walking, setWalking] = useState(false);
   const [facing, setFacing] = useState<1 | -1>(1);
+  const [caption, setCaption] = useState<string | null>(null);
 
   const phaseRef = useRef<Phase>("hidden");
   const posRef = useRef<Vec>({ x: 0, y: 0 });
@@ -88,6 +107,7 @@ export default function CatFamiliar() {
   const reduceRef = useRef(reduce);
   const rafRef = useRef<number | null>(null);
   const boxTimerRef = useRef<number | null>(null);
+  const captionTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     reduceRef.current = reduce;
@@ -104,6 +124,25 @@ export default function CatFamiliar() {
     };
     const setFace = (f: 1 | -1) => setFacing(f);
 
+    function clearCaptionTimer() {
+      if (captionTimerRef.current !== null) {
+        clearTimeout(captionTimerRef.current);
+        captionTimerRef.current = null;
+      }
+    }
+
+    /** Show a caption; auto-clear after `ms`, or keep it until replaced (null). */
+    function showCaption(text: string, ms: number | null) {
+      clearCaptionTimer();
+      setCaption(text);
+      if (ms !== null) {
+        captionTimerRef.current = window.setTimeout(() => {
+          captionTimerRef.current = null;
+          setCaption(null);
+        }, ms);
+      }
+    }
+
     function clearBoxTimer() {
       if (boxTimerRef.current !== null) {
         clearTimeout(boxTimerRef.current);
@@ -119,6 +158,7 @@ export default function CatFamiliar() {
       setWalking(false);
       setFace(pose.x + pose.size / 2 >= t.x + CAT_W / 2 ? 1 : -1);
       setPhaseBoth("active");
+      showCaption(pickLine(APPEAR_LINES), CAPTION_MS);
     }
 
     function startWalk(from: Vec, to: Vec, now: number) {
@@ -133,11 +173,13 @@ export default function CatFamiliar() {
       walkRef.current.active = false;
       setWalking(false);
       setPhaseBoth("boxing");
+      showCaption(pickLine(DISAPPEAR_LINES), null);
       clearBoxTimer();
       const ms = reduceRef.current ? BOX_REDUCED_MS : BOX_MS;
       boxTimerRef.current = window.setTimeout(() => {
         boxTimerRef.current = null;
         setPhaseBoth("hidden");
+        setCaption(null);
       }, ms);
     }
 
@@ -221,6 +263,7 @@ export default function CatFamiliar() {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
       clearBoxTimer();
+      clearCaptionTimer();
     };
   }, [registerWake, poseRef]);
 
@@ -231,6 +274,7 @@ export default function CatFamiliar() {
 
   return (
     <div className="pointer-events-none fixed z-[65]" style={containerStyle} aria-hidden="true">
+      {caption && <div className="cat-caption">{caption}</div>}
       <div className="cat-familiar">
         <div className="cat-facing" style={faceStyle}>
           {phase === "boxing" ? <CatInBox /> : <PixelCat walking={walking && !reduce} />}
@@ -241,10 +285,11 @@ export default function CatFamiliar() {
 }
 
 /**
- * Side-view pixel-ish cat facing right. Body, neck-bridge, and head live in one
- * group so the head is always fused to the body (and they bob together); legs
- * and tail animate separately while walking. Drawn within ~x6–47 so a
- * full-width box can fully cover it.
+ * Side-view cat facing right, drawn as ONE connected silhouette: the body,
+ * chest, and head are heavily overlapping shapes in a single `.cat-body` group,
+ * so the head can never drift away from the body in any state. Only the tail and
+ * legs are separate groups (and they animate independently while walking). The
+ * whole cat is drawn within ~x6-47 so the box can fully cover it.
  */
 function PixelCat({ walking }: { walking: boolean }) {
   return (
@@ -255,35 +300,37 @@ function PixelCat({ walking }: { walking: boolean }) {
       className={`cat-svg ${walking ? "cat-walking" : ""}`}
       aria-hidden="true"
     >
-      <g className="cat-tail" style={{ transformOrigin: "16px 24px" }}>
-        <path d="M16 24 C9 25 6 18 8 12" fill="none" stroke="#475569" strokeWidth="4" strokeLinecap="round" />
+      <g className="cat-tail" style={{ transformOrigin: "16px 25px" }}>
+        <path d="M16 25 C9 26 6 19 8 13" fill="none" stroke="#475569" strokeWidth="4" strokeLinecap="round" />
       </g>
 
-      <g className="cat-leg cat-leg-b" style={{ transformOrigin: "17px 30px" }}>
-        <rect x="15" y="29" width="4" height="9" rx="1.6" fill="#475569" />
+      <g className="cat-leg cat-leg-b" style={{ transformOrigin: "14px 31px" }}>
+        <rect x="12" y="30" width="4" height="9" rx="1.6" fill="#475569" />
       </g>
-      <g className="cat-leg cat-leg-a" style={{ transformOrigin: "23px 30px" }}>
-        <rect x="21" y="29" width="4" height="9" rx="1.6" fill="#64748b" />
+      <g className="cat-leg cat-leg-a" style={{ transformOrigin: "20px 31px" }}>
+        <rect x="18" y="30" width="4" height="9" rx="1.6" fill="#64748b" />
       </g>
-      <g className="cat-leg cat-leg-a" style={{ transformOrigin: "31px 30px" }}>
-        <rect x="29" y="29" width="4" height="9" rx="1.6" fill="#475569" />
+      <g className="cat-leg cat-leg-a" style={{ transformOrigin: "28px 31px" }}>
+        <rect x="26" y="30" width="4" height="9" rx="1.6" fill="#475569" />
       </g>
-      <g className="cat-leg cat-leg-b" style={{ transformOrigin: "37px 30px" }}>
-        <rect x="35" y="29" width="4" height="9" rx="1.6" fill="#64748b" />
+      <g className="cat-leg cat-leg-b" style={{ transformOrigin: "34px 31px" }}>
+        <rect x="32" y="30" width="4" height="9" rx="1.6" fill="#64748b" />
       </g>
 
       <g className="cat-body">
-        {/* body + neck-bridge + head share one fill so they read as one shape */}
-        <ellipse cx="23" cy="23" rx="13" ry="8" fill="#64748b" />
-        <ellipse cx="33" cy="22" rx="8" ry="7.5" fill="#64748b" />
-        <circle cx="39" cy="15" r="7.5" fill="#64748b" />
-        <path d="M33 9 L34.5 3.5 L38 8.5 Z" fill="#64748b" />
-        <path d="M45 9 L43.5 3.5 L40 8.5 Z" fill="#64748b" />
-        <path d="M34.5 8.2 L35.4 5 L37 8 Z" fill="#94a3b8" />
-        <path d="M43.5 8.2 L42.6 5 L41 8 Z" fill="#94a3b8" />
-        <circle cx="41" cy="14" r="1.5" fill="#1f2937" />
-        <circle cx="45.6" cy="16" r="1" fill="#1f2937" />
-        <path d="M46.5 16 q2 0.6 3 -0.4" fill="none" stroke="#cbd5e1" strokeWidth="0.6" strokeLinecap="round" />
+        {/* body, chest, and head overlap heavily so the silhouette is seamless */}
+        <ellipse cx="21" cy="24" rx="13" ry="8.5" fill="#64748b" />
+        <ellipse cx="30" cy="22" rx="9" ry="8.5" fill="#64748b" />
+        <circle cx="37" cy="18" r="8" fill="#64748b" />
+        {/* ears (part of the head group, so attached) */}
+        <path d="M30 12 L31.5 6 L35 11 Z" fill="#64748b" />
+        <path d="M44 12 L42.5 6 L39 11 Z" fill="#64748b" />
+        <path d="M31.6 11.2 L32.4 7.4 L34.1 10.6 Z" fill="#94a3b8" />
+        <path d="M42.4 11.2 L41.6 7.4 L39.9 10.6 Z" fill="#94a3b8" />
+        {/* face */}
+        <circle cx="39" cy="17" r="1.5" fill="#1f2937" />
+        <circle cx="43.2" cy="18" r="1" fill="#1f2937" />
+        <path d="M44 18 q1.8 0.6 2.8 -0.4" fill="none" stroke="#cbd5e1" strokeWidth="0.6" strokeLinecap="round" />
       </g>
     </svg>
   );
