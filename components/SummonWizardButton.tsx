@@ -57,9 +57,18 @@ const JUST_COMPLETED_MS = 20 * 60 * 1000;
  * Local, deterministic pool of friendly, learning-science-flavored home-page
  * lines. The wizard stays a guide (not a teacher): each line is short and
  * contextual. No AI — copy is picked locally based on the learner's state, then
- * one line is chosen at random so it rotates between visits.
+ * one line is chosen at random so it rotates between visits. There is no single
+ * default greeting: a warm "greet" line and the "generic" lines are always in
+ * the pool, so the bubble varies every time it opens.
  */
 const HOME_COPY = {
+  greet: [
+    "Back at the tower. Where shall we point the wand?",
+    "The spellbook is open and waiting.",
+    "Good to see you. Ready to tinker?",
+    "Let's make a little magic today.",
+    "The wand's warmed up whenever you are.",
+  ],
   review: [
     "A little recall before the next lesson makes the magic stick.",
     "The tower remembers what you struggled with.",
@@ -84,6 +93,8 @@ const HOME_COPY = {
   ],
   generic: [
     "You're building quantum intuition one experiment at a time.",
+    "Small experiments, big intuition. Let's continue.",
+    "Curiosity is the only prerequisite here.",
   ],
 } as const;
 
@@ -110,12 +121,13 @@ function dashboardScene(profile: UserProfile | null): SceneCopy {
   const streak = profile?.streak ?? 0;
   const justCompleted = Date.now() - lastCompletionMs(profile) < JUST_COMPLETED_MS;
 
-  const pool: string[] = [];
+  // Always seed the pool with a warm greeting + generic lines (so the bubble
+  // never settles on one canned default), then add whatever the state warrants.
+  const pool: string[] = [...HOME_COPY.greet, ...HOME_COPY.generic];
   if (reviewDue) pool.push(...HOME_COPY.review);
   if (justCompleted) pool.push(...HOME_COPY.reflect);
   if (streak >= 2) pool.push(...HOME_COPY.streak);
   if (next) pool.push(...(started ? HOME_COPY.nextResume : HOME_COPY.nextNew));
-  pool.push(...HOME_COPY.generic);
 
   const actions: BubbleAction[] = [];
   if (next) {
