@@ -240,7 +240,12 @@ export default function CatFamiliar() {
   );
 }
 
-/** Side-view pixel-ish cat facing right; legs/tail/body animate while walking. */
+/**
+ * Side-view pixel-ish cat facing right. Body, neck-bridge, and head live in one
+ * group so the head is always fused to the body (and they bob together); legs
+ * and tail animate separately while walking. Drawn within ~x6–47 so a
+ * full-width box can fully cover it.
+ */
 function PixelCat({ walking }: { walking: boolean }) {
   return (
     <svg
@@ -251,62 +256,73 @@ function PixelCat({ walking }: { walking: boolean }) {
       aria-hidden="true"
     >
       <g className="cat-tail" style={{ transformOrigin: "16px 24px" }}>
-        <path d="M16 24 C8 25 4 18 6 11" fill="none" stroke="#475569" strokeWidth="4" strokeLinecap="round" />
+        <path d="M16 24 C9 25 6 18 8 12" fill="none" stroke="#475569" strokeWidth="4" strokeLinecap="round" />
       </g>
 
-      <g className="cat-leg cat-leg-b" style={{ transformOrigin: "18px 27px" }}>
-        <rect x="16" y="26" width="4" height="10" rx="1.6" fill="#475569" />
+      <g className="cat-leg cat-leg-b" style={{ transformOrigin: "17px 30px" }}>
+        <rect x="15" y="29" width="4" height="9" rx="1.6" fill="#475569" />
       </g>
-      <g className="cat-leg cat-leg-a" style={{ transformOrigin: "25px 27px" }}>
-        <rect x="23" y="26" width="4" height="10" rx="1.6" fill="#64748b" />
+      <g className="cat-leg cat-leg-a" style={{ transformOrigin: "23px 30px" }}>
+        <rect x="21" y="29" width="4" height="9" rx="1.6" fill="#64748b" />
       </g>
-      <g className="cat-leg cat-leg-a" style={{ transformOrigin: "34px 27px" }}>
-        <rect x="32" y="26" width="4" height="10" rx="1.6" fill="#475569" />
+      <g className="cat-leg cat-leg-a" style={{ transformOrigin: "31px 30px" }}>
+        <rect x="29" y="29" width="4" height="9" rx="1.6" fill="#475569" />
       </g>
-      <g className="cat-leg cat-leg-b" style={{ transformOrigin: "40px 27px" }}>
-        <rect x="38" y="26" width="4" height="10" rx="1.6" fill="#64748b" />
+      <g className="cat-leg cat-leg-b" style={{ transformOrigin: "37px 30px" }}>
+        <rect x="35" y="29" width="4" height="9" rx="1.6" fill="#64748b" />
       </g>
 
       <g className="cat-body">
-        <ellipse cx="27" cy="22" rx="16" ry="9" fill="#64748b" />
-        <circle cx="42" cy="16" r="8" fill="#64748b" />
-        <path d="M35.5 10 L37 3.5 L41.5 8.5 Z" fill="#64748b" />
-        <path d="M48.5 10 L47 3.5 L42.5 8.5 Z" fill="#64748b" />
-        <path d="M37 8.6 L38 5 L40 7.6 Z" fill="#94a3b8" />
-        <path d="M47 8.6 L46 5 L44 7.6 Z" fill="#94a3b8" />
-        <circle cx="44" cy="15" r="1.5" fill="#1f2937" />
-        <circle cx="49.2" cy="17" r="1" fill="#1f2937" />
-        <path d="M50 17 q2 0.5 3 -0.5" fill="none" stroke="#cbd5e1" strokeWidth="0.6" strokeLinecap="round" />
+        {/* body + neck-bridge + head share one fill so they read as one shape */}
+        <ellipse cx="23" cy="23" rx="13" ry="8" fill="#64748b" />
+        <ellipse cx="33" cy="22" rx="8" ry="7.5" fill="#64748b" />
+        <circle cx="39" cy="15" r="7.5" fill="#64748b" />
+        <path d="M33 9 L34.5 3.5 L38 8.5 Z" fill="#64748b" />
+        <path d="M45 9 L43.5 3.5 L40 8.5 Z" fill="#64748b" />
+        <path d="M34.5 8.2 L35.4 5 L37 8 Z" fill="#94a3b8" />
+        <path d="M43.5 8.2 L42.6 5 L41 8 Z" fill="#94a3b8" />
+        <circle cx="41" cy="14" r="1.5" fill="#1f2937" />
+        <circle cx="45.6" cy="16" r="1" fill="#1f2937" />
+        <path d="M46.5 16 q2 0.6 3 -0.4" fill="none" stroke="#cbd5e1" strokeWidth="0.6" strokeLinecap="round" />
       </g>
     </svg>
   );
 }
 
-/** Cardboard box; the cat lifts, lowers in, and the flaps fold shut. */
+/**
+ * Cardboard box. The box rises in, the cat lowers into it, and the flaps fold
+ * shut. The front wall and flaps span the cat's full width and sit ABOVE the cat
+ * in z-order, so once the cat is down it is fully covered — it can never leak
+ * past the box sides or show through the box as the box fades out.
+ */
 function CatInBox() {
   return (
     <div className="cat-box-scene">
+      {/* interior back wall, seen through the open top behind the cat */}
       <svg className="cat-box-part cat-box-back" viewBox="0 0 52 40" width={CAT_W} height={CAT_H} aria-hidden="true">
-        <polygon points="14,31 38,31 35,27 17,27" fill="#9a7335" />
-        <rect x="14" y="30" width="24" height="2" fill="#86632d" />
+        <polygon points="6,31 46,31 42,26 10,26" fill="#9a7335" />
+        <rect x="6" y="30" width="40" height="2" fill="#86632d" />
       </svg>
 
+      {/* cat sits BELOW the front wall in z-order so the box covers it */}
       <div className="cat-box-cat">
         <PixelCat walking={false} />
       </div>
 
+      {/* front wall spans the full cat width so nothing leaks past the sides */}
       <svg className="cat-box-part cat-box-front" viewBox="0 0 52 40" width={CAT_W} height={CAT_H} aria-hidden="true">
-        <rect x="13" y="31" width="26" height="9" rx="1.5" fill="#c89148" />
-        <rect x="13" y="31" width="26" height="2.2" fill="#dca85c" />
-        <rect x="25.2" y="31" width="1.6" height="9" fill="#a9783a" opacity="0.6" />
+        <rect x="2" y="30" width="48" height="10" rx="1.5" fill="#c89148" />
+        <rect x="2" y="30" width="48" height="2.4" fill="#dca85c" />
+        <rect x="25.2" y="30" width="1.6" height="10" fill="#a9783a" opacity="0.6" />
       </svg>
 
+      {/* lid flaps: open while the cat goes in, then fold shut on top */}
       <svg className="cat-box-part cat-box-flaps" viewBox="0 0 52 40" width={CAT_W} height={CAT_H} aria-hidden="true">
-        <g className="cat-box-flap cat-box-flap-l" style={{ transformOrigin: "13px 31px" }}>
-          <rect x="13" y="27" width="13" height="4" rx="1" fill="#d6a24c" />
+        <g className="cat-box-flap cat-box-flap-l" style={{ transformOrigin: "4px 30px" }}>
+          <rect x="4" y="26" width="22" height="4.5" rx="1.2" fill="#d6a24c" />
         </g>
-        <g className="cat-box-flap cat-box-flap-r" style={{ transformOrigin: "39px 31px" }}>
-          <rect x="26" y="27" width="13" height="4" rx="1" fill="#c8954a" />
+        <g className="cat-box-flap cat-box-flap-r" style={{ transformOrigin: "48px 30px" }}>
+          <rect x="26" y="26" width="22" height="4.5" rx="1.2" fill="#c8954a" />
         </g>
       </svg>
     </div>

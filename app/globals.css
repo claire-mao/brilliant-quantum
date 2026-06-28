@@ -1416,15 +1416,17 @@ body {
   z-index: 3;
 }
 
+/* The box rises up from below so the cat is fully visible first, then the box
+   lifts into place around/over it. */
 .cat-box-back,
 .cat-box-front,
 .cat-box-flaps {
-  animation: cat-box-rise 0.3s ease-out both;
+  animation: cat-box-rise 0.36s ease-out both;
 }
 @keyframes cat-box-rise {
   0% {
     opacity: 0;
-    transform: translateY(7px);
+    transform: translateY(12px);
   }
   100% {
     opacity: 1;
@@ -1432,25 +1434,29 @@ body {
   }
 }
 
-/* Cat lifts a touch, then lowers all the way in and fades once enclosed.
-   It is fully gone (~1.2s) well before the box itself leaves (~2s). */
+/* Cat lifts a touch, then lowers all the way in. It stays fully opaque the
+   whole descent — it disappears by being COVERED (the box front/flaps sit above
+   it, z-index, and the scene clips it), not by fading in the open. Opacity only
+   drops to 0 at the very end, once it is already hidden behind the box, so it
+   can never leak through the box while the box itself fades out later (~1.6s). */
 .cat-box-cat {
-  animation: cat-box-drop 0.95s cubic-bezier(0.5, 0, 0.7, 1) 0.25s both;
+  animation: cat-box-drop 1.05s cubic-bezier(0.45, 0, 0.7, 1) 0.25s both;
 }
 @keyframes cat-box-drop {
   0% {
     transform: translateY(0);
     opacity: 1;
   }
-  24% {
+  22% {
     transform: translateY(-11px);
     opacity: 1;
   }
-  78% {
+  90% {
+    transform: translateY(36px);
     opacity: 1;
   }
   100% {
-    transform: translateY(26px);
+    transform: translateY(42px);
     opacity: 0;
   }
 }
