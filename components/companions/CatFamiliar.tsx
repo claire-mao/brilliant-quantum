@@ -22,7 +22,7 @@ const MIN_MS = 800;
 const MAX_MS = 2500;
 const ARRIVE_EPS = 6;
 const BOX_MS = 2200;
-const BOX_REDUCED_MS = 460;
+const BOX_REDUCED_MS = 760;
 
 type Phase = "hidden" | "active" | "boxing";
 interface Vec {
