@@ -11,6 +11,7 @@
 export type SoundName =
   | "correct"
   | "wrong"
+  | "defeat"
   | "badge"
   | "wizard"
   | "meow"
@@ -94,25 +95,34 @@ function tone(c: AudioContext, dest: GainNode, o: ToneOpts): void {
   osc.stop(t0 + dur + 0.03);
 }
 
-/** Short noise burst through a sweeping lowpass: a soft "fizzle". */
-function noiseFizzle(c: AudioContext, dest: GainNode): void {
-  const t0 = c.currentTime;
-  const dur = 0.22;
-  const src = c.createBufferSource();
-  src.buffer = getNoiseBuffer(c);
-  const lp = c.createBiquadFilter();
-  lp.type = "lowpass";
-  lp.frequency.setValueAtTime(1400, t0);
-  lp.frequency.exponentialRampToValueAtTime(280, t0 + dur);
-  const g = c.createGain();
-  g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(0.12, t0 + 0.02);
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  src.connect(lp);
-  lp.connect(g);
-  g.connect(dest);
-  src.start(t0);
-  src.stop(t0 + dur + 0.02);
+/**
+ * Short double "er-er" error buzzer — two flat square-wave blips through a lowpass
+ * filter, with a tiny gap between them. Reads clearly as "no" without being harsh.
+ */
+function errorBuzzer(c: AudioContext, dest: GainNode): void {
+  const blip = (delay: number, freq: number) => {
+    const t0 = c.currentTime + delay;
+    const dur = 0.1;
+    const osc = c.createOscillator();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(freq, t0);
+    const lp = c.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 880;
+    lp.Q.value = 0.7;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.24, t0 + 0.005);
+    g.gain.setValueAtTime(0.24, t0 + 0.035);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(lp);
+    lp.connect(g);
+    g.connect(dest);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  };
+  blip(0, 245);
+  blip(0.13, 220);
 }
 
 /** Tiny airy noise puff. */
@@ -201,10 +211,14 @@ const RECIPES: Record<SoundName, (c: AudioContext, d: GainNode) => void> = {
     tone(c, d, { freq: 1047, type: "triangle", dur: 0.14, delay: 0.08, gain: 0.42 });
     tone(c, d, { freq: 1568, type: "sine", dur: 0.22, delay: 0.16, gain: 0.26 });
   },
-  // Soft low fizzle: a gentle dip plus a quiet noise wash.
-  wrong: (c, d) => {
-    tone(c, d, { freq: 200, type: "sine", dur: 0.2, gain: 0.32, slideTo: 130 });
-    noiseFizzle(c, d);
+  // Short double "er-er" buzzer: unmistakable "no" without harshness.
+  wrong: (c, d) => errorBuzzer(c, d),
+  // Enemy dissolve: descending shimmer with a soft poof.
+  defeat: (c, d) => {
+    noisePoof(c, d);
+    tone(c, d, { freq: 880, type: "triangle", dur: 0.18, gain: 0.28, slideTo: 440 });
+    tone(c, d, { freq: 660, type: "sine", dur: 0.22, delay: 0.1, gain: 0.22, slideTo: 220 });
+    tone(c, d, { freq: 330, type: "sine", dur: 0.34, delay: 0.2, gain: 0.18, slideTo: 110 });
   },
   // Bright four-note arpeggio fanfare.
   badge: (c, d) => {
@@ -278,91 +292,51 @@ export type AuraKind = "hearts" | "lightning" | "circles" | "orbit" | "starburst
 const AURA_CYCLE_MS = 4000;
 
 /**
- * A whip crack to the ground: a quick rising air "swish" (the whip slicing
- * through the air) that snaps into a razor-sharp bright crack. No bass. `when`
- * offsets it within the cycle so several can fire in a row.
+ * A single distant thunder boom: punchy sub thump with a brief low noise puff.
+ * Short attack/decay so repeated hits read as "boom, boom, boom" — not a rolling rumble.
+ * `when` aligns with bolt animationDelay; `delay` is light-to-sound lag (~220ms).
  */
-function whipCrack(c: AudioContext, dest: GainNode, when: number): void {
-  const t0 = c.currentTime + when;
-  const swishDur = 0.12;
+function thunderBoom(
+  c: AudioContext,
+  dest: GainNode,
+  when: number,
+  opts: { gain?: number; delay?: number } = {}
+): void {
+  const strikeDelay = opts.delay ?? 0.22;
+  const t0 = c.currentTime + when + strikeDelay;
+  const peak = opts.gain ?? 0.44;
 
-  // Swish: rising bandpassed noise, building toward the snap.
-  const swish = c.createBufferSource();
-  swish.buffer = getNoiseBuffer(c);
-  const bp = c.createBiquadFilter();
-  bp.type = "bandpass";
-  bp.Q.value = 1.2;
-  bp.frequency.setValueAtTime(700, t0);
-  bp.frequency.exponentialRampToValueAtTime(4200, t0 + swishDur);
+  // Sub punch — fast attack, ~280ms decay, no treble crack.
+  const sub = c.createOscillator();
+  sub.type = "sine";
+  sub.frequency.setValueAtTime(64, t0);
+  sub.frequency.exponentialRampToValueAtTime(36, t0 + 0.2);
   const sg = c.createGain();
   sg.gain.setValueAtTime(0.0001, t0);
-  sg.gain.exponentialRampToValueAtTime(0.2, t0 + swishDur * 0.7);
-  sg.gain.exponentialRampToValueAtTime(0.0001, t0 + swishDur + 0.01);
-  swish.connect(bp);
-  bp.connect(sg);
+  sg.gain.exponentialRampToValueAtTime(peak, t0 + 0.016);
+  sg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.28);
+  sub.connect(sg);
   sg.connect(dest);
-  swish.start(t0);
-  swish.stop(t0 + swishDur + 0.04);
+  sub.start(t0);
+  sub.stop(t0 + 0.34);
 
-  // CRACK: a razor-sharp, bright snap right at the end of the swish.
-  const ct = t0 + swishDur;
-  const crack = c.createBufferSource();
-  crack.buffer = getNoiseBuffer(c);
-  const hp = c.createBiquadFilter();
-  hp.type = "highpass";
-  hp.frequency.value = 3500;
-  const cg = c.createGain();
-  cg.gain.setValueAtTime(0.0001, ct);
-  cg.gain.exponentialRampToValueAtTime(0.68, ct + 0.001); // instant, loud snap
-  cg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.07);
-  crack.connect(hp);
-  hp.connect(cg);
-  cg.connect(dest);
-  crack.start(ct);
-  crack.stop(ct + 0.09);
-
-  // A bright zap edge to sharpen the snap.
-  const zap = c.createOscillator();
-  zap.type = "sawtooth";
-  zap.frequency.setValueAtTime(3000, ct);
-  zap.frequency.exponentialRampToValueAtTime(1100, ct + 0.04);
-  const zg = c.createGain();
-  zg.gain.setValueAtTime(0.0001, ct);
-  zg.gain.exponentialRampToValueAtTime(0.22, ct + 0.001);
-  zg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.05);
-  zap.connect(zg);
-  zg.connect(dest);
-  zap.start(ct);
-  zap.stop(ct + 0.07);
-
-  // Booming low-mid impact for weight and loudness (punchy, not deep bass).
-  const boom = c.createOscillator();
-  boom.type = "sine";
-  boom.frequency.setValueAtTime(180, ct);
-  boom.frequency.exponentialRampToValueAtTime(80, ct + 0.18);
-  const bg = c.createGain();
-  bg.gain.setValueAtTime(0.0001, ct);
-  bg.gain.exponentialRampToValueAtTime(0.45, ct + 0.004);
-  bg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.26);
-  boom.connect(bg);
-  bg.connect(dest);
-  boom.start(ct);
-  boom.stop(ct + 0.3);
-
-  const body = c.createBufferSource();
-  body.buffer = getNoiseBuffer(c);
-  const blp = c.createBiquadFilter();
-  blp.type = "lowpass";
-  blp.frequency.value = 380;
-  const bog = c.createGain();
-  bog.gain.setValueAtTime(0.0001, ct);
-  bog.gain.exponentialRampToValueAtTime(0.3, ct + 0.006);
-  bog.gain.exponentialRampToValueAtTime(0.0001, ct + 0.24);
-  body.connect(blp);
-  blp.connect(bog);
-  bog.connect(dest);
-  body.start(ct);
-  body.stop(ct + 0.28);
+  // Brief lowpassed noise body — warm thunder, not electric fizz.
+  const puff = c.createBufferSource();
+  puff.buffer = getNoiseBuffer(c);
+  const lp = c.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.Q.value = 0.6;
+  lp.frequency.setValueAtTime(160, t0);
+  lp.frequency.exponentialRampToValueAtTime(65, t0 + 0.16);
+  const ng = c.createGain();
+  ng.gain.setValueAtTime(0.0001, t0);
+  ng.gain.exponentialRampToValueAtTime(peak * 0.32, t0 + 0.022);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.2);
+  puff.connect(lp);
+  lp.connect(ng);
+  ng.connect(dest);
+  puff.start(t0);
+  puff.stop(t0 + 0.24);
 }
 
 /** A swelling pad note (slow attack, hold, release) for warm/holy/deep auras. */
@@ -399,9 +373,11 @@ const AURA: Record<AuraKind, (c: AudioContext, d: GainNode) => void> = {
       tone(c, d, { freq: f, type: "triangle", dur: 0.55, delay: i * 0.5, gain: 0.08 })
     );
   },
-  // Booming whip cracks: 4 in quick succession, then a pause (the cycle repeats).
+  // Distinct thunder booms synced to bolt stagger (AvatarWizard: i * 0.28s) + ~220ms lag.
   lightning: (c, d) => {
-    [0, 0.3, 0.6, 0.92].forEach((t) => whipCrack(c, d, t));
+    [0, 0.28, 0.56, 0.84].forEach((t, i) =>
+      thunderBoom(c, d, t, { gain: 0.44 - i * 0.04 })
+    );
   },
   // A warm, glowing chord (a fifth + octave).
   circles: (c, d) => {

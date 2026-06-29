@@ -9,6 +9,7 @@
 
 import type { UserProfile } from "@/lib/types";
 import type { PracticeQuestion } from "@/lib/ai/validators";
+import { getLesson, getUnits } from "@/content/lessons";
 import {
   CONCEPTS,
   CONCEPT_LABEL,
@@ -25,6 +26,7 @@ import {
   getConceptSignals,
   isConceptDue,
   isConceptStruggling,
+  reviewSessionCount,
   type ConceptSignal,
 } from "./signals";
 import { getRetrievalForConcept } from "./retrieval";
@@ -220,3 +222,145 @@ export function getConceptNeed(
 }
 
 export { conceptsForLesson };
+
+const DAY = 86_400_000;
+
+function successRate(sig?: ConceptSignal): number | null {
+  if (!sig) return null;
+  const t = sig.correct + sig.wrong;
+  return t > 0 ? sig.correct / t : null;
+}
+
+function dueLabel(dueAt: number, now: number): string {
+  if (!dueAt) return "Soon";
+  if (dueAt <= now) {
+    const overdue = Math.floor((now - dueAt) / DAY);
+    return overdue >= 1 ? "Overdue" : "Today";
+  }
+  const days = Math.ceil((dueAt - now) / DAY);
+  return days <= 1 ? "Tomorrow" : `In ${days} days`;
+}
+
+function unitAndLessonForConcept(tag: ConceptTag): { unitTitle: string; lessonTitle: string } {
+  const lessonIds = lessonsForConcept(tag);
+  if (!lessonIds.length) return { unitTitle: "", lessonTitle: "" };
+  const primaryId = lessonIds[0];
+  const lessonTitle = getLesson(primaryId)?.title ?? primaryId;
+  let unitTitle = "";
+  for (const unit of getUnits()) {
+    if (unit.lessonIds.includes(primaryId)) {
+      unitTitle = unit.title;
+      break;
+    }
+  }
+  return { unitTitle, lessonTitle };
+}
+
+export type NeedsReviewReasonKind = "due" | "struggle" | "recall";
+
+export interface NeedsReviewItem {
+  tag: ConceptTag;
+  label: string;
+  /** User-facing reason label. */
+  reason: string;
+  reasonKind: NeedsReviewReasonKind;
+  due: string;
+  unitTitle: string;
+  lessonTitle: string;
+}
+
+const REASON_LABEL: Record<NeedsReviewReasonKind, string> = {
+  due: "Due for review",
+  struggle: "Recent struggle",
+  recall: "Needs another recall",
+};
+
+/**
+ * Actionable concepts to revisit — single source of truth for Grimoire, Tower,
+ * and AI review targeting. Combines spaced review, struggle signals, hints,
+ * retrieval success, and mastery status from the learner model.
+ */
+export function getNeedsReview(profile: UserProfile | null): NeedsReviewItem[] {
+  const signals = getConceptSignals();
+  const profiles = getLearnerConceptProfile(profile);
+  const profileByTag = new Map(profiles.map((p) => [p.tag, p]));
+  const now = Date.now();
+  const rows: (NeedsReviewItem & { group: number; sortKey: number })[] = [];
+
+  for (const tag of CONCEPTS) {
+    const sig = signals[tag];
+    const conceptProfile = profileByTag.get(tag);
+    if (conceptProfile?.status === "mastered") continue;
+
+    const { completed, started, total } = lessonStats(tag, profile);
+    const introduced = completed > 0 || started > 0 || (sig?.seen ?? 0) > 0;
+    if (!introduced) continue;
+
+    const attempts = sig ? sig.correct + sig.wrong : 0;
+    const sr = successRate(sig);
+    const sessions = reviewSessionCount(tag);
+    const struggling =
+      sig?.lastResult === "wrong" || ((sig?.wrong ?? 0) > (sig?.correct ?? 0) && (sig?.wrong ?? 0) > 0);
+    const due = isConceptDue(tag, now);
+    const dueSoon = !!sig && sig.dueAt > 0 && sig.dueAt <= now + DAY;
+    const recentlyWrong = sig?.lastResult === "wrong";
+    const heavyHints = (sig?.hints ?? 0) >= 2 && sig?.lastResult !== "correct";
+    const lowRetrieval = attempts >= 2 && (sr ?? 1) < 0.5;
+    const needsFirstRecall = total > 0 && completed >= total && (sig?.correct ?? 0) === 0;
+    const stale =
+      !sig || (sig.lastSeenAt > 0 && now - sig.lastSeenAt > 3 * DAY && !due && sessions < 2);
+
+    const clearedBySessions = sessions >= 2 && !struggling && !due && !recentlyWrong;
+    const clearedByRetrieval =
+      (sig?.correct ?? 0) >= 2 && (sr ?? 0) >= 0.7 && !struggling && !due && !dueSoon;
+    if (clearedBySessions || clearedByRetrieval) continue;
+
+    if (!struggling && !due && !dueSoon && !recentlyWrong && !heavyHints && !lowRetrieval && !needsFirstRecall && !stale) {
+      continue;
+    }
+
+    let reasonKind: NeedsReviewReasonKind;
+    if (struggling || recentlyWrong) reasonKind = "struggle";
+    else if (due || dueSoon) reasonKind = "due";
+    else reasonKind = "recall";
+
+    const group = reasonKind === "struggle" ? 0 : reasonKind === "due" ? 1 : 2;
+    const { unitTitle, lessonTitle } = unitAndLessonForConcept(tag);
+
+    rows.push({
+      tag,
+      label: CONCEPT_LABEL[tag],
+      reason: REASON_LABEL[reasonKind],
+      reasonKind,
+      due: dueLabel(sig?.dueAt ?? 0, now),
+      unitTitle,
+      lessonTitle,
+      group,
+      sortKey: sig?.dueAt ?? now,
+    });
+  }
+
+  rows.sort((a, b) => a.group - b.group || a.sortKey - b.sortKey);
+  return rows.map(({ tag, label, reason, reasonKind, due, unitTitle, lessonTitle }) => ({
+    tag,
+    label,
+    reason,
+    reasonKind,
+    due,
+    unitTitle,
+    lessonTitle,
+  }));
+}
+
+/** Whether a concept currently appears in Needs Review. */
+export function isConceptNeedsReview(profile: UserProfile | null, tag: ConceptTag): boolean {
+  return getNeedsReview(profile).some((item) => item.tag === tag);
+}
+
+/** Review item for a specific concept, if any. */
+export function getNeedsReviewItem(
+  profile: UserProfile | null,
+  tag: ConceptTag
+): NeedsReviewItem | null {
+  return getNeedsReview(profile).find((item) => item.tag === tag) ?? null;
+}

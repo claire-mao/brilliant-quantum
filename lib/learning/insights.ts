@@ -19,6 +19,7 @@ import {
   type ConceptTag,
 } from "./concepts";
 import { getConceptSignals, type ConceptSignal } from "./signals";
+import { getNeedsReview } from "./learner-model";
 import { getActivityTimes } from "@/lib/profile/activity";
 
 const DAY = 86_400_000;
@@ -135,67 +136,8 @@ export function getMemoryGrimoire(profile: UserProfile | null): ConceptMemory[] 
 
 /* ---------- needs review ---------- */
 
-export interface NeedsReviewItem {
-  tag: ConceptTag;
-  label: string;
-  due: string;
-  reason: string;
-}
-
-function dueLabel(dueAt: number, now: number): string {
-  if (!dueAt) return "Soon";
-  if (dueAt <= now) {
-    const overdue = Math.floor((now - dueAt) / DAY);
-    return overdue >= 1 ? "Overdue" : "Today";
-  }
-  const days = Math.ceil((dueAt - now) / DAY);
-  return days <= 1 ? "Tomorrow" : `In ${days} days`;
-}
-
-/**
- * Concepts the learner should revisit. Priority: (1) overdue spaced review,
- * (2) recent misconceptions, (3) low retrieval success, then due-soon.
- */
-export function getNeedsReview(profile: UserProfile | null): NeedsReviewItem[] {
-  const signals = getConceptSignals();
-  const now = Date.now();
-  const rows: (NeedsReviewItem & { group: number; sortKey: number })[] = [];
-
-  for (const tag of CONCEPTS) {
-    const sig = signals[tag];
-    const stats = lessonStats(tag, profile);
-    if (!isIntroduced(stats, sig)) continue;
-
-    const attempts = sig ? sig.correct + sig.wrong : 0;
-    const sr = successRate(sig);
-    const overdue = !!sig && sig.dueAt > 0 && sig.dueAt <= now;
-    const dueSoon = !!sig && sig.dueAt > 0 && sig.dueAt <= now + DAY;
-    const miss = sig?.lastResult === "wrong" && sig.misconceptions.length > 0;
-    const low = attempts >= 2 && (sr ?? 1) < 0.5;
-    if (!(dueSoon || miss || low)) continue;
-
-    const group = overdue ? 0 : miss ? 1 : low ? 2 : 3;
-    const reason = miss
-      ? "Recent misconception detected"
-      : overdue || dueSoon
-        ? "Memory beginning to fade"
-        : low
-          ? "Retrieval still shaky"
-          : "Time for a refresher";
-
-    rows.push({
-      tag,
-      label: CONCEPT_LABEL[tag],
-      due: dueLabel(sig?.dueAt ?? 0, now),
-      reason,
-      group,
-      sortKey: sig?.dueAt ?? now,
-    });
-  }
-
-  rows.sort((a, b) => a.group - b.group || a.sortKey - b.sortKey);
-  return rows.map(({ tag, label, due, reason }) => ({ tag, label, due, reason }));
-}
+export type { NeedsReviewItem, NeedsReviewReasonKind } from "./learner-model";
+export { getNeedsReview } from "./learner-model";
 
 /* ---------- current focus ---------- */
 

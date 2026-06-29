@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import RouteGuard from "@/components/RouteGuard";
 import NavBar from "@/components/NavBar";
 import TowerArena from "@/components/tower/TowerArena";
@@ -15,8 +15,16 @@ export default function TowerPage() {
 
   return (
     <RouteGuard>
-      <NavBar />
-      <TowerArena />
+      <NavBar variant="dark" />
+      <Suspense
+        fallback={
+          <div className="flex flex-1 items-center justify-center p-8 text-sm text-slate-400">
+            Loading the tower…
+          </div>
+        }
+      >
+        <TowerArena />
+      </Suspense>
     </RouteGuard>
   );
 }

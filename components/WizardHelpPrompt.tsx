@@ -4,28 +4,26 @@ import { useEffect, useRef } from "react";
 import { useCompanion } from "@/components/companions/CompanionProvider";
 import { saveTowerHintContext, type HintRequest } from "@/lib/companions/tower-context";
 import { playSound } from "@/lib/sound/sounds";
-
-/** A single friendly invite. From here the wizard walks the learner step by step. */
-const OFFER_MESSAGE = "Stuck here? Let's work through it together, one step at a time.";
+import { AI_OFF_HINT_FALLBACKS, WRONG_ESCALATION, type HintLevel } from "@/lib/companions/messages";
 
 /**
- * Handwritten scaffolded steps used when the AI is unavailable. They follow the
- * same four levels as the AI so the step-by-step loop works fully AI-off:
- * retrieval cue -> attention cue -> concept cue -> short explanation.
+ * Opening offer after a wrong answer (the first rung of the escalation ladder).
+ * From here the wizard walks the learner through it one step at a time.
  */
-function fallbackForLevel(level: number, ctx: HintRequest): string {
-  switch (level) {
-    case 1:
-      return "First, recall what the previous experiment or step showed. What happened there?";
-    case 2:
-      return "Now look closely at what changed right before the result, and focus your attention there.";
-    case 3:
-      return "Think about the core idea at play here, how the amplitudes or phase behave.";
-    default:
-      return ctx.feedback
-        ? `${ctx.feedback} Re-read that note, then finish the final step yourself.`
-        : "Here is the reasoning in full. Walk through it, then complete the final step yourself.";
-  }
+const OFFER_MESSAGE = WRONG_ESCALATION[1];
+
+/** Clamp an arbitrary step number to a valid 1..4 scaffolding level. */
+function toHintLevel(level: number): HintLevel {
+  return Math.min(4, Math.max(1, Math.floor(level))) as HintLevel;
+}
+
+/**
+ * Handwritten hint content used when the AI hint call is unavailable. Mirrors the
+ * four AI scaffolding levels (retrieval -> attention -> concept -> reasoning) so
+ * the step-by-step loop still works fully AI-off.
+ */
+function fallbackForLevel(level: number): string {
+  return AI_OFF_HINT_FALLBACKS[toHintLevel(level)];
 }
 
 const START_ACTION = { id: "help-hint", label: "Walk me through it", variant: "primary" as const };
@@ -84,12 +82,12 @@ export default function WizardHelpPrompt({
         const res = await fetch("/api/ai/hint", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...ctx, level }),
+          body: JSON.stringify({ ...ctx, level, pageKind: "lesson" }),
         });
         const data = (await res.json().catch(() => null)) as { hint?: string } | null;
-        hint = res.ok && data?.hint ? data.hint : fallbackForLevel(level, ctx);
+        hint = res.ok && data?.hint ? data.hint : fallbackForLevel(level);
       } catch {
-        hint = fallbackForLevel(level, ctx);
+        hint = fallbackForLevel(level);
       }
       // After every hint, keep guiding: offer the next step until the reasoning
       // is fully walked (level 4), where the learner completes the final step.

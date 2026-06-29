@@ -1,11 +1,8 @@
 "use client";
 
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { InlineMath } from "@/components/MathText";
 
 export type CatPhase = "appearing" | "present" | "leaving";
-
-const SCHRODINGER_EQ = "i\\hbar\\frac{\\partial}{\\partial t}\\Psi = \\hat{H}\\Psi";
 
 const FUR = "#94a3b8";
 const FUR_DK = "#64748b";
@@ -16,8 +13,8 @@ const PINK = "#f9a8d4";
  * The wizard's familiar: a blocky, pixel-style cat matching the pixel wizard. It
  * blinks/lifts its head and swishes its tail at rest, breaks into a blocky run
  * (legs + body bob) while chasing, and meows with little sound lines when clicked.
- * When it leaves, a cardboard box lowers from above and it sinks inside. SVG + CSS
- * only; animations freeze under prefers-reduced-motion.
+ * When it leaves, a cardboard box pops up, the cat lifts above it, then drops
+ * inside. SVG + CSS only; animations freeze under prefers-reduced-motion.
  */
 export default function SchrodingerCat({
   phase,
@@ -60,16 +57,11 @@ export default function SchrodingerCat({
       </span>
 
       {leaving && (
-        <>
-          <span className="schro-eq absolute -top-4 left-1/2 whitespace-nowrap rounded-md bg-indigo-950/85 px-1.5 py-0.5 text-[0.55rem] leading-none text-indigo-100 shadow-[0_0_10px_rgba(99,102,241,0.6)]">
-            <InlineMath>{SCHRODINGER_EQ}</InlineMath>
-          </span>
-          <span className="schro-box absolute inset-0 z-[2] block">
-            <svg viewBox="0 0 24 24" className="h-full w-full overflow-visible">
-              <CardboardBox />
-            </svg>
-          </span>
-        </>
+        <span className="schro-box absolute inset-0 z-[2] block">
+          <svg viewBox="0 0 24 24" className="h-full w-full overflow-visible">
+            <CardboardBox />
+          </svg>
+        </span>
       )}
     </span>
   );
@@ -106,8 +98,9 @@ function PixelCat({ active, running, meowing }: { active: boolean; running: bool
         <rect x={11} y={2} width={2} height={2} fill={FUR} />
         <rect x={4.5} y={3} width={1} height={1} fill={PINK} />
         <rect x={11.5} y={3} width={1} height={1} fill={PINK} />
-        {/* square head */}
-        <rect x={4} y={4} width={9} height={6} fill={FUR} />
+        {/* square head; extends down into the body (same FUR color, so invisible
+            at rest) so a head lift never opens a seam between head and body */}
+        <rect x={4} y={4} width={9} height={8} fill={FUR} />
         {/* tiny pixel eyes */}
         <rect x={6} y={6} width={1} height={2} fill={EYE} />
         <rect x={10} y={6} width={1} height={2} fill={EYE} />
@@ -127,10 +120,12 @@ function PixelCat({ active, running, meowing }: { active: boolean; running: bool
   );
 }
 
-/** A cardboard box, larger than the cat, with two open flaps and a taped seam. */
+/** A cardboard box, larger than the cat, with two open flaps and a taped seam.
+ *  Scaled up around its opening (12, 11) so it grows wider and deeper without
+ *  moving the rim, keeping the cat's lift-and-drop timing intact. */
 function CardboardBox() {
   return (
-    <g>
+    <g transform="translate(12 11) scale(1.35) translate(-12 -11)">
       <rect x={4.5} y={9} width={15} height={3.6} fill="#5b3d22" />
       <path d="M4.5 10 L1.4 6.4 L8 7.6 L12 10 Z" fill="#e0b985" stroke="#8a5a2b" strokeWidth={0.3} strokeLinejoin="round" />
       <path d="M19.5 10 L22.6 6.4 L16 7.6 L12 10 Z" fill="#cda46e" stroke="#8a5a2b" strokeWidth={0.3} strokeLinejoin="round" />

@@ -12,15 +12,15 @@ export default function TowerCard() {
   const [hover, setHover] = useState(false);
 
   return (
-    <div className="mt-6 flex justify-center">
+    <div className="mt-6 flex w-full justify-center overflow-visible px-1">
       <Link
         href="/tower"
         aria-label="Enter the Wizard Tower"
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
-        className="tower-trigger group relative flex flex-col items-center"
+        className="tower-trigger group relative flex w-full max-w-[16.2rem] flex-col items-center"
       >
-        <div className="relative">
+        <div className="relative w-full">
           <TowerArt active={hover} />
           <TowerMagic />
         </div>
@@ -83,10 +83,10 @@ function TowerMagic() {
   );
 }
 
-/** A tall pixel-stone castle. viewBox 120x200 (slender + tall). */
+/** A tall pixel-stone castle. viewBox 120x200 (slender + tall). ~3× prior h-60/w-36 footprint. */
 function TowerArt({ active }: { active: boolean }) {
   return (
-    <svg viewBox="0 0 120 200" className="h-60 w-36" aria-hidden="true">
+    <svg viewBox="0 0 120 200" className="mx-auto aspect-[120/200] h-auto w-full" aria-hidden="true">
       <defs>
         <linearGradient id="tower-stone-deep" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#818cf8" />

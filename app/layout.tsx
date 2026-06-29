@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Cinzel } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
@@ -17,6 +17,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Old, engraved-stone serif used to give the Tower a mysterious, ancient feel.
+const cinzel = Cinzel({
+  variable: "--font-arcane",
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "900"],
+});
+
 export const metadata: Metadata = {
   title: "Brilliant Quantum",
   description: "Build intuition for quantum computing through short, interactive lessons.",
@@ -30,9 +37,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col overflow-x-clip">
         <AuthProvider>
           <CompanionProvider>
             {children}

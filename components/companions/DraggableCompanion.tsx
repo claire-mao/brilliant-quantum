@@ -17,12 +17,18 @@ import {
   type WizardPhysics,
 } from "@/lib/companions/physics";
 import { getAnchorPixelPosition, WIZARD_SIZE, MARGIN, NAV_SAFE_TOP } from "@/lib/companions/walking";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { pageKindFromPath } from "@/lib/companions/page-context";
+import { pickDashboardMessage, pickIdleClickMessage, pickProfileMessage, pickRandom } from "@/lib/companions/messages";
+import { clamp } from "@/lib/utils/clamp";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { playCatMeow } from "@/lib/sound/sounds";
 import { useCompanion } from "./CompanionProvider";
 import { SparkleBurst } from "../WizardCompanion";
 import SpeechBubble from "./SpeechBubble";
 import { AGENT_AVATARS } from "./agents";
 import SchrodingerCat, { type CatPhase } from "./SchrodingerCat";
-import { playCatMeow } from "@/lib/sound/sounds";
 
 const DRAG_THRESHOLD = 5;
 const CAT_SIZE = 48;
@@ -37,44 +43,29 @@ function computeCatTarget(p: { x: number; y: number }): { x: number; y: number }
   };
 }
 
-const CLICK_MESSAGES = [
-  "Still here.",
-  "Need a nudge?",
-  "That rune looked suspicious.",
-  "Try the experiment first.",
-  "Explore the tower when you're ready.",
-];
+// Cat copy lives at module scope so the random pick stays out of render (the
+// React Compiler purity lint flags Math.random in component/render scope).
+const CAT_APPEAR_MESSAGES = ["The cat peeks out.", "The cat is watching.", "A cat appears."];
+const CAT_BOX_MESSAGES = ["The cat slips in.", "The box rustles.", "A meow from inside."];
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
-
-function useReducedMotion(): boolean {
-  const [reduce, setReduce] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const handler = () => setReduce(mq.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-  return reduce;
-}
-
+/**
+ * Draggable floating companion shell: pointer drag with physics, anchor snapping,
+ * speech bubbles, and optional Schrödinger cat follower on dashboard/profile pages.
+ */
 export default function DraggableCompanion({
   companion,
   onDismiss,
+  onUpdate,
 }: {
   companion: ActiveCompanion;
   onDismiss: (agent: AgentId) => void;
-  // Kept for API compatibility; idle walking is disabled so these are unused.
   onUpdate?: (agent: AgentId, update: CompanionUpdate) => void;
   isInteractionPaused?: () => boolean;
 }) {
   const anchor = ANCHORS[companion.anchorId];
   const Avatar = AGENT_AVATARS[companion.agent];
   const { registerInteraction } = useCompanion();
+  const { profile } = useAuth();
 
   const [pos, setPos] = useState<{ x: number; y: number }>(() =>
     typeof window !== "undefined" ? getAnchorPixelPosition(companion.anchorId) : { x: 0, y: 0 }
@@ -101,6 +92,7 @@ export default function DraggableCompanion({
   const [catArrived, setCatArrived] = useState(false);
 
   const reduce = useReducedMotion();
+  const pathname = usePathname();
   const drag = useRef({
     offsetX: 0,
     offsetY: 0,
@@ -121,6 +113,8 @@ export default function DraggableCompanion({
   const catPosRef = useRef<{ x: number; y: number } | null>(null);
   const catRafRef = useRef<number | null>(null);
   const arriveTimerRef = useRef<number | null>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const [bubbleWidth, setBubbleWidth] = useState(140);
   useEffect(() => {
     const pending = timers.current;
     return () => {
@@ -219,6 +213,31 @@ export default function DraggableCompanion({
       el.style.transform = `translate3d(${c.x}px, ${c.y}px, 0)`;
     }
   }, [catState, reduce, pos, dragging]);
+
+  const bubbleMessage = clickMsg ?? companion.message;
+  const bubbleState = clickMsg ? "speaking" : companion.state;
+  const bubbleActions = clickMsg ? undefined : companion.bubbleActions;
+  const showBubble =
+    !!Avatar &&
+    companion.phase === "present" &&
+    !dragging &&
+    !picked &&
+    (bubbleState === "thinking" || !!bubbleMessage || !!bubbleActions?.length);
+
+  useLayoutEffect(() => {
+    if (!showBubble) return;
+    const el = bubbleRef.current;
+    if (!el) return;
+
+    const syncWidth = () => {
+      setBubbleWidth(el.getBoundingClientRect().width);
+    };
+
+    syncWidth();
+    const ro = new ResizeObserver(syncWidth);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [showBubble, bubbleMessage, bubbleState, bubbleActions]);
 
   if (!Avatar) return null;
 
@@ -338,8 +357,8 @@ export default function DraggableCompanion({
       const roll = Math.random();
       let catMsg: string | null = null;
       if (catState === "hidden" && roll < 0.1) {
-        // 1 in 10: the familiar pads out.
-        catMsg = "A curious familiar pads out of my sleeve.";
+        // 1 in 10: the cat appears.
+        catMsg = pickRandom(CAT_APPEAR_MESSAGES);
         playCatMeow();
         if (reduce) {
           setCatState("present");
@@ -348,8 +367,8 @@ export default function DraggableCompanion({
           later(() => setCatState("present"), 520);
         }
       } else if (catState === "present" && roll < 0.05) {
-        // 1 in 20: into the cardboard box it goes, both here and not.
-        catMsg = "Into the box it goes. Now it is both here and not.";
+        // 1 in 20: the cat goes into the box.
+        catMsg = pickRandom(CAT_BOX_MESSAGES);
         playCatMeow();
         if (reduce) {
           setCatState("hidden");
@@ -362,13 +381,38 @@ export default function DraggableCompanion({
           }, 2500);
         }
       }
-      const msg = catMsg ?? CLICK_MESSAGES[Math.floor(Math.random() * CLICK_MESSAGES.length)];
-      setClickMsg(msg);
       if (!reduce) {
         setPopping(true);
         later(() => setPopping(false), 360);
       }
-      later(() => setClickMsg(null), catMsg ? 6000 : 5000);
+      if (catMsg) {
+        // Cat quips stay ephemeral; they never replace a pinned dashboard line.
+        setClickMsg(catMsg);
+        later(() => setClickMsg(null), 6000);
+      } else if (pageKindFromPath(pathname) === "dashboard" && onUpdate) {
+        // Dashboard: pick from the full dashboard pool and pin until dismiss / action.
+        onUpdate(companion.agent, {
+          state: "speaking",
+          message: pickDashboardMessage(profile),
+          source: "manual-dashboard",
+        });
+      } else if (pageKindFromPath(pathname) === "profile" && onUpdate) {
+        // Profile: rotate through the profile pool and pin until dismiss / action.
+        onUpdate(companion.agent, {
+          state: "speaking",
+          message: pickProfileMessage(profile),
+          source: "manual-profile",
+        });
+      } else {
+        const pinnedManual =
+          companion.messageSource === "manual-dashboard" ||
+          companion.messageSource === "manual-profile";
+        const msg = pickIdleClickMessage(pathname);
+        if (!pinnedManual) {
+          setClickMsg(msg);
+          later(() => setClickMsg(null), 5000);
+        }
+      }
     }
   }
 
@@ -391,15 +435,6 @@ export default function DraggableCompanion({
         ? "companion-out"
         : "";
   const teleporting = (companion.phase === "entering" && !hasUserDragged) || companion.phase === "leaving";
-
-  const bubbleMessage = clickMsg ?? companion.message;
-  const bubbleState = clickMsg ? "speaking" : companion.state;
-  const bubbleActions = clickMsg ? undefined : companion.bubbleActions;
-  const showBubble =
-    companion.phase === "present" &&
-    !dragging &&
-    !picked &&
-    (bubbleState === "thinking" || !!bubbleMessage || !!bubbleActions?.length);
 
   const activePhysics = dragging ? physics : settling ? settleStart : PHYSICS_IDLE;
   const wrapperStyle: CSSProperties = {
@@ -439,23 +474,42 @@ export default function DraggableCompanion({
 
   const vw = typeof window !== "undefined" ? window.innerWidth : 0;
   const vh = typeof window !== "undefined" ? window.innerHeight : 0;
+  const pageKind = pageKindFromPath(pathname);
 
   // The wizard stays put on click; only the bubble shifts to stay fully on
-  // screen, with its arrow still pointing at the wizard.
-  const bubbleW = vw > 0 ? Math.min(240, Math.max(160, vw - 16)) : 240;
+  // screen, with its arrow still pointing at the wizard. Max width is
+  // viewport-aware; actual width shrinks to fit short copy via fit-content.
+  const bubbleMax =
+    pageKind === "dashboard" || pageKind === "lesson" || pageKind === "profile"
+      ? vw >= 768
+        ? 320
+        : vw >= 640
+          ? 280
+          : Math.min(260, vw - 32)
+      : vw >= 640
+        ? 240
+        : Math.min(220, vw - 32);
+  const bubbleMin = 120;
+
   const wizardCenterX = pos.x + WIZARD_SIZE / 2;
-  const bubbleLeftVp = clamp(wizardCenterX - bubbleW / 2, 8, Math.max(8, vw - bubbleW - 8));
-  const arrowLeft = clamp(wizardCenterX - bubbleLeftVp, 16, bubbleW - 16);
+  const bubbleLeftVp = clamp(wizardCenterX - bubbleWidth / 2, 8, Math.max(8, vw - bubbleWidth - 8));
+  const arrowLeft = clamp(wizardCenterX - bubbleLeftVp, 16, bubbleWidth - 16);
 
   const bubble = showBubble ? (
     <SpeechBubble
+      ref={bubbleRef}
+      key={bubbleMessage ?? "thinking"}
       state={bubbleState}
       message={bubbleMessage}
       arrow={arrow}
       horizontal={horizontal}
       actions={bubbleActions}
       onClose={() => onDismiss(companion.agent)}
-      style={{ width: bubbleW, marginLeft: bubbleLeftVp - pos.x }}
+      style={{
+        minWidth: bubbleMin,
+        maxWidth: vw > 0 ? Math.min(bubbleMax, vw - 32) : bubbleMax,
+        marginLeft: bubbleLeftVp - pos.x,
+      }}
       arrowLeft={arrowLeft}
     />
   ) : null;
@@ -475,7 +529,7 @@ export default function DraggableCompanion({
         style={useAnchorClass ? undefined : positionStyle}
         onPointerDownCapture={() => registerInteraction()}
       >
-        <div className={`flex max-w-[16rem] flex-col items-start gap-1 ${phaseClass}`}>
+        <div className={`flex w-fit max-w-full flex-col items-start gap-1 ${phaseClass}`}>
           {vertical === "top" ? (
             <>
               {avatar}

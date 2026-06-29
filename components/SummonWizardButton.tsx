@@ -1,25 +1,34 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useCompanion } from "@/components/companions/CompanionProvider";
 import type { BubbleAction, ContextKind } from "@/lib/companions/types";
-import { getTowerHintContext, getTowerTopic } from "@/lib/companions/tower-context";
+import {
+  aiTopicForPage,
+  hintContextForPage,
+  pageKindFromPath,
+  type PageKind,
+} from "@/lib/companions/page-context";
 import { quantumBasicsCourse } from "@/content/lessons";
 import type { UserProfile } from "@/lib/types";
+import {
+  FAREWELLS,
+  LESSON_PAGE_MESSAGES,
+  SUMMON_FALLBACKS,
+  TOWER_MESSAGES,
+  pickDashboardMessage,
+  pickProfileMessage,
+  pickRandom,
+} from "@/lib/companions/messages";
 
-const HINT_FALLBACK = "Look back at the experiment first — what changed right before the answer appeared?";
-const FACT_FALLBACK = "The guide's spellbook is resting. Your lessons are unaffected — try again later.";
-const NO_CONTEXT_HINT =
-  "Open a lesson and attempt a challenge — then I can point at the useful clue.";
-
-/** App pages where the summon control should appear. */
+/** App pages where the summon control should appear (never inside the Tower or auth). */
 function isAppPage(pathname: string): boolean {
   return (
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/lessons") ||
-    pathname.startsWith("/tower")
+    pathname.startsWith("/profile")
   );
 }
 
@@ -36,11 +45,18 @@ interface SceneCopy {
   actions: BubbleAction[];
 }
 
-function sceneFor(pathname: string): SceneCopy {
+/**
+ * Pick the bubble copy for the page the wizard was summoned on. All copy comes
+ * from the local (non-AI) pools in lib/companions/messages.ts. This runs from a
+ * click handler (openHome), so the module-level random pickers are safe here.
+ * The dashboard line is context-aware: it reflects the learner's local progress,
+ * review needs, and streak rather than a fixed greeting.
+ */
+function sceneFor(pathname: string, profile: UserProfile | null): SceneCopy {
   if (pathname.startsWith("/lessons")) {
     return {
       context: "hint",
-      message: "Need a nudge?",
+      message: pickRandom(LESSON_PAGE_MESSAGES),
       actions: [
         { id: "summon-hint", label: "Hint", variant: "primary" },
         { id: "summon-practice", label: "Practice", variant: "ghost" },
@@ -48,13 +64,21 @@ function sceneFor(pathname: string): SceneCopy {
       ],
     };
   }
-  if (pathname.startsWith("/tower")) {
-    return { context: "generic", message: "Choose your next challenge.", actions: [] };
+  if (pathname.startsWith("/profile")) {
+    return {
+      context: "generic",
+      message: pickProfileMessage(profile),
+      actions: [{ id: "summon-dashboard", label: "Back to course", variant: "primary" }],
+    };
   }
-  // dashboard (default app page)
+  if (pathname.startsWith("/tower")) {
+    return { context: "generic", message: pickRandom(TOWER_MESSAGES), actions: [] };
+  }
+  // dashboard / home (default app page): one context-aware line, kept stable
+  // until dismissed or replaced by Continue (see the manual-dashboard pin).
   return {
     context: "generic",
-    message: "Ready for the next lesson?",
+    message: pickDashboardMessage(profile),
     actions: [{ id: "summon-continue", label: "Continue", variant: "primary" }],
   };
 }
@@ -81,9 +105,16 @@ export default function SummonWizardButton() {
     ];
 
     async function askHint() {
-      const ctx = getTowerHintContext();
+      const ctx = hintContextForPage(pathname);
+      const pageKind = pageKindFromPath(pathname) as PageKind;
       if (!ctx) {
-        update("wizard", { state: "speaking", message: NO_CONTEXT_HINT, bubbleActions: undefined, autoDismissMs: 16000 });
+        const fallback =
+          pageKind === "profile"
+            ? SUMMON_FALLBACKS.profileHint
+            : pageKind === "dashboard"
+              ? SUMMON_FALLBACKS.dashboardHint
+              : SUMMON_FALLBACKS.noContext;
+        update("wizard", { state: "speaking", message: fallback, bubbleActions: undefined, autoDismissMs: 16000 });
         return;
       }
       update("wizard", { state: "thinking", message: undefined, bubbleActions: undefined });
@@ -91,47 +122,62 @@ export default function SummonWizardButton() {
         const res = await fetch("/api/ai/hint", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(ctx),
+          body: JSON.stringify({ ...ctx, pageKind }),
         });
         const data = (await res.json().catch(() => null)) as { hint?: string } | null;
-        const hint = res.ok && data?.hint ? data.hint : HINT_FALLBACK;
+        const hint = res.ok && data?.hint ? data.hint : SUMMON_FALLBACKS.hint;
         update("wizard", { state: "speaking", message: hint, bubbleActions: undefined, wandAim: 16, autoDismissMs: 22000 });
       } catch {
-        update("wizard", { state: "speaking", message: HINT_FALLBACK, bubbleActions: undefined, autoDismissMs: 22000 });
+        update("wizard", { state: "speaking", message: SUMMON_FALLBACKS.hint, bubbleActions: undefined, autoDismissMs: 22000 });
       }
     }
 
     async function askFunFact() {
-      const topic = getTowerTopic() ?? "quantum computing";
+      const topic = aiTopicForPage(pathname);
+      const pageKind = pageKindFromPath(pathname) as PageKind;
       update("wizard", { state: "thinking", message: undefined, bubbleActions: undefined });
       try {
         const res = await fetch("/api/ai/fun-fact", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ topic }),
+          body: JSON.stringify({ topic, pageKind }),
         });
         const data = (await res.json().catch(() => null)) as { fact?: string } | null;
-        const fact = res.ok && data?.fact ? data.fact : FACT_FALLBACK;
+        const fact = res.ok && data?.fact ? data.fact : SUMMON_FALLBACKS.funFact;
         update("wizard", { state: "speaking", message: fact, bubbleActions: undefined, wandAim: -12, autoDismissMs: 24000 });
       } catch {
-        update("wizard", { state: "speaking", message: FACT_FALLBACK, bubbleActions: undefined, autoDismissMs: 24000 });
+        update("wizard", { state: "speaking", message: SUMMON_FALLBACKS.funFact, bubbleActions: undefined, autoDismissMs: 24000 });
       }
     }
 
     function go(href: string, farewell: string) {
-      update("wizard", { state: "speaking", message: farewell, bubbleActions: undefined, autoDismissMs: 4000 });
+      // A user-pressed button is a manual action, so it may replace the pinned message.
+      update("wizard", { state: "speaking", message: farewell, bubbleActions: undefined, autoDismissMs: 4000, source: "manual" });
       router.push(href);
     }
 
     setBubbleActionHandler("summon-hint", () => void askHint());
-    setBubbleActionHandler("summon-practice", () => go("/tower", "To the arena — let's practice."));
+    setBubbleActionHandler("summon-practice", () => go("/tower", FAREWELLS.practice));
     setBubbleActionHandler("summon-funfact", () => void askFunFact());
-    setBubbleActionHandler("summon-continue", () => go(nextLessonHref(profile), "Onward, apprentice."));
-    setBubbleActionHandler("summon-tower", () => go("/tower", "To the tower."));
-    setBubbleActionHandler("summon-dashboard", () => go("/dashboard", "Back to the course."));
+    setBubbleActionHandler("summon-continue", () => go(nextLessonHref(profile), FAREWELLS.continue));
+    setBubbleActionHandler("summon-tower", () => go("/tower", FAREWELLS.tower));
+    setBubbleActionHandler("summon-dashboard", () => go("/dashboard", FAREWELLS.dashboard));
 
     return () => ids.forEach(clearBubbleActionHandler);
-  }, [profile, router, update, setBubbleActionHandler, clearBubbleActionHandler]);
+  }, [pathname, profile, router, update, setBubbleActionHandler, clearBubbleActionHandler]);
+
+  // Reset the companion on navigation so a page's message never lingers onto the
+  // next one. The Tower is Alice's arena (never float the companion there), and
+  // leaving the dashboard drops the pinned greeting so it cannot block or carry
+  // over to another page.
+  const prevPathRef = useRef(pathname);
+  useEffect(() => {
+    const prev = prevPathRef.current;
+    prevPathRef.current = pathname;
+    const leftDashboard = prev.startsWith("/dashboard") && !pathname.startsWith("/dashboard");
+    const leftProfile = prev.startsWith("/profile") && !pathname.startsWith("/profile");
+    if (pathname.startsWith("/tower") || leftDashboard || leftProfile) dismiss("wizard");
+  }, [pathname, dismiss]);
 
   if (!user || !isAppPage(pathname)) return null;
 
@@ -141,8 +187,9 @@ export default function SummonWizardButton() {
       dismiss("wizard");
       return;
     }
-    const scene = sceneFor(pathname);
-    // Always spawn the companion in front of its home (no random anchor).
+    const scene = sceneFor(pathname, profile);
+    // Always spawn the companion in front of its home (no random anchor). The
+    // dashboard greeting is pinned as a manual message so nothing auto-overwrites it.
     summon({
       context: scene.context,
       state: "speaking",
@@ -151,6 +198,11 @@ export default function SummonWizardButton() {
       bubbleActions: scene.actions.length ? scene.actions : undefined,
       showMotes: true,
       wandAim: 18,
+      source: pathname.startsWith("/dashboard")
+        ? "manual-dashboard"
+        : pathname.startsWith("/profile")
+          ? "manual-profile"
+          : "manual-lesson",
     });
   }
 
@@ -160,7 +212,7 @@ export default function SummonWizardButton() {
         type="button"
         onClick={openHome}
         aria-label="Open the wizard's home"
-        className="home-trigger pointer-events-auto group flex items-center justify-center bg-transparent transition-transform hover:scale-[1.03] active:scale-95"
+        className="home-trigger pointer-events-auto group flex min-h-11 min-w-11 items-center justify-center bg-transparent transition-transform hover:scale-[1.03] active:scale-95"
       >
         <PixelHome />
       </button>

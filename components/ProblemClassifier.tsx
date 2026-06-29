@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import MathText from "./MathText";
+import ProgressiveFeedbackPanel from "./ProgressiveFeedbackPanel";
+import { getCorrectHeadline, shouldRevealAnswer } from "@/lib/learning/progressive-feedback";
 
 /**
  * Graded sorting task: classify problems by the kind of quantum speedup they
@@ -70,8 +72,11 @@ export default function ProblemClassifier({
 }) {
   const [picks, setPicks] = useState<Record<string, Category>>({});
   const [checked, setChecked] = useState(false);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [showExplanationRequested, setShowExplanationRequested] = useState(false);
   const allAnswered = problems.every((p) => picks[p.id]);
   const allCorrect = problems.every((p) => picks[p.id] === p.answer);
+  const reveal = shouldRevealAnswer(wrongCount, showExplanationRequested, allCorrect);
 
   function choose(id: string, cat: Category) {
     setPicks((p) => ({ ...p, [id]: cat }));
@@ -80,7 +85,9 @@ export default function ProblemClassifier({
   function check() {
     onAttempt();
     setChecked(true);
-    onCanAdvanceChange(problems.every((p) => picks[p.id] === p.answer));
+    const ok = problems.every((p) => picks[p.id] === p.answer);
+    onCanAdvanceChange(ok);
+    if (!ok) setWrongCount((c) => c + 1);
   }
 
   return (
@@ -115,7 +122,7 @@ export default function ProblemClassifier({
                   </button>
                 ))}
               </div>
-              {checked && pick && <p className="mt-2 text-xs text-slate-600">{p.note}</p>}
+              {checked && pick && reveal && <p className="mt-2 text-xs text-slate-600">{p.note}</p>}
             </div>
           );
         })}
@@ -132,21 +139,32 @@ export default function ProblemClassifier({
       {!allAnswered && (
         <p className="mt-2 text-xs text-slate-400">Classify every problem to check.</p>
       )}
-      {checked && (
-        <p
-          className={`mt-3 rounded-lg px-4 py-3 text-sm leading-6 ${
-            allCorrect ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"
-          }`}
-        >
-          {allCorrect
-            ? "All correct. Quantum speedups are real but selective."
-            : "Not all correct yet. Review the highlighted rows and try again."}
-        </p>
+      {checked && allCorrect && (
+        <ProgressiveFeedbackPanel
+          isCorrect
+          wrongCount={wrongCount}
+          showExplanationRequested={showExplanationRequested}
+          onRequestExplanation={() => setShowExplanationRequested(true)}
+          questionContext={{ fullExplanation: teaching }}
+          correctHeadline={getCorrectHeadline(wrongCount)}
+          correctExplanation="All correct. Quantum speedups are real but selective."
+        />
+      )}
+      {checked && !allCorrect && (
+        <ProgressiveFeedbackPanel
+          isCorrect={false}
+          wrongCount={wrongCount}
+          showExplanationRequested={showExplanationRequested}
+          onRequestExplanation={() => setShowExplanationRequested(true)}
+          questionContext={{ fullExplanation: teaching }}
+        />
       )}
 
-      <p className="mt-4 text-sm leading-6 text-slate-500">
-        <MathText>{teaching}</MathText>
-      </p>
+      {(allCorrect || reveal) && (
+        <p className="mt-4 text-sm leading-6 text-slate-500">
+          <MathText>{teaching}</MathText>
+        </p>
+      )}
     </div>
   );
 }

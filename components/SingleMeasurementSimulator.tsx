@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ProbabilityVisual from "./ProbabilityVisual";
+import MathText from "./MathText";
 
 /**
  * Measure a single qubit once. Before measuring it shows the uncertain
@@ -58,7 +59,9 @@ export default function SingleMeasurementSimulator({
       </button>
 
       {result !== null && (
-        <p className="mt-4 text-sm leading-6 text-slate-600">{teaching}</p>
+        <p className="mt-4 text-sm leading-6 text-slate-600">
+          <MathText>{teaching}</MathText>
+        </p>
       )}
     </div>
   );

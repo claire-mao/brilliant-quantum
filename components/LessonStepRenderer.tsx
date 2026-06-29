@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import type { LessonStep } from "@/lib/types";
 import QubitSlider from "./QubitSlider";
 import ProbabilityVisual from "./ProbabilityVisual";
@@ -22,7 +21,8 @@ import InterferenceSimulator from "./InterferenceSimulator";
 import ReflectionCard from "./ReflectionCard";
 import LearnMore from "./LearnMore";
 import MathText from "./MathText";
-import WizardHelpPrompt from "./WizardHelpPrompt";
+import { getCorrectHeadline } from "@/lib/learning/progressive-feedback";
+import ProgressiveFeedbackPanel from "./ProgressiveFeedbackPanel";
 import WorkedExample from "./WorkedExample";
 import { saveTowerHintContext } from "@/lib/companions/tower-context";
 import { primaryConcept, type ConceptTag } from "@/lib/learning/concepts";
@@ -47,6 +47,8 @@ import DecoherenceSimulator from "./DecoherenceSimulator";
 import ErrorCorrectionExplorer from "./ErrorCorrectionExplorer";
 import ApplicationClassifier from "./ApplicationClassifier";
 import TechnologyTimeline from "./TechnologyTimeline";
+import UnitSigil, { sigilForUnitId } from "./dashboard/UnitSigil";
+import { getUnits } from "@/content/lessons";
 
 /**
  * Renders a single lesson step. Interactive steps report when the learner may
@@ -109,17 +111,7 @@ function Body({
 
     case "informative":
       return (
-        <div className="mt-4">
-          <div className="flex flex-col gap-3">
-            {step.body.map((paragraph, i) => (
-              <p key={i} className="max-w-prose text-base leading-7 text-slate-700">
-                <MathText>{paragraph}</MathText>
-              </p>
-            ))}
-          </div>
-          <PrimaryCallout step={step} />
-          {step.resources && <LearnMore resources={step.resources} />}
-        </div>
+        <InformativeView step={step} />
       );
 
     case "bit-explorer":
@@ -650,6 +642,39 @@ function Body({
         />
       );
 
+    case "course-map":
+      return (
+        <div className="mt-4">
+          <p className="max-w-prose text-base leading-7 text-slate-700">
+            <MathText>{step.intro}</MathText>
+          </p>
+          <ol className="mt-6 flex flex-col gap-3 rounded-3xl border border-white/10 bg-[radial-gradient(120%_120%_at_50%_-10%,#1e1245_0%,#0d0a24_60%,#070611_100%)] p-4 sm:p-5">
+            {getUnits().map((unit, i) => (
+              <li
+                key={unit.id}
+                className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 backdrop-blur-sm"
+              >
+                <span className="relative shrink-0">
+                  <UnitSigil kind={sigilForUnitId(unit.id)} status="active" />
+                  <span className="absolute -left-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500 text-[11px] font-bold text-white ring-2 ring-[#0d0a24]">
+                    {i + 1}
+                  </span>
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-serif font-semibold text-white">{unit.title}</span>
+                  <span className="block text-sm leading-6 text-slate-300">{unit.description}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+          {step.outro && (
+            <p className="mt-6 max-w-prose text-base leading-7 text-slate-700">
+              <MathText>{step.outro}</MathText>
+            </p>
+          )}
+        </div>
+      );
+
     case "reflection":
       return (
         <div className="mt-4">
@@ -657,6 +682,24 @@ function Body({
         </div>
       );
   }
+}
+
+const INFORMATIVE_TEXT_CLASS = "w-full max-w-none text-base leading-7 text-slate-700";
+
+function InformativeView({ step }: { step: Extract<LessonStep, { type: "informative" }> }) {
+  return (
+    <div className="mt-4 w-full">
+      <div className="flex w-full min-w-0 flex-col gap-3">
+        {step.body.map((paragraph, i) => (
+          <p key={i} className={INFORMATIVE_TEXT_CLASS}>
+            <MathText>{paragraph}</MathText>
+          </p>
+        ))}
+      </div>
+      <PrimaryCallout step={step} />
+      {step.resources && <LearnMore resources={step.resources} />}
+    </div>
+  );
 }
 
 /** Small learning-science callout (misconception, real-world, why, memory). */
@@ -693,17 +736,83 @@ function Callout({
   );
 }
 
+function ListCallout({
+  tone,
+  label,
+  items,
+}: {
+  tone: keyof typeof CALLOUT_TONE;
+  label: string;
+  items: string[];
+}) {
+  return (
+    <div className={`mt-4 rounded-xl border px-4 py-3 ${CALLOUT_TONE[tone]}`}>
+      <p className="text-xs font-semibold uppercase tracking-wide">{label}</p>
+      <ul className={`mt-2 space-y-1.5 text-sm leading-6 ${CALLOUT_BODY[tone]}`}>
+        {items.map((item) => (
+          <li key={item} className="flex gap-2">
+            <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-current opacity-60" aria-hidden="true" />
+            <span>
+              <MathText>{item}</MathText>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /**
- * Show at most ONE callout per step to keep the screen calm. Priority favors the
- * most useful: a misconception to correct, then a real-world hook, then why it
- * matters, then a memory link back to an earlier idea.
+ * Show the misconception to correct, plus one connection callout (real-world,
+ * why it matters, or a memory link). At most two small callouts per step keeps
+ * the screen calm while surfacing both the pitfall and why the idea matters.
  */
 function PrimaryCallout({ step }: { step: Extract<LessonStep, { type: "informative" }> }) {
-  if (step.misconception) return <Callout tone="amber" label="Common misconception" text={step.misconception} />;
-  if (step.realWorld) return <Callout tone="sky" label="Where you meet this" text={step.realWorld} />;
-  if (step.whyMatters) return <Callout tone="violet" label="Why this matters" text={step.whyMatters} />;
-  if (step.memoryConnection) return <Callout tone="indigo" label="Remember" text={step.memoryConnection} />;
-  return null;
+  const connection = step.applications?.length
+    ? {
+        kind: "list" as const,
+        tone: "sky" as const,
+        label: step.realWorldLabel ?? "Current applications",
+        items: step.applications,
+      }
+    : step.realWorld
+      ? {
+          kind: "text" as const,
+          tone: "sky" as const,
+          label: step.realWorldLabel ?? "Where you meet this",
+          text: step.realWorld,
+        }
+      : step.whyMatters
+        ? {
+            kind: "text" as const,
+            tone: "violet" as const,
+            label: "Why this matters",
+            text: step.whyMatters,
+          }
+        : step.memoryConnection
+          ? {
+              kind: "text" as const,
+              tone: "indigo" as const,
+              label: "Remember",
+              text: step.memoryConnection,
+            }
+          : null;
+
+  if (!step.misconception && !connection) return null;
+
+  return (
+    <>
+      {step.misconception && (
+        <Callout tone="amber" label="Common misconception" text={step.misconception} />
+      )}
+      {connection?.kind === "list" && (
+        <ListCallout tone={connection.tone} label={connection.label} items={connection.items} />
+      )}
+      {connection?.kind === "text" && (
+        <Callout tone={connection.tone} label={connection.label} text={connection.text} />
+      )}
+    </>
+  );
 }
 
 /** Sample one playground measurement: 1 with `probPercent`% chance, else 0. */
@@ -824,6 +933,7 @@ function ChallengeView({
   const [value, setValue] = useState(50);
   const [result, setResult] = useState<"correct" | "incorrect" | null>(null);
   const [wrongCount, setWrongCount] = useState(0);
+  const [showExplanationRequested, setShowExplanationRequested] = useState(false);
   const solved = result === "correct";
 
   function check() {
@@ -880,30 +990,36 @@ function ChallengeView({
         </button>
       )}
 
-      {result && (
-        <p
-          className={`mt-4 rounded-lg px-4 py-3 text-sm leading-6 ${
-            result === "correct"
-              ? "bg-emerald-50 text-emerald-800"
-              : "bg-amber-50 text-amber-800"
-          }`}
-        >
-          <MathText>
-            {result === "correct" ? step.correctFeedback : step.incorrectFeedback}
-          </MathText>
-        </p>
+      {result === "correct" && (
+        <ProgressiveFeedbackPanel
+          isCorrect
+          wrongCount={wrongCount}
+          showExplanationRequested={showExplanationRequested}
+          onRequestExplanation={() => setShowExplanationRequested(true)}
+          questionContext={{
+            conceptTag: conceptTag ?? null,
+            fullExplanation: step.correctFeedback,
+            correctAnswerLabel: `${step.targetProbability}%`,
+          }}
+          correctHeadline={getCorrectHeadline(wrongCount)}
+          correctExplanation={step.correctFeedback}
+          stepKey={step.id}
+        />
       )}
       {result === "incorrect" && (
-        <p className="mt-2 text-sm font-medium text-amber-700">
-          Try again — adjust the slider and check once more. The guide may offer a nudge, or visit the{" "}
-          <Link href="/tower" className="text-indigo-600 underline underline-offset-2 hover:text-indigo-700">
-            Wizard Tower
-          </Link>
-          .
-        </p>
-      )}
-      {hintContext && (
-        <WizardHelpPrompt context={hintContext} wrongCount={wrongCount} stepKey={step.id} />
+        <ProgressiveFeedbackPanel
+          isCorrect={false}
+          wrongCount={wrongCount}
+          showExplanationRequested={showExplanationRequested}
+          onRequestExplanation={() => setShowExplanationRequested(true)}
+          questionContext={{
+            conceptTag: conceptTag ?? null,
+            fullExplanation: `${step.incorrectFeedback} The target was ${step.targetProbability}%.`,
+            correctAnswerLabel: `${step.targetProbability}%`,
+          }}
+          hintContext={hintContext}
+          stepKey={step.id}
+        />
       )}
     </div>
   );

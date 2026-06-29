@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import type { PredictionOption } from "@/lib/types";
 import MathText from "./MathText";
 import { saveTowerHintContext } from "@/lib/companions/tower-context";
 import { recordConceptResult } from "@/lib/learning/signals";
 import type { ConceptTag } from "@/lib/learning/concepts";
-import WizardHelpPrompt from "./WizardHelpPrompt";
+import { getCorrectHeadline } from "@/lib/learning/progressive-feedback";
+import ProgressiveFeedbackPanel from "./ProgressiveFeedbackPanel";
 
 /**
- * Predict-before-explain multiple choice.
+ * Predict-before-explain multiple choice with retrieval-first wrong-answer feedback.
  */
 export default function PredictionChoice({
   options,
@@ -33,13 +33,16 @@ export default function PredictionChoice({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [solved, setSolved] = useState(false);
   const [wrongCount, setWrongCount] = useState(0);
+  const [showExplanationRequested, setShowExplanationRequested] = useState(false);
   const selected = options.find((o) => o.id === selectedId) ?? null;
+  const correctOption = options.find((o) => o.correct) ?? null;
 
   function choose(id: string) {
     if (solved) return;
     const option = options.find((o) => o.id === id);
     if (!option) return;
     setSelectedId(id);
+    setShowExplanationRequested(false);
 
     if (!graded) {
       onCanAdvanceChange(true);
@@ -61,7 +64,7 @@ export default function PredictionChoice({
           lessonTitle: hintMeta.lessonTitle,
           prompt: hintMeta.prompt,
           selectedWrong: option.label,
-          correctAnswer: options.find((o) => o.correct)?.label,
+          correctAnswer: correctOption?.label,
           feedback: option.feedback,
         });
       }
@@ -76,11 +79,14 @@ export default function PredictionChoice({
           lessonTitle: hintMeta.lessonTitle,
           prompt: hintMeta.prompt,
           selectedWrong: selected.label,
-          correctAnswer: options.find((o) => o.correct)?.label,
+          correctAnswer: correctOption?.label,
           feedback: selected.feedback,
           conceptTag: conceptTag ?? undefined,
         }
       : null;
+
+  const fullExplanation =
+    correctOption?.feedback || teaching || selected?.feedback || undefined;
 
   return (
     <div className="mt-5">
@@ -113,37 +119,55 @@ export default function PredictionChoice({
         })}
       </div>
 
-      {selected && (
+      {selected && graded && (
+        <>
+          {selected.correct || solved ? (
+            <ProgressiveFeedbackPanel
+              isCorrect
+              wrongCount={wrongCount}
+              showExplanationRequested={showExplanationRequested}
+              onRequestExplanation={() => setShowExplanationRequested(true)}
+              questionContext={{
+                conceptTag,
+                fullExplanation,
+                correctAnswerLabel: correctOption?.label,
+              }}
+              correctHeadline={getCorrectHeadline(wrongCount)}
+              correctExplanation={selected.correct ? selected.feedback : fullExplanation}
+              stepKey={stepKey}
+            />
+          ) : (
+            wrongSelected && (
+              <ProgressiveFeedbackPanel
+                isCorrect={false}
+                wrongCount={wrongCount}
+                showExplanationRequested={showExplanationRequested}
+                onRequestExplanation={() => setShowExplanationRequested(true)}
+                questionContext={{
+                  conceptTag,
+                  fullExplanation,
+                  correctAnswerLabel: correctOption?.label,
+                }}
+                hintContext={hintContext}
+                stepKey={stepKey}
+              />
+            )
+          )}
+        </>
+      )}
+
+      {selected && !graded && (
         <div className="mt-4">
-          <p
-            className={`rounded-lg px-4 py-3 text-sm leading-6 ${
-              graded
-                ? selected.correct
-                  ? "bg-emerald-50 text-emerald-800"
-                  : "bg-amber-50 text-amber-800"
-                : "bg-indigo-50 text-indigo-800"
-            }`}
-          >
+          <p className="rounded-lg bg-indigo-50 px-4 py-3 text-sm leading-6 text-indigo-800">
             <MathText>{selected.feedback}</MathText>
           </p>
-          {wrongSelected && (
-            <p className="mt-2 text-sm font-medium text-amber-700">
-              Try again — pick another answer. The guide may offer a nudge, or visit the{" "}
-              <Link href="/tower" className="text-indigo-600 underline underline-offset-2 hover:text-indigo-700">
-                Wizard Tower
-              </Link>
-              .
-            </p>
-          )}
-          {hintContext && stepKey && (
-            <WizardHelpPrompt context={hintContext} wrongCount={wrongCount} stepKey={stepKey} />
-          )}
-          {(solved || !graded) && teaching && (
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              <MathText>{teaching}</MathText>
-            </p>
-          )}
         </div>
+      )}
+
+      {(solved || !graded) && teaching && (
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          <MathText>{teaching}</MathText>
+        </p>
       )}
     </div>
   );

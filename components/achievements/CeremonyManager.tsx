@@ -5,22 +5,10 @@ import { useAuth } from "@/lib/auth-context";
 import { ACHIEVEMENTS, getUnlockedIds, type AchievementDef } from "@/lib/achievements/catalog";
 import { getCelebrated, setCelebrated } from "@/lib/achievements/celebrated";
 import { playSound } from "@/lib/sound/sounds";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import BadgeCeremony from "./BadgeCeremony";
 
 const CEREMONY_MS = 3000;
-
-function useReducedMotion(): boolean {
-  const [reduce, setReduce] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const handler = () => setReduce(mq.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-  return reduce;
-}
 
 /**
  * Watches derived achievements and plays the unlock ceremony for newly earned

@@ -37,7 +37,7 @@ export default function Home() {
   return (
     <main className="flex flex-1 flex-col bg-gradient-to-b from-slate-50 via-indigo-50/60 to-indigo-100/40">
       {/* Hero */}
-      <section className="mx-auto grid w-full max-w-[1100px] flex-1 items-start gap-10 px-6 py-14 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
+      <section className="mx-auto grid w-full max-w-[1100px] flex-1 items-start gap-10 px-6 py-14 lg:grid-cols-[4fr_5fr] lg:py-20">
         <div className="text-center lg:text-left">
           <h1 className="text-4xl font-bold leading-[1.4] tracking-tight text-slate-900 sm:text-5xl">
             Master the Quantum Arts, One Spell at a Time
@@ -56,8 +56,8 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mx-auto w-full max-w-sm">
-          <WizardTowerArt className="aspect-[220/260] w-full" />
+        <div className="mx-auto w-full max-w-[36rem] px-2 sm:px-0">
+          <WizardTowerArt className="aspect-[220/312] w-full" />
         </div>
       </section>
 

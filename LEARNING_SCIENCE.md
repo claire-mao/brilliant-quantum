@@ -21,7 +21,7 @@ works using hand-written fallbacks.
 3. Prior knowledge predicts future learning → prerequisite reminders.
 4. Retrieval beats rereading → between-lesson recall + the tower.
 5. Spacing beats cramming → a per-concept review schedule.
-6. Explicit instruction for novices → the lesson leads; the wizard only nudges.
+6. Explicit instruction for novices → the lesson leads; the wizard only offers gentle prompts.
 7. Worked examples accelerate learning → `worked-example` steps.
 8. Feedback should be timely and actionable → immediate, specific feedback.
 9. Knowledge enables critical thinking → mastery is built on correct reasoning.

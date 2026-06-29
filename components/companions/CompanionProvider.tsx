@@ -24,6 +24,13 @@ import { playSound } from "@/lib/sound/sounds";
 const ENTER_MS = 500;
 const LEAVE_MS = 360;
 const INTERACTION_PAUSE_MS = 4000;
+const DEV = process.env.NODE_ENV === "development";
+
+/** Temporary dev-only trace of who writes the wizard bubble (source + text). */
+function logMessage(event: string, agent: string, source: string, message?: string) {
+  if (!DEV) return;
+  console.log(`[companion] ${event}`, { agent, source, message, at: new Date().toISOString() });
+}
 
 const NOOP: CompanionApi = {
   summon: () => {},
@@ -65,6 +72,15 @@ export default function CompanionProvider({ children }: { children: ReactNode })
   const timers = useRef<Record<string, number[]>>({});
   const interactionPausedUntil = useRef(0);
   const bubbleHandlers = useRef<Record<string, () => void>>({});
+  // Tracks the source of each agent's current bubble message. Manual dashboard /
+  // profile lines are "pinned": automatic writes are refused so they cannot clobber them.
+  const messageMetaRef = useRef<Record<string, { source: string; at: number }>>({});
+
+  const isBlockedByManual = useCallback((agent: string, source: string) => {
+    const meta = messageMetaRef.current[agent];
+    if (!meta || source.startsWith("manual")) return false;
+    return meta.source === "manual-dashboard" || meta.source === "manual-profile";
+  }, []);
 
   const clearTimers = useCallback((agent: AgentId) => {
     (timers.current[agent] ?? []).forEach((t) => clearTimeout(t));
@@ -102,6 +118,8 @@ export default function CompanionProvider({ children }: { children: ReactNode })
 
   const dismiss = useCallback(
     (agent: AgentId = "wizard") => {
+      // Clearing the pin lets the next (manual or auto) summon proceed normally.
+      delete messageMetaRef.current[agent];
       clearTimers(agent);
       setCompanions((prev) =>
         prev[agent] ? { ...prev, [agent]: { ...prev[agent], phase: "leaving" } } : prev
@@ -122,6 +140,12 @@ export default function CompanionProvider({ children }: { children: ReactNode })
   const summon = useCallback(
     (request: SummonRequest) => {
       const agent: AgentId = request.agent ?? "wizard";
+      const source = request.source ?? "auto";
+      // Never let an automatic summon overwrite a pinned manual dashboard/profile message.
+      if (isBlockedByManual(agent, source)) {
+        logMessage("summon refused (manual pinned)", agent, source, request.message);
+        return;
+      }
       clearTimers(agent);
       playSound("wizard");
       // Deterministic: spawn in front of the wizard's home unless told otherwise.
@@ -142,8 +166,11 @@ export default function CompanionProvider({ children }: { children: ReactNode })
           bubbleActions: request.bubbleActions,
           wandAim: request.wandAim,
           showMotes: request.showMotes ?? true,
+          messageSource: source,
         },
       }));
+      messageMetaRef.current[agent] = { source, at: Date.now() };
+      logMessage("summon", agent, source, request.message);
 
       const enter = window.setTimeout(() => {
         setCompanions((prev) =>
@@ -161,11 +188,22 @@ export default function CompanionProvider({ children }: { children: ReactNode })
         addTimer(agent, auto);
       }
     },
-    [clearTimers, addTimer, dismiss]
+    [clearTimers, addTimer, dismiss, isBlockedByManual]
   );
 
   const update = useCallback(
     (agent: AgentId, partial: CompanionUpdate) => {
+      const source = partial.source ?? "auto";
+      const changesMessage = "message" in partial;
+      // An automatic message change must not clobber a pinned manual message.
+      if (changesMessage && isBlockedByManual(agent, source)) {
+        logMessage("update refused (manual pinned)", agent, source, partial.message);
+        return;
+      }
+      if (changesMessage) {
+        messageMetaRef.current[agent] = { source, at: Date.now() };
+        logMessage("update", agent, source, partial.message);
+      }
       setCompanions((prev) =>
         prev[agent]
           ? {
@@ -181,6 +219,7 @@ export default function CompanionProvider({ children }: { children: ReactNode })
                 anchorId: partial.anchorId ?? prev[agent].anchorId,
                 wandAim: partial.wandAim ?? prev[agent].wandAim,
                 showMotes: partial.showMotes ?? prev[agent].showMotes,
+                messageSource: changesMessage ? source : prev[agent].messageSource,
               },
             }
           : prev
@@ -194,7 +233,7 @@ export default function CompanionProvider({ children }: { children: ReactNode })
         addTimer(agent, auto);
       }
     },
-    [clearTimers, addTimer, dismiss]
+    [clearTimers, addTimer, dismiss, isBlockedByManual]
   );
 
   useEffect(() => {

@@ -12,6 +12,8 @@ export interface PracticeChoice {
 }
 
 export interface PracticeQuestion {
+  /** Stable id for dedup and verification (handwritten fallbacks). */
+  questionId?: string;
   prompt: string;
   choices: PracticeChoice[];
   correctChoiceId: string;
@@ -21,6 +23,8 @@ export interface PracticeQuestion {
   /** Optional learning-science metadata (grounds the item in prior knowledge). */
   prerequisite?: string;
   misconception?: string;
+  /** Progressive hints for wrong attempts (retrieval → concept). */
+  progressiveHints?: [string, string, string];
 }
 
 function asNonEmptyString(value: unknown): string | null {

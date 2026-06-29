@@ -43,8 +43,8 @@ function DashboardContent() {
         streak={profile?.streak ?? 0}
       />
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="order-1 flex flex-col gap-6">
+      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(255px,330px)]">
+        <div className="order-1 flex min-w-0 flex-col gap-6">
           <Recommendation profile={profile} />
           <section>
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-violet-200/80">
@@ -58,7 +58,7 @@ function DashboardContent() {
           </section>
         </div>
 
-        <aside className="order-2">
+        <aside className="order-2 min-w-0">
           <DashboardProgressPanel profile={profile} />
           <TowerCard />
         </aside>

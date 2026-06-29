@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import ProbabilityVisual from "./ProbabilityVisual";
+import MathText from "./MathText";
+import { getCorrectHeadline } from "@/lib/learning/progressive-feedback";
+import ProgressiveFeedbackPanel from "./ProgressiveFeedbackPanel";
 
 /**
  * Graded build challenge: starting from a definite 0, apply gates to reach a
@@ -25,6 +28,8 @@ export default function GateSequenceBuilder({
   const [pOne, setPOne] = useState(0);
   const [appliedGates, setAppliedGates] = useState<string[]>([]);
   const [result, setResult] = useState<"correct" | "incorrect" | null>(null);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [showExplanationRequested, setShowExplanationRequested] = useState(false);
   const solved = result === "correct";
 
   function applyGate(gate: "X" | "H") {
@@ -47,6 +52,7 @@ export default function GateSequenceBuilder({
     const passed = pOne === 50;
     setResult(passed ? "correct" : "incorrect");
     onCanAdvanceChange(passed);
+    if (!passed) setWrongCount((c) => c + 1);
   }
 
   return (
@@ -97,24 +103,30 @@ export default function GateSequenceBuilder({
         </button>
       )}
 
-      {result && (
-        <p
-          className={`mt-4 rounded-lg px-4 py-3 text-sm leading-6 ${
-            result === "correct"
-              ? "bg-emerald-50 text-emerald-800"
-              : "bg-amber-50 text-amber-800"
-          }`}
-        >
-          {result === "correct" ? correctFeedback : incorrectFeedback}
-        </p>
+      {result === "correct" && (
+        <ProgressiveFeedbackPanel
+          isCorrect
+          wrongCount={wrongCount}
+          showExplanationRequested={showExplanationRequested}
+          onRequestExplanation={() => setShowExplanationRequested(true)}
+          questionContext={{ fullExplanation: correctFeedback }}
+          correctHeadline={getCorrectHeadline(wrongCount)}
+          correctExplanation={correctFeedback}
+        />
       )}
       {result === "incorrect" && (
-        <p className="mt-2 text-sm font-medium text-amber-700">
-          Try again - reset and apply a different gate.
-        </p>
+        <ProgressiveFeedbackPanel
+          isCorrect={false}
+          wrongCount={wrongCount}
+          showExplanationRequested={showExplanationRequested}
+          onRequestExplanation={() => setShowExplanationRequested(true)}
+          questionContext={{ fullExplanation: `${incorrectFeedback} ${teaching ?? ""}`.trim() }}
+        />
       )}
       {solved && teaching && (
-        <p className="mt-3 text-sm leading-6 text-slate-600">{teaching}</p>
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          <MathText>{teaching}</MathText>
+        </p>
       )}
     </div>
   );

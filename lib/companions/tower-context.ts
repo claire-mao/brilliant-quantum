@@ -9,6 +9,9 @@ export interface HintRequest {
   correctAnswer?: string;
   feedback?: string;
   conceptTag?: string;
+  wrongAttemptCount?: number;
+  reviewReason?: string;
+  misconception?: string;
 }
 
 export interface TowerLessonContext {
@@ -47,7 +50,7 @@ export function saveTowerLessonContext(lessonId: string, lessonTitle: string): v
   writeJson(LESSON_KEY, { lessonId, lessonTitle, savedAt: Date.now() } satisfies TowerLessonContext);
 }
 
-/** Store wrong-answer context so the Hint Chamber can offer a useful nudge. */
+/** Store wrong-answer context so the Hint Chamber can offer a useful hint. */
 export function saveTowerHintContext(context: HintRequest & { lessonId?: string }): void {
   writeJson(HINT_KEY, { ...context, savedAt: Date.now() } satisfies TowerHintContext);
 }
@@ -60,7 +63,7 @@ export function getTowerHintContext(): TowerHintContext | null {
   return readJson<TowerHintContext>(HINT_KEY);
 }
 
-/** Topic string for practice / lore when no explicit topic is passed. */
+/** Topic string for practice when no explicit topic is passed. */
 export function getTowerTopic(): string | null {
   const lesson = getTowerLessonContext();
   return lesson?.lessonTitle ?? null;

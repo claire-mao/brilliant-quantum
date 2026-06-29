@@ -32,7 +32,7 @@ export default function LessonPage() {
   // the component and keeps the previous lesson's step state).
   return (
     <RouteGuard>
-      <NavBar />
+      <NavBar variant="dark" />
       <LessonPlayer key={params.lessonId} />
     </RouteGuard>
   );
@@ -44,6 +44,7 @@ function defaultCanAdvance(step: LessonStep | undefined): boolean {
   return (
     step.type === "explanation" ||
     step.type === "informative" ||
+    step.type === "course-map" ||
     step.type === "playground" ||
     step.type === "reflection" ||
     (step.type === "wave-explorer" && !step.interactive)
@@ -242,15 +243,15 @@ function LessonPlayer() {
       data-lesson-main
       onPointerDownCapture={registerInteraction}
     >
-      <div className="flex items-center justify-between text-sm text-slate-500">
-        <Link href="/dashboard" className="hover:underline" onClick={flushStep}>
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+        <Link href="/dashboard" className="min-w-0 max-w-[55%] truncate hover:underline sm:max-w-none" onClick={flushStep}>
           ← {lesson.title}
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 items-center gap-3 sm:gap-4">
           <button
             type="button"
             onClick={startRun}
-            className="text-slate-400 hover:text-slate-700 hover:underline"
+            className="min-h-11 px-1 text-slate-400 hover:text-slate-700 hover:underline"
           >
             Restart
           </button>
@@ -291,7 +292,7 @@ function LessonPlayer() {
           type="button"
           onClick={handleNext}
           disabled={!canAdvance || saving}
-          className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          className="min-h-11 w-full rounded-lg bg-indigo-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           {saving ? "Saving..." : isLast ? "Finish lesson" : "Next"}
         </button>

@@ -1,29 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import AchievementBadge, { type AchievementIcon } from "@/components/AchievementBadge";
+import AchievementBadge from "@/components/AchievementBadge";
 import {
-  getUnits,
-  isUnitComplete,
   getCompletedLessonCount,
   getTotalLessonCount,
   getCompletedUnitCount,
   getTotalUnitCount,
 } from "@/content/lessons";
+import { getRecentUnitRelics } from "@/lib/achievements/catalog";
 import type { UserProfile } from "@/lib/types";
-import { getCourseMastery, type CourseMastery } from "@/lib/learning/insights";
 import MagicalStatCard from "./MagicalStatCard";
 import MemoryGrimoire from "./MemoryGrimoire";
-
-/** Unit-completion relics (kept in sync with the achievements page). */
-const UNIT_RELICS: Record<string, { title: string; icon: AchievementIcon }> = {
-  "chapter-information": { title: "Qubit Initiate", icon: "atom" },
-  "chapter-transforming": { title: "Gatecaster", icon: "circuit" },
-  "chapter-why-quantum": { title: "Interference Weaver", icon: "wave" },
-  "chapter-multiple-qubits": { title: "Entanglement Adept", icon: "nodes" },
-  "chapter-algorithms": { title: "Algorithm Sorcerer", icon: "maze" },
-  "chapter-hardware": { title: "Hardware Alchemist", icon: "chip" },
-};
 
 /**
  * Right-side progress panel for the dashboard: course progress ring, key stats,
@@ -35,21 +22,9 @@ export default function DashboardProgressPanel({ profile }: { profile: UserProfi
   const completedUnits = getCompletedUnitCount(profile);
   const totalUnits = getTotalUnitCount();
   const streak = profile?.streak ?? 0;
-  const completionPct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+  const pct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
-  // Weighted mastery reads local signals, so compute after mount; until then
-  // show plain completion to keep the first paint deterministic.
-  const [mastery, setMastery] = useState<CourseMastery | null>(null);
-  useEffect(() => {
-    const id = window.setTimeout(() => setMastery(getCourseMastery(profile, completedLessons, totalLessons)), 0);
-    return () => clearTimeout(id);
-  }, [profile, completedLessons, totalLessons]);
-  const pct = mastery?.percent ?? completionPct;
-
-  const relics = getUnits()
-    .filter((u) => isUnitComplete(u, profile) && UNIT_RELICS[u.id])
-    .map((u) => ({ id: u.id, ...UNIT_RELICS[u.id] }))
-    .slice(-3);
+  const relics = getRecentUnitRelics(profile, 3);
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md shadow-[0_0_40px_rgba(76,29,149,0.25)]">
@@ -59,24 +34,34 @@ export default function DashboardProgressPanel({ profile }: { profile: UserProfi
         <ProgressRing pct={pct} />
         <div>
           <p className="text-3xl font-bold tabular-nums text-white">{pct}%</p>
-          <p className="text-xs text-slate-400">knowledge mastered</p>
+          <p className="text-xs text-slate-400">course complete</p>
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className="mt-4 grid grid-cols-1 gap-2 min-[420px]:grid-cols-3">
         <MagicalStatCard label="Lessons" value={`${completedLessons}/${totalLessons}`} />
         <MagicalStatCard label="Units" value={`${completedUnits}/${totalUnits}`} />
         <MagicalStatCard label="Streak" value={`${streak}`} hint={streak === 1 ? "day" : "days"} />
       </div>
 
       <div className="mt-5">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Relics</h3>
+        <h3 className="grimoire-heading text-xs font-semibold uppercase tracking-wide text-amber-200/80">
+          Relics
+        </h3>
         {relics.length > 0 ? (
-          <ul className="mt-3 flex flex-wrap gap-3">
+          <ul className="mt-2 flex flex-col gap-1.5">
             {relics.map((r) => (
-              <li key={r.id} className="flex flex-col items-center gap-1 text-center" title={r.title}>
-                <AchievementBadge unlocked type="unit" icon={r.icon} className="h-11 w-11 drop-shadow-[0_0_8px_rgba(167,139,250,0.5)]" />
-                <span className="max-w-[4.5rem] text-[10px] leading-tight text-slate-400">{r.title}</span>
+              <li
+                key={r.id}
+                className="flex items-center gap-3 rounded-lg border border-amber-300/25 bg-amber-400/5 px-3 py-2"
+              >
+                <AchievementBadge
+                  unlocked
+                  type="unit"
+                  icon={r.icon}
+                  className="h-9 w-9 shrink-0 drop-shadow-[0_0_8px_rgba(251,191,36,0.45)]"
+                />
+                <span className="text-sm font-medium text-amber-100">{r.title}</span>
               </li>
             ))}
           </ul>
