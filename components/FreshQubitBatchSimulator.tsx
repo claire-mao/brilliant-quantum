@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import MathText from "./MathText";
 
 /**
  * Measure a small batch of freshly prepared qubits. Each run re-randomizes the
@@ -69,8 +70,12 @@ export default function FreshQubitBatchSimulator({
             </span>
           </div>
 
-          <p className="mt-4 text-base font-medium text-slate-700">{prompt}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">{teaching}</p>
+          <p className="mt-4 text-base font-medium text-slate-700">
+            <MathText>{prompt}</MathText>
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            <MathText>{teaching}</MathText>
+          </p>
         </div>
       )}
     </div>

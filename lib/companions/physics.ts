@@ -1,5 +1,7 @@
 /** Physics values passed to the wizard SVG during drag / settle. */
 
+import { clamp } from "@/lib/utils/clamp";
+
 export interface WizardPhysics {
   tilt: number;
   sway: number;
@@ -18,9 +20,7 @@ export const PHYSICS_IDLE: WizardPhysics = {
   robeLag: 0,
 };
 
-export function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
+export { clamp } from "@/lib/utils/clamp";
 
 /**
  * Compute layered lag rotations from horizontal drag velocity and direction changes.

@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { chat } from "@/lib/ai/client";
-import { funFactPrompt } from "@/lib/ai/prompts";
+import { funFactPrompt, type PageKind } from "@/lib/ai/prompts";
 
 export const runtime = "nodejs";
 
 function str(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() !== "" ? value : undefined;
+}
+
+function pageKind(value: unknown): PageKind | undefined {
+  if (value === "dashboard" || value === "lesson" || value === "tower" || value === "profile") {
+    return value;
+  }
+  return undefined;
 }
 
 export async function POST(request: Request) {
@@ -16,7 +23,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { system, user } = funFactPrompt({ topic });
+    const { system, user } = funFactPrompt({ topic, pageKind: pageKind(body.pageKind) });
     const fact = await chat({ system, user, maxTokens: 160, temperature: 0.7 });
     return NextResponse.json({ fact });
   } catch {

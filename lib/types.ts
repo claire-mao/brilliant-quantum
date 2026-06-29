@@ -41,6 +41,7 @@ export type StepType =
   | "tech-timeline"
   | "challenge"
   | "worked-example"
+  | "course-map"
   | "reflection";
 
 export type GateId = "X" | "H";
@@ -77,6 +78,16 @@ export interface InformativeStep extends BaseStep {
   emoji?: string;
   /** Optional "Common misconception" callout, shown below the body. */
   misconception?: string;
+  /** Optional real-world connection callout (label via realWorldLabel). */
+  realWorld?: string;
+  /** Optional bullet list of applications (label via realWorldLabel). */
+  applications?: string[];
+  /** Label for the realWorld / applications callout (default: "Where you meet this"). */
+  realWorldLabel?: string;
+  /** Optional one-line "Why this matters" callout (what it unlocks next). */
+  whyMatters?: string;
+  /** Optional "Remember" callout linking back to an earlier idea. */
+  memoryConnection?: string;
   resources?: ResourceLink[];
 }
 
@@ -495,6 +506,17 @@ export interface WorkedExampleStep extends BaseStep {
   teaching?: string;
 }
 
+/**
+ * Visual roadmap of the whole course: the units, in order, shown as a journey.
+ * Used by the course-introduction lesson. The renderer pulls the live unit list,
+ * so this step only carries the framing copy.
+ */
+export interface CourseMapStep extends BaseStep {
+  type: "course-map";
+  intro: string;
+  outro?: string;
+}
+
 /** Summary card shown at the end of the lesson. */
 export interface ReflectionStep extends BaseStep {
   type: "reflection";
@@ -544,6 +566,7 @@ export type LessonStep =
   | TechTimelineStep
   | ChallengeStep
   | WorkedExampleStep
+  | CourseMapStep
   | ReflectionStep;
 
 export interface LessonBadge {

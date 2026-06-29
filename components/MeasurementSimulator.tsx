@@ -3,6 +3,7 @@
 import { useState } from "react";
 import QubitSlider from "./QubitSlider";
 import Histogram from "./Histogram";
+import MathText from "./MathText";
 
 /**
  * Interactive measurement simulator: set a probability, then measure the qubit
@@ -49,7 +50,9 @@ export default function MeasurementSimulator({
       {results && (
         <div className="mt-6">
           <Histogram zeros={results.zeros} ones={results.ones} total={sampleSize} />
-          <p className="mt-4 text-sm leading-6 text-slate-600">{teaching}</p>
+          <p className="mt-4 text-sm leading-6 text-slate-600">
+            <MathText>{teaching}</MathText>
+          </p>
         </div>
       )}
     </div>

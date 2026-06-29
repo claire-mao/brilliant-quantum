@@ -27,7 +27,7 @@ export default function NavBar({ variant = "light" }: { variant?: "light" | "dar
     <header
       className={
         dark
-          ? "relative z-10 border-b border-white/10 bg-[#0b0a1f]/70 backdrop-blur-md"
+          ? "relative z-10 border-b border-white/10 bg-[#0b0a1f]"
           : "border-b border-slate-200 bg-white"
       }
     >
@@ -54,8 +54,8 @@ export default function NavBar({ variant = "light" }: { variant?: "light" | "dar
               onClick={handleLogout}
               className={
                 dark
-                  ? "rounded-lg border border-white/20 px-3 py-1.5 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10"
-                  : "rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                  ? "min-h-11 rounded-lg border border-white/20 px-3 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10"
+                  : "min-h-11 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
               }
             >
               Log out
@@ -109,7 +109,7 @@ function BrandLogo({ dark, href }: { dark: boolean; href: string }) {
       href={href}
       onClick={handleClick}
       aria-label="Brilliant Quantum home"
-      className={`brand-logo group relative flex shrink-0 items-center gap-2 text-base font-bold tracking-tight sm:text-lg ${
+      className={`brand-logo group relative flex shrink-0 items-center gap-2 text-sm font-bold tracking-tight sm:text-base md:text-lg ${
         pulsing ? "brand-pulsing" : ""
       } ${dark ? "text-white" : "text-indigo-600"}`}
     >

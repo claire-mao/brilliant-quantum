@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { ClassifierCategory, ClassifierItem } from "@/lib/types";
 import MathText from "./MathText";
+import ProgressiveFeedbackPanel from "./ProgressiveFeedbackPanel";
+import { getCorrectHeadline, shouldRevealAnswer } from "@/lib/learning/progressive-feedback";
 
 /**
  * Generic graded classifier: assign each item to one of several categories,
@@ -25,8 +27,11 @@ export default function ApplicationClassifier({
 }) {
   const [picks, setPicks] = useState<Record<string, string>>({});
   const [checked, setChecked] = useState(false);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [showExplanationRequested, setShowExplanationRequested] = useState(false);
   const allAnswered = items.every((it) => picks[it.id]);
   const allCorrect = items.every((it) => picks[it.id] === it.answer);
+  const reveal = shouldRevealAnswer(wrongCount, showExplanationRequested, allCorrect);
 
   function choose(id: string, cat: string) {
     setPicks((p) => ({ ...p, [id]: cat }));
@@ -35,7 +40,9 @@ export default function ApplicationClassifier({
   function check() {
     onAttempt();
     setChecked(true);
-    onCanAdvanceChange(items.every((it) => picks[it.id] === it.answer));
+    const ok = items.every((it) => picks[it.id] === it.answer);
+    onCanAdvanceChange(ok);
+    if (!ok) setWrongCount((c) => c + 1);
   }
 
   return (
@@ -74,7 +81,7 @@ export default function ApplicationClassifier({
                   </button>
                 ))}
               </div>
-              {checked && pick && <p className="mt-2 text-xs text-slate-600">{it.note}</p>}
+              {checked && pick && reveal && <p className="mt-2 text-xs text-slate-600">{it.note}</p>}
             </div>
           );
         })}
@@ -89,21 +96,32 @@ export default function ApplicationClassifier({
         Check answers
       </button>
       {!allAnswered && <p className="mt-2 text-xs text-slate-400">Classify every item to check.</p>}
-      {checked && (
-        <p
-          className={`mt-3 rounded-lg px-4 py-3 text-sm leading-6 ${
-            allCorrect ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"
-          }`}
-        >
-          {allCorrect
-            ? "All correct."
-            : "Not all correct yet — review the highlighted rows and try again."}
-        </p>
+      {checked && allCorrect && (
+        <ProgressiveFeedbackPanel
+          isCorrect
+          wrongCount={wrongCount}
+          showExplanationRequested={showExplanationRequested}
+          onRequestExplanation={() => setShowExplanationRequested(true)}
+          questionContext={{ fullExplanation: teaching }}
+          correctHeadline={getCorrectHeadline(wrongCount)}
+          correctExplanation="All correct."
+        />
+      )}
+      {checked && !allCorrect && (
+        <ProgressiveFeedbackPanel
+          isCorrect={false}
+          wrongCount={wrongCount}
+          showExplanationRequested={showExplanationRequested}
+          onRequestExplanation={() => setShowExplanationRequested(true)}
+          questionContext={{ fullExplanation: teaching }}
+        />
       )}
 
-      <p className="mt-4 text-sm leading-6 text-slate-500">
-        <MathText>{teaching}</MathText>
-      </p>
+      {(allCorrect || reveal) && (
+        <p className="mt-4 text-sm leading-6 text-slate-500">
+          <MathText>{teaching}</MathText>
+        </p>
+      )}
     </div>
   );
 }

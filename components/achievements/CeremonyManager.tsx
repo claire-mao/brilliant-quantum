@@ -4,22 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { ACHIEVEMENTS, getUnlockedIds, type AchievementDef } from "@/lib/achievements/catalog";
 import { getCelebrated, setCelebrated } from "@/lib/achievements/celebrated";
+import { playSound } from "@/lib/sound/sounds";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import BadgeCeremony from "./BadgeCeremony";
 
-const CEREMONY_MS = 2700;
-
-function useReducedMotion(): boolean {
-  const [reduce, setReduce] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const handler = () => setReduce(mq.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-  return reduce;
-}
+const CEREMONY_MS = 3000;
 
 /**
  * Watches derived achievements and plays the unlock ceremony for newly earned
@@ -71,6 +60,7 @@ export default function CeremonyManager() {
       const newly = unlocked.filter((u) => !seenSet.has(u));
       if (newly.length === 0) return;
       setCelebrated([...seen, ...newly]); // never replay
+      playSound("badge");
       if (reduce) return; // respect reduced motion: skip the animation
       const defs = newly
         .map((u) => ACHIEVEMENTS.find((d) => d.id === u))

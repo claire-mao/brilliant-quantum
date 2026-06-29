@@ -7,9 +7,9 @@ import RouteGuard from "@/components/RouteGuard";
 import NavBar from "@/components/NavBar";
 import Badge from "@/components/Badge";
 import LessonStepRenderer from "@/components/LessonStepRenderer";
-import { SparkleBurst } from "@/components/WizardCompanion";
 import { useCompanion } from "@/components/companions/CompanionProvider";
 import { saveTowerLessonContext } from "@/lib/companions/tower-context";
+import { playSound } from "@/lib/sound/sounds";
 import { useAuth } from "@/lib/auth-context";
 import {
   getLesson,
@@ -26,10 +26,14 @@ import { recordLessonPracticed } from "@/lib/learning/signals";
 import { getNextRetrievalPrompt, type RetrievalPromptResult } from "@/lib/learning/learner-model";
 
 export default function LessonPage() {
+  const params = useParams<{ lessonId: string }>();
+  // Key by lessonId so navigating between lessons remounts the player and
+  // re-reads that lesson's saved resume point (otherwise the App Router reuses
+  // the component and keeps the previous lesson's step state).
   return (
     <RouteGuard>
-      <NavBar />
-      <LessonPlayer />
+      <NavBar variant="dark" />
+      <LessonPlayer key={params.lessonId} />
     </RouteGuard>
   );
 }
@@ -40,21 +44,30 @@ function defaultCanAdvance(step: LessonStep | undefined): boolean {
   return (
     step.type === "explanation" ||
     step.type === "informative" ||
+    step.type === "course-map" ||
     step.type === "playground" ||
     step.type === "reflection" ||
     (step.type === "wave-explorer" && !step.interactive)
   );
 }
 
+/**
+ * Resolve the step to open on from a saved `currentStep`. Guards against
+ * missing, non-numeric, non-finite, fractional, or out-of-range values by
+ * flooring and clamping into [0, lastStepIndex].
+ */
 function resumeIndex(lesson: Lesson, savedStep: number | undefined): number {
-  if (!savedStep || savedStep <= 0) return 0;
-  return Math.min(savedStep, lesson.steps.length - 1);
+  const lastIndex = lesson.steps.length - 1;
+  if (typeof savedStep !== "number" || !Number.isFinite(savedStep)) return 0;
+  const idx = Math.floor(savedStep);
+  if (idx <= 0) return 0;
+  return Math.min(idx, lastIndex);
 }
 
 function LessonPlayer() {
   const params = useParams<{ lessonId: string }>();
   const lessonId = params.lessonId;
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, updateLocalLessonProgress } = useAuth();
   const { registerInteraction } = useCompanion();
 
   const lesson = useMemo(() => getLesson(lessonId), [lessonId]);
@@ -82,13 +95,85 @@ function LessonPlayer() {
   const [runKey, setRunKey] = useState(0);
   // Total tries across all graded steps in the current run.
   const gradedAttempts = useRef(0);
+  // Tracks a just-made graded attempt so we can play a correct/wrong cue based
+  // on whether it unlocked advancing. A short timer covers components that mark
+  // a wrong answer by leaving advancing disabled (no explicit false signal).
+  const pendingGrade = useRef(false);
+  const gradeTimer = useRef<number | null>(null);
 
   const handleCanAdvanceChange = useCallback((value: boolean) => {
     setCanAdvance(value);
+    if (pendingGrade.current) {
+      pendingGrade.current = false;
+      if (gradeTimer.current) {
+        clearTimeout(gradeTimer.current);
+        gradeTimer.current = null;
+      }
+      playSound(value ? "correct" : "wrong");
+    }
   }, []);
   const handleGradedAttempt = useCallback(() => {
     gradedAttempts.current += 1;
+    pendingGrade.current = true;
+    if (gradeTimer.current) clearTimeout(gradeTimer.current);
+    gradeTimer.current = window.setTimeout(() => {
+      if (pendingGrade.current) {
+        pendingGrade.current = false;
+        playSound("wrong");
+      }
+      gradeTimer.current = null;
+    }, 80);
   }, []);
+
+  const lastSavedStepRef = useRef<number | null>(null);
+  const stepIndexRef = useRef(0);
+  const resumeLogged = useRef(false);
+
+  useEffect(() => {
+    stepIndexRef.current = stepIndex;
+  }, [stepIndex]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development" && !resumeLogged.current) {
+      resumeLogged.current = true;
+      console.log("[lesson] mount resume", { lessonId, resumedStep: stepIndex, saved: savedProgress });
+    }
+  }, [lessonId, stepIndex, savedProgress]);
+
+  // Persist a resume point: write to Firestore AND optimistically update the
+  // in-memory profile so an immediate re-open reads the new step instead of
+  // stale context. Tracks the last-saved step to avoid duplicate writes.
+  const persistStep = useCallback(
+    (step: number) => {
+      if (!user) return Promise.resolve();
+      lastSavedStepRef.current = step;
+      stepIndexRef.current = step;
+      updateLocalLessonProgress(lessonId, { currentStep: step });
+      if (process.env.NODE_ENV === "development") {
+        console.log("[lesson] save step", { lessonId, step });
+      }
+      return saveLessonStep(user.uid, lessonId, step);
+    },
+    [user, lessonId, updateLocalLessonProgress]
+  );
+
+  // Save the current step on tab-hide and on unmount (Back to course / navigating
+  // away). No-op when the step is already saved, so writes stay minimal.
+  const flushStep = useCallback(() => {
+    if (!user || stepIndexRef.current === lastSavedStepRef.current) return;
+    void persistStep(stepIndexRef.current);
+  }, [user, persistStep]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flushStep();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      flushStep();
+    };
+  }, [flushStep]);
 
   if (!lesson || lesson.steps.length === 0 || !isLessonUnlocked(lessonId, profile)) {
     return (
@@ -117,7 +202,7 @@ function LessonPlayer() {
     setCanAdvance(defaultCanAdvance(steps[0]));
     setMode("lesson");
     setRunKey((k) => k + 1);
-    if (user) void saveLessonStep(user.uid, lessonId, 0);
+    void persistStep(0);
   }
 
   if (mode === "complete") {
@@ -145,7 +230,7 @@ function LessonPlayer() {
         const next = stepIndex + 1;
         setStepIndex(next);
         setCanAdvance(defaultCanAdvance(steps[next]));
-        await saveLessonStep(user.uid, lessonId, next);
+        await persistStep(next);
       }
     } finally {
       setSaving(false);
@@ -158,15 +243,15 @@ function LessonPlayer() {
       data-lesson-main
       onPointerDownCapture={registerInteraction}
     >
-      <div className="flex items-center justify-between text-sm text-slate-500">
-        <Link href="/dashboard" className="hover:underline">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+        <Link href="/dashboard" className="min-w-0 max-w-[55%] truncate hover:underline sm:max-w-none" onClick={flushStep}>
           ← {lesson.title}
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 items-center gap-3 sm:gap-4">
           <button
             type="button"
             onClick={startRun}
-            className="text-slate-400 hover:text-slate-700 hover:underline"
+            className="min-h-11 px-1 text-slate-400 hover:text-slate-700 hover:underline"
           >
             Restart
           </button>
@@ -176,16 +261,22 @@ function LessonPlayer() {
         </div>
       </div>
 
-      <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="relative mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
         <div
-          className="h-full rounded-full bg-indigo-600 transition-[width] duration-200"
+          className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.5)] transition-[width] duration-500 ease-out"
+          style={{ width: `${((stepIndex + 1) / totalSteps) * 100}%` }}
+        />
+        {/* brief glow sweep when the step advances */}
+        <div
+          key={stepIndex}
+          className="progress-pulse pointer-events-none absolute inset-y-0 left-0 rounded-full bg-white opacity-0"
           style={{ width: `${((stepIndex + 1) / totalSteps) * 100}%` }}
         />
       </div>
 
       {stepIndex === 0 && <PrerequisiteReminder lessonId={lessonId} />}
 
-      <div className="mt-8">
+      <div key={`step-${runKey}-${step.id}`} className="lesson-step mt-8">
         <LessonStepRenderer
           key={`${runKey}-${step.id}`}
           step={step}
@@ -201,7 +292,7 @@ function LessonPlayer() {
           type="button"
           onClick={handleNext}
           disabled={!canAdvance || saving}
-          className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          className="min-h-11 w-full rounded-lg bg-indigo-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           {saving ? "Saving..." : isLast ? "Finish lesson" : "Next"}
         </button>
@@ -325,6 +416,7 @@ function CompletionView({
   useEffect(() => {
     if (!recordedRef.current) {
       recordLessonPracticed(conceptsForLesson(lesson.id));
+      playSound("complete");
       recordedRef.current = true;
     }
     const id = window.setTimeout(
@@ -340,18 +432,28 @@ function CompletionView({
 
   return (
     <main className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-12 text-center sm:px-6 lg:px-8">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl">
-        <span aria-hidden="true">🎉</span>
+      <div className="lesson-complete-pop relative mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
+        <svg
+          viewBox="0 0 24 24"
+          className="relative h-10 w-10 text-emerald-600"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.6}
+          aria-hidden="true"
+        >
+          <path className="lesson-check" d="M5 13 l4 4 L19 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </div>
       <h1 className="mt-4 text-2xl font-bold text-slate-900">Lesson complete</h1>
       <p className="mt-2 text-slate-600">You finished {lesson.title}.</p>
 
+      <div className="mx-auto mt-5 h-2 w-full max-w-xs overflow-hidden rounded-full bg-slate-100">
+        <div className="lesson-complete-bar h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
+      </div>
+
       {lesson.badge && (
         <div className="mt-6 flex justify-center">
-          <div className="relative">
-            <SparkleBurst />
-            <Badge title={lesson.badge.title} subtitle={lesson.badge.subtitle} />
-          </div>
+          <Badge title={lesson.badge.title} subtitle={lesson.badge.subtitle} />
         </div>
       )}
 

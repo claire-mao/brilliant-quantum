@@ -3,46 +3,40 @@
 import { useEffect, useRef } from "react";
 import { useCompanion } from "@/components/companions/CompanionProvider";
 import { saveTowerHintContext, type HintRequest } from "@/lib/companions/tower-context";
-
-/** Guide-style offers that escalate with each wrong attempt (never reveal). */
-const OFFER_MESSAGES = [
-  "Need a nudge? Let's retrieve what you already saw.",
-  "Want me to point at what changed?",
-  "Shall I name the idea at play?",
-  "Want me to walk the reasoning with you?",
-];
+import { playSound } from "@/lib/sound/sounds";
+import { AI_OFF_HINT_FALLBACKS, WRONG_ESCALATION, type HintLevel } from "@/lib/companions/messages";
 
 /**
- * Handwritten scaffolded hints used when AI is unavailable. They follow the same
- * four levels as the AI so the learning loop works fully AI-off.
+ * Opening offer after a wrong answer (the first rung of the escalation ladder).
+ * From here the wizard walks the learner through it one step at a time.
  */
-function fallbackForLevel(level: number, ctx: HintRequest): string {
-  switch (level) {
-    case 1:
-      return "What did the previous experiment or step show? Recall that first.";
-    case 2:
-      return "Look closely at what changed right before the result — focus your attention there.";
-    case 3:
-      return "Think about the core idea at play here — how the amplitudes or phase behave.";
-    default:
-      return ctx.feedback
-        ? `${ctx.feedback} Re-read that note, then finish the final step yourself.`
-        : "Re-read the lesson's explanation of this idea, then complete the final step yourself.";
-  }
-}
+const OFFER_MESSAGE = WRONG_ESCALATION[1];
 
-const HINT_ACTION = { id: "help-hint", label: "Give me a hint", variant: "primary" as const };
-const LATER_ACTION = { id: "help-later", label: "Not yet", variant: "ghost" as const };
-
-function levelFor(wrongCount: number): number {
-  return Math.max(1, Math.min(4, wrongCount));
+/** Clamp an arbitrary step number to a valid 1..4 scaffolding level. */
+function toHintLevel(level: number): HintLevel {
+  return Math.min(4, Math.max(1, Math.floor(level))) as HintLevel;
 }
 
 /**
- * Proactively summons the Guide Wizard after a wrong answer. Hints are
- * progressive: retrieval cue -> attention cue -> concept cue -> short
- * explanation, escalating only as the learner keeps missing. The answer is
- * never revealed before the final stage. The tower Hint Chamber remains a backup.
+ * Handwritten hint content used when the AI hint call is unavailable. Mirrors the
+ * four AI scaffolding levels (retrieval -> attention -> concept -> reasoning) so
+ * the step-by-step loop still works fully AI-off.
+ */
+function fallbackForLevel(level: number): string {
+  return AI_OFF_HINT_FALLBACKS[toHintLevel(level)];
+}
+
+const START_ACTION = { id: "help-hint", label: "Walk me through it", variant: "primary" as const };
+const LATER_ACTION = { id: "help-later", label: "Not yet", variant: "ghost" as const };
+const NEXT_ACTION = { id: "help-next", label: "Next step", variant: "primary" as const };
+const GOTIT_ACTION = { id: "help-gotit", label: "I've got it", variant: "ghost" as const };
+
+/**
+ * Proactively summons the Wizard after a wrong answer and then guides the learner
+ * step by step. Each step reveals one more level of scaffolding (retrieval cue ->
+ * attention cue -> concept cue -> short explanation), and after every hint the
+ * wizard keeps guiding by offering the next step. The answer is never revealed
+ * before the final step. The tower Hint Chamber remains a backup.
  */
 export default function WizardHelpPrompt({
   context,
@@ -60,45 +54,65 @@ export default function WizardHelpPrompt({
   const snoozedUntil = useRef(0);
   const lastStepKey = useRef(stepKey);
 
-  // Keep latest values available to the (stably registered) bubble handlers.
+  // Keep latest context available to the stably registered handlers, and track
+  // which guidance step (hint level) the learner is currently on.
   const ctxRef = useRef(context);
-  const levelRef = useRef(levelFor(wrongCount));
+  const guideStep = useRef(0);
   useEffect(() => {
     ctxRef.current = context;
-    levelRef.current = levelFor(wrongCount);
-  }, [context, wrongCount]);
+  }, [context]);
 
   useEffect(() => {
     if (stepKey !== lastStepKey.current) {
       lastOffered.current = 0;
       snoozedUntil.current = 0;
+      guideStep.current = 0;
       lastStepKey.current = stepKey;
     }
   }, [stepKey]);
 
   useEffect(() => {
-    setBubbleActionHandler("help-hint", async () => {
-      const level = levelRef.current;
+    // Fetch the hint for one step, then keep guiding toward the next step.
+    async function deliverStep(level: number) {
       const ctx = ctxRef.current;
       update("wizard", { state: "thinking", message: undefined, bubbleActions: undefined });
+      playSound("thinking");
+      let hint: string;
       try {
         const res = await fetch("/api/ai/hint", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...ctx, level }),
+          body: JSON.stringify({ ...ctx, level, pageKind: "lesson" }),
         });
         const data = (await res.json().catch(() => null)) as { hint?: string } | null;
-        const hint = res.ok && data?.hint ? data.hint : fallbackForLevel(level, ctx);
-        update("wizard", { state: "speaking", message: hint, bubbleActions: undefined, wandAim: 15, autoDismissMs: 24000 });
+        hint = res.ok && data?.hint ? data.hint : fallbackForLevel(level);
       } catch {
-        update("wizard", {
-          state: "speaking",
-          message: fallbackForLevel(level, ctx),
-          bubbleActions: undefined,
-          wandAim: 15,
-          autoDismissMs: 24000,
-        });
+        hint = fallbackForLevel(level);
       }
+      // After every hint, keep guiding: offer the next step until the reasoning
+      // is fully walked (level 4), where the learner completes the final step.
+      const actions = level < 4 ? [NEXT_ACTION, GOTIT_ACTION] : [GOTIT_ACTION];
+      update("wizard", {
+        state: "speaking",
+        message: hint,
+        bubbleActions: actions,
+        wandAim: 15,
+        autoDismissMs: 60000,
+      });
+    }
+
+    setBubbleActionHandler("help-hint", () => {
+      guideStep.current = 1;
+      void deliverStep(1);
+    });
+
+    setBubbleActionHandler("help-next", () => {
+      guideStep.current = Math.min(4, guideStep.current + 1);
+      void deliverStep(guideStep.current);
+    });
+
+    setBubbleActionHandler("help-gotit", () => {
+      dismiss("wizard");
     });
 
     setBubbleActionHandler("help-later", () => {
@@ -108,26 +122,27 @@ export default function WizardHelpPrompt({
 
     return () => {
       clearBubbleActionHandler("help-hint");
+      clearBubbleActionHandler("help-next");
+      clearBubbleActionHandler("help-gotit");
       clearBubbleActionHandler("help-later");
     };
   }, [update, dismiss, setBubbleActionHandler, clearBubbleActionHandler]);
 
   useEffect(() => {
     if (!enabled || wrongCount === 0) return;
-    // Offer once per distinct wrong attempt; a new wrong attempt overrides snooze.
+    // Offer once per distinct wrong attempt, and respect a recent "Not yet".
     if (wrongCount === lastOffered.current) return;
-    if (wrongCount === lastOffered.current + 0 && Date.now() < snoozedUntil.current) return;
+    if (Date.now() < snoozedUntil.current) return;
 
     const delay = window.setTimeout(() => {
       saveTowerHintContext(context);
       lastOffered.current = wrongCount;
-      const level = levelFor(wrongCount);
-      const msg = OFFER_MESSAGES[level - 1];
+      guideStep.current = 0;
       summon({
         context: "hint",
         state: "speaking",
-        message: msg,
-        bubbleActions: [HINT_ACTION, LATER_ACTION],
+        message: OFFER_MESSAGE,
+        bubbleActions: [START_ACTION, LATER_ACTION],
         wandAim: 20,
         showMotes: true,
       });

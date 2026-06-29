@@ -4,13 +4,13 @@ import { useState } from "react";
 import type { PredictionOption } from "@/lib/types";
 import type { ConceptTag } from "@/lib/learning/concepts";
 import { recordConceptResult } from "@/lib/learning/signals";
+import { getCorrectHeadline } from "@/lib/learning/progressive-feedback";
 import MathText from "./MathText";
+import ProgressiveFeedbackPanel from "./ProgressiveFeedbackPanel";
 
 /**
  * Worked example: shows expert reasoning step by step, then hides the final
- * step and asks the learner to complete it. Worked examples reduce working-
- * memory load for novices before an independent challenge. Completing the final
- * step (correctly) unlocks Next; a wrong pick gives feedback and lets them retry.
+ * step and asks the learner to complete it with retrieval-first wrong feedback.
  */
 export default function WorkedExample({
   intro,
@@ -33,13 +33,17 @@ export default function WorkedExample({
 }) {
   const [picked, setPicked] = useState<string | null>(null);
   const [solved, setSolved] = useState(false);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [showExplanationRequested, setShowExplanationRequested] = useState(false);
   const selected = options.find((o) => o.id === picked) ?? null;
+  const correctOption = options.find((o) => o.correct) ?? null;
 
   function choose(id: string) {
     if (solved) return;
     const option = options.find((o) => o.id === id);
     if (!option) return;
     setPicked(id);
+    setShowExplanationRequested(false);
     onAttempt();
     if (option.correct) {
       setSolved(true);
@@ -47,11 +51,13 @@ export default function WorkedExample({
       if (conceptTag) recordConceptResult(conceptTag, true);
     } else {
       onCanAdvanceChange(false);
+      setWrongCount((c) => c + 1);
       if (conceptTag) recordConceptResult(conceptTag, false, { misconception: option.feedback });
     }
   }
 
   const wrong = !!selected && !selected.correct && !solved;
+  const fullExplanation = correctOption?.feedback || teaching;
 
   return (
     <div className="mt-3">
@@ -107,19 +113,25 @@ export default function WorkedExample({
         })}
       </div>
 
-      {selected && (
-        <p
-          className={`mt-4 rounded-lg px-4 py-3 text-sm leading-6 ${
-            selected.correct ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"
-          }`}
-        >
-          <MathText>{selected.feedback}</MathText>
-        </p>
+      {selected && selected.correct && (
+        <ProgressiveFeedbackPanel
+          isCorrect
+          wrongCount={wrongCount}
+          showExplanationRequested={showExplanationRequested}
+          onRequestExplanation={() => setShowExplanationRequested(true)}
+          questionContext={{ conceptTag, fullExplanation, correctAnswerLabel: correctOption?.label }}
+          correctHeadline={getCorrectHeadline(wrongCount)}
+          correctExplanation={selected.feedback}
+        />
       )}
       {wrong && (
-        <p className="mt-2 text-sm font-medium text-amber-700">
-          Re-read the reasoning steps above, then complete the final step.
-        </p>
+        <ProgressiveFeedbackPanel
+          isCorrect={false}
+          wrongCount={wrongCount}
+          showExplanationRequested={showExplanationRequested}
+          onRequestExplanation={() => setShowExplanationRequested(true)}
+          questionContext={{ conceptTag, fullExplanation, correctAnswerLabel: correctOption?.label }}
+        />
       )}
       {solved && teaching && (
         <p className="mt-3 max-w-prose text-sm leading-6 text-slate-600">

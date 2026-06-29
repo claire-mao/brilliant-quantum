@@ -12,6 +12,7 @@ import {
   type WandStyle,
 } from "@/lib/profile/avatar";
 import AvatarWizard from "./AvatarWizard";
+import { playAura } from "@/lib/sound/sounds";
 
 const WAND_LABEL: Record<WandStyle, string> = {
   classic: "Classic orb",
@@ -55,7 +56,7 @@ export default function AvatarBuilder({
     const next = !value.familiar;
     set("familiar", next);
     if (next) {
-      setMeow(true);
+      setMeow(true); // the cat's meow animation plays the meow sound itself
       if (meowTimer.current) clearTimeout(meowTimer.current);
       meowTimer.current = window.setTimeout(() => setMeow(false), 1600);
     }
@@ -89,7 +90,10 @@ export default function AvatarBuilder({
           options={AURA_STYLES}
           selected={value.auraStyle}
           labels={AURA_LABEL}
-          onPick={(v) => set("auraStyle", v)}
+          onPick={(v) => {
+            set("auraStyle", v);
+            playAura(v);
+          }}
         />
 
         <div>

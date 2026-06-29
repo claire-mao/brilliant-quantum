@@ -30,7 +30,12 @@ export interface ConceptSignal {
   dueAt: number;
   intervalDays: number;
   misconceptions: MisconceptionNote[];
+  /** Distinct Tower room / session keys with at least one correct answer. */
+  correctSessionKeys?: string[];
 }
+
+/** Fired after learning signals change (Tower, lessons, practice). */
+export const LEARNING_SIGNALS_UPDATED = "bq-learning-signals-updated";
 
 type SignalState = Record<string, ConceptSignal>;
 
@@ -45,7 +50,13 @@ function emptySignal(): ConceptSignal {
     dueAt: 0,
     intervalDays: 0,
     misconceptions: [],
+    correctSessionKeys: [],
   };
+}
+
+function notifySignalsUpdated(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(LEARNING_SIGNALS_UPDATED));
 }
 
 function read(): SignalState {
@@ -91,7 +102,7 @@ function reschedule(sig: ConceptSignal, correct: boolean, now: number): void {
 export function recordConceptResult(
   tag: ConceptTag,
   correct: boolean,
-  opts: { hints?: number; misconception?: string } = {}
+  opts: { hints?: number; misconception?: string; sessionKey?: string } = {}
 ): void {
   const state = read();
   const sig = state[tag] ?? emptySignal();
@@ -103,6 +114,13 @@ export function recordConceptResult(
   if (correct) sig.correct += 1;
   else sig.wrong += 1;
   if (opts.hints) sig.hints += opts.hints;
+
+  if (correct && opts.sessionKey) {
+    const keys = sig.correctSessionKeys ?? [];
+    if (!keys.includes(opts.sessionKey)) {
+      sig.correctSessionKeys = [...keys, opts.sessionKey].slice(-8);
+    }
+  }
 
   if (!correct && opts.misconception) {
     const text = opts.misconception.trim().slice(0, 160);
@@ -117,6 +135,7 @@ export function recordConceptResult(
   reschedule(sig, correct, now);
   state[tag] = sig;
   write(state);
+  notifySignalsUpdated();
 }
 
 /**
@@ -138,6 +157,12 @@ export function recordLessonPracticed(tags: ConceptTag[]): void {
     state[tag] = sig;
   }
   write(state);
+  notifySignalsUpdated();
+}
+
+/** Distinct sessions/rooms where the learner answered correctly for this concept. */
+export function reviewSessionCount(tag: ConceptTag): number {
+  return getConceptSignal(tag)?.correctSessionKeys?.length ?? 0;
 }
 
 export function isConceptDue(tag: ConceptTag, now = Date.now()): boolean {

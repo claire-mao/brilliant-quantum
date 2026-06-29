@@ -226,3 +226,51 @@ export function climateForFloor(floor: number): Climate {
 export function climateBackground(palette: ClimatePalette): string {
   return `radial-gradient(120% 80% at 50% -10%, ${palette.glow}, transparent 60%), linear-gradient(180deg, ${palette.bgFrom} 0%, ${palette.bgVia} 55%, ${palette.bgTo} 100%)`;
 }
+
+/** Pixel backdrop tokens for TowerArena / DungeonScene (mapped from palette). */
+export interface ClimateSceneTokens {
+  wallTop: string;
+  wallBottom: string;
+  stone: string;
+  stoneDark: string;
+  floor: string;
+  floorDark: string;
+  accent: string;
+  torch: string;
+  mist: string;
+  particle: string;
+}
+
+export function climateSceneTokens(climate: Climate): ClimateSceneTokens {
+  const p = climate.palette;
+  return {
+    wallTop: p.bgFrom,
+    wallBottom: p.bgTo,
+    stone: p.wall,
+    stoneDark: p.wallDark,
+    floor: p.floor,
+    floorDark: p.floorDark,
+    accent: p.accent,
+    torch: p.accentSoft,
+    mist: p.glow,
+    particle: p.accentSoft,
+  };
+}
+
+/** Spell projectile color per concept (TowerArena battle FX). */
+const CONCEPT_PROJECTILE: Partial<Record<ConceptTag, string>> = {
+  qubits: "#a78bfa",
+  superposition: "#a78bfa",
+  measurement: "#c4b5fd",
+  "bloch-sphere": "#a78bfa",
+  phase: "#22d3ee",
+  interference: "#22d3ee",
+  entanglement: "#2dd4bf",
+  gates: "#fbbf24",
+  algorithms: "#60a5fa",
+  hardware: "#fb923c",
+};
+
+export function projectileColorForConcept(tag: ConceptTag): string {
+  return CONCEPT_PROJECTILE[tag] ?? "#a78bfa";
+}

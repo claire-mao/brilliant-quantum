@@ -42,6 +42,23 @@ const lesson1: Lesson = {
   },
   steps: [
     {
+      type: "informative",
+      id: "welcome",
+      title: "Welcome",
+      body: [
+        "Classical computers store information as definite 0s and 1s. Quantum computers use qubits that can represent both at once, letting them explore many possibilities in parallel.",
+        "Learning here is hands-on. You'll explore quantum ideas by experimenting, making predictions, and solving challenges in live simulations. Each activity is designed to help you understand why something happens, not just remember the answer.",
+        "By the end, you'll have a clear picture of how qubits work, how gates transform them, and why measurement always gives a single answer.",
+      ],
+      realWorldLabel: "Current applications",
+      applications: [
+        "Drug and material discovery",
+        "Battery and energy research",
+        "Cryptography and security",
+        "Optimization problems",
+      ],
+    },
+    {
       type: "bit-explorer",
       id: "classical-bit",
       title: "Classical bits",
@@ -50,14 +67,14 @@ const lesson1: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — it always holds one definite value",
+          label: "No,  it always holds one definite value",
           correct: true,
           feedback:
             "Correct. A classical bit always holds a single definite value, 0 or 1. Representing both at once is a property of quantum systems, which you'll examine next.",
         },
         {
           id: "yes",
-          label: "Yes — it can represent both at once",
+          label: "Yes,  it can represent both at once",
           feedback:
             "Not for a classical bit. A classical bit is defined to hold one definite value, 0 or 1. Holding both at once is a quantum property, introduced next.",
         },
@@ -66,27 +83,30 @@ const lesson1: Lesson = {
     {
       type: "informative",
       id: "why-quantum",
-      title: "Why quantum computing",      body: [
-        "Some computational problems — such as molecular simulation, materials discovery, and optimization — scale beyond what classical computers can solve efficiently.",
-        "Quantum computers process information differently, using qubits instead of classical bits. In this lesson, you'll build intuition for qubits through interactive experiments rather than mathematics.",
+      title: "Why quantum computing",
+      body: [
+        "Some problems are too big for any ordinary computer. Simulating exactly how a single complex molecule behaves could take the fastest supercomputer longer than the universe has existed.",
+        "Quantum computers attack those problems with a different building block: the qubit. You will build intuition for qubits by experimenting with them, not by memorizing formulas.",
       ],
+      whyMatters:
+        "Qubits are the foundation for everything ahead. Every gate, circuit, and algorithm in this course is just a way of steering them.",
       resources: [
         {
           label: "IBM Quantum Learning",
-          url: "https://learning.quantum.ibm.com/",
+          url: "https://learning.quantum.ibm.com/course/basics-of-quantum-information",
           description: "Introductory courses on quantum computing.",
           kind: "docs",
         },
         {
           label: "Qiskit documentation",
-          url: "https://www.ibm.com/quantum/qiskit",
+          url: "https://quantum.cloud.ibm.com/docs",
           description: "Tools and tutorials for writing quantum programs.",
           kind: "docs",
         },
         {
           label: "Quantum computing: a short introduction",
-          url: "https://www.youtube.com/results?search_query=quantum+computing+introduction",
-          description: "Introductory explainer videos (opens YouTube).",
+          url: "https://www.youtube.com/watch?v=JhHMJSYAImU",
+          description: "IBM's short introduction to quantum computing (opens YouTube).",
           kind: "video",
         },
       ],
@@ -103,7 +123,7 @@ const lesson1: Lesson = {
           label: "A qubit holds a combination of 0 and 1 until measured",
           correct: true,
           feedback:
-            "Correct. This combination is called superposition. The percentages are the probabilities of each outcome when the qubit is measured.",
+            "The correct answer is that a qubit can represent both 0 and 1 simultaneously until measured. This corrects the misconception that qubits read all values at once, as superposition is a fixed state until observation occurs.",
         },
         {
           id: "random",
@@ -115,7 +135,7 @@ const lesson1: Lesson = {
           id: "faster",
           label: "A qubit is simply a faster bit",
           feedback:
-            "Speed is not the distinction. A qubit can hold a superposition of 0 and 1 — a state a classical bit cannot represent.",
+            "Speed is not the distinction. A qubit can hold a superposition of 0 and 1,  a state a classical bit cannot represent.",
         },
       ],
     },
@@ -129,15 +149,18 @@ const lesson1: Lesson = {
     {
       type: "informative",
       id: "what-measurement-means",
-      title: "What measurement does",      body: [
-        "A qubit can hold a superposition of 0 and 1, but that superposition cannot be observed directly.",
-        "Measurement returns a single definite outcome, 0 or 1. The probabilities describe how often each outcome occurs, not what any single measurement will be.",
-        "To recover the probabilities, prepare many identical qubits and measure each once. Observe this next.",
+      title: "What measurement does",
+      body: [
+        "A qubit can hold a superposition of 0 and 1, but you can never watch that superposition directly.",
+        "Every measurement hands back one definite answer, 0 or 1. The probabilities tell you how often each answer shows up, not what the next single measurement will be.",
+        "So to see the probabilities, you prepare many identical qubits and measure each one once. You will watch this happen next.",
       ],
+      misconception:
+        "It is tempting to picture the qubit secretly storing both a 0 and a 1, with measurement just reading one off. It does not work that way. Before you measure there is one superposed state, and measuring forces it into a single result.",
       resources: [
         {
           label: "IBM Quantum Learning: measurement",
-          url: "https://learning.quantum.ibm.com/",
+          url: "https://quantum.cloud.ibm.com/docs/guides/measure-qubits",
           description: "A deeper treatment of measurement.",
           kind: "docs",
         },
@@ -190,9 +213,9 @@ const lesson1: Lesson = {
       targetProbability: 75,
       tolerance: 5,
       correctFeedback:
-        "Correct. The qubit now measures 1 about 75% of the time and 0 about 25% — a superposition you prepared.",
+        "Correct. The qubit now measures 1 about 75% of the time and 0 about 25%,  a superposition you prepared.",
       incorrectFeedback:
-        "Not yet. Aim for P(1) near 75%, which leaves P(0) near 25%. Adjust the slider and check again.",
+        "Not yet. Recall how amplitudes map to probabilities, then adjust.",
     },
     {
       type: "reflection",
@@ -222,15 +245,20 @@ const lesson2: Lesson = {
     {
       type: "informative",
       id: "what-is-measurement",
-      title: "What does measurement do?",      body: [
-        "A qubit can hold a superposition of 0 and 1, but that superposition cannot be observed directly.",
-        "Measurement returns a single outcome, 0 or 1. It is the operation that converts a quantum state into a classical result.",
-        "Before measurement you can describe only probabilities. After measurement you have one definite outcome, and the original superposition is gone.",
+      title: "What does measurement do?",
+      body: [
+        "A qubit can hold a superposition of 0 and 1, but you cannot watch that superposition directly.",
+        "Measurement returns a single outcome, 0 or 1. It is the step that turns a quantum state into a classical result you can actually read.",
+        "Before you measure, you can only talk about probabilities. After you measure, you have one definite outcome and the original superposition is gone for good.",
       ],
+      misconception:
+        "Many people assume the qubit already is a 0 or a 1 and measurement simply uncovers it. There is no hidden value waiting to be found. Measurement is what creates the definite outcome.",
+      memoryConnection:
+        "Last lesson you saw that one measurement cannot reveal the probabilities. This is the reason: measuring changes the state instead of just reading it.",
       resources: [
         {
           label: "IBM Quantum Learning",
-          url: "https://learning.quantum.ibm.com/",
+          url: "https://learning.quantum.ibm.com/course/utility-scale-quantum-computing/lesson-02-bits-gates-and-circuits",
           description: "Introductory material, including measurement.",
           kind: "docs",
         },
@@ -289,11 +317,16 @@ const lesson2: Lesson = {
     {
       type: "informative",
       id: "collapse-explained",
-      title: "Collapse",      body: [
+      title: "Collapse",
+      body: [
         "Measurement collapses a qubit's superposition into one observed outcome, 0 or 1.",
-        "Collapse is permanent for that qubit. Measure the same qubit again immediately and it returns the same outcome; the uncertainty is gone.",
-        "To recover the probabilities, prepare many identical qubits and measure each once. The set of outcomes reveals the distribution.",
+        "That collapse sticks. Measure the same qubit again right away and it returns the same outcome, because the uncertainty is already gone.",
+        "To see the probabilities again, you prepare many identical qubits and measure each once. The full set of outcomes reveals the distribution.",
       ],
+      realWorld:
+        "Collapse is not just theory. Quantum random number generators rely on it, sampling one genuinely unpredictable outcome at a time for cryptography and secure keys.",
+      whyMatters:
+        "Measurement is the only way to read a quantum computer's answer, so understanding collapse is what makes every algorithm later in the course actually readable.",
     },
     {
       type: "collapse-check",
@@ -349,7 +382,7 @@ const lesson2: Lesson = {
           label: "0",
           correct: true,
           feedback:
-            "Correct. P(1) = 20% gives P(0) = 80%, so 0 occurs far more often — about 80 of 100 measurements.",
+            "Correct. P(1) = 20% gives P(0) = 80%, so 0 occurs far more often,  about 80 of 100 measurements.",
         },
         {
           id: "one",
@@ -395,7 +428,7 @@ const lesson3: Lesson = {
       id: "hook",
       title: "Flipping a basis state",
       prompt:
-        "We have described and measured quantum states; now we transform them. The Pauli X gate acts on the computational basis. Apply X to \\( |0\\rangle \\) and measure — what does it return?",
+        "We have described and measured quantum states; now we transform them. The Pauli X gate acts on the computational basis. Apply X to \\( |0\\rangle \\) and measure,  what does it return?",
       options: [
         {
           id: "one",
@@ -416,7 +449,7 @@ const lesson3: Lesson = {
             "X does not create a superposition. It maps the definite \\( |0\\rangle \\) to the definite \\( |1\\rangle \\). The gate that makes a 50/50 state comes later.",
         },
       ],
-      teaching: "X exchanges \\( |0\\rangle \\) and \\( |1\\rangle \\) — the quantum bit flip.",
+      teaching: "X exchanges \\( |0\\rangle \\) and \\( |1\\rangle \\),  the quantum bit flip.",
     },
     {
       type: "gate-lab",
@@ -466,10 +499,14 @@ const lesson3: Lesson = {
       ],
       misconception:
         "X does not measure or randomize the qubit. It deterministically swaps \\( |0\\rangle \\) and \\( |1\\rangle \\); it does not reveal a hidden value.",
+      realWorld:
+        "The X gate is the workhorse of error correction. When a stray bit flips on real hardware, an X gate is exactly what flips it back.",
+      whyMatters:
+        "X is your first real gate. Once you can predict what one deterministic gate does, you can read any circuit as a sequence of such moves.",
       resources: [
         {
           label: "IBM Quantum Learning: gates",
-          url: "https://learning.quantum.ibm.com/",
+          url: "https://learning.quantum.ibm.com/course/utility-scale-quantum-computing/lesson-02-bits-gates-and-circuits",
           description: "Single-qubit gates, including the Pauli gates.",
           kind: "docs",
         },
@@ -509,7 +546,7 @@ const lesson3: Lesson = {
       options: [
         {
           id: "definite",
-          label: "Definite — it is exactly \\( |1\\rangle \\)",
+          label: "Definite,  it is exactly \\( |1\\rangle \\)",
           correct: true,
           feedback: "Correct. X maps one basis state to another; the result is the definite state \\( |1\\rangle \\).",
         },
@@ -533,8 +570,8 @@ const lesson3: Lesson = {
       correctFeedback:
         "Correct. X is its own inverse, so a second X undoes the first: \\( XX = I \\) returns \\( |0\\rangle \\).",
       incorrectFeedback:
-        "Not \\( |0\\rangle \\) yet. The qubit is at \\( |1\\rangle \\). Since X is its own inverse, one more X flips it back.",
-      teaching: "To undo X, apply X again — each flip reverses the previous one.",
+        "Not yet. Recall what X does to a qubit state.",
+      teaching: "To undo X, apply X again,  each flip reverses the previous one.",
     },
     {
       type: "prediction",
@@ -545,16 +582,16 @@ const lesson3: Lesson = {
       options: [
         {
           id: "transform",
-          label: "Transforming — it maps one state to the other deterministically",
+          label: "Transforming,  it maps one state to the other deterministically",
           correct: true,
           feedback:
             "Correct. X is a fixed, reversible transformation, not a measurement. Nothing is revealed or randomized.",
         },
         {
           id: "reveal",
-          label: "Revealing — it reads out a hidden 0 or 1",
+          label: "Revealing,  it reads out a hidden 0 or 1",
           feedback:
-            "X does not measure. It maps \\( |0\\rangle \\leftrightarrow |1\\rangle \\) deterministically and reversibly — a readout would not be reversible.",
+            "X does not measure. It maps \\( |0\\rangle \\leftrightarrow |1\\rangle \\) deterministically and reversibly,  a readout would not be reversible.",
         },
       ],
       teaching: "Gates transform states; they do not measure or reveal hidden values.",
@@ -569,7 +606,7 @@ const lesson3: Lesson = {
         "It is deterministic and reversible, with \\( XX = I \\).",
         "X moves between definite basis states; it does not create superposition.",
       ],
-      next: "Pauli Z — a gate that changes the state without changing the 0/1 measurement.",
+      next: "Pauli Z,  a gate that changes the state without changing the 0/1 measurement.",
     },
   ],
 };
@@ -596,7 +633,7 @@ const lesson4: Lesson = {
           label: "About half 0 and half 1",
           correct: true,
           feedback:
-            "Correct. \\( X|0\\rangle = |1\\rangle \\), then \\( H|1\\rangle = |-\\rangle \\), a 50/50 state — so measurements split evenly.",
+            "Correct. \\( X|0\\rangle = |1\\rangle \\), then \\( H|1\\rangle = |-\\rangle \\), a 50/50 state,  so measurements split evenly.",
         },
         {
           id: "one",
@@ -620,7 +657,7 @@ const lesson4: Lesson = {
       start: "0",
       measure: true,
       teaching:
-        "Order matters. \\( HX|0\\rangle = |-\\rangle \\) and \\( XH|0\\rangle = |+\\rangle \\) both measure 50/50, yet they are different states — a relative-phase difference you could expose with another H or a Z.",
+        "Order matters. \\( HX|0\\rangle = |-\\rangle \\) and \\( XH|0\\rangle = |+\\rangle \\) both measure 50/50, yet they are different states,  a relative-phase difference you could expose with another H or a Z.",
     },
     {
       type: "prediction",
@@ -659,10 +696,12 @@ const lesson4: Lesson = {
       ],
       misconception:
         "Two sequences with the same 0/1 statistics are not necessarily the same operation. \\( XH \\) and \\( HX \\) both give 50/50 but differ by phase, which becomes visible after further gates.",
+      realWorld:
+        "Real quantum programs in tools like Qiskit are exactly these ordered gate lists, compiled onto a chip and then measured.",
       resources: [
         {
           label: "IBM Quantum Learning: circuits",
-          url: "https://learning.quantum.ibm.com/",
+          url: "https://learning.quantum.ibm.com/course/quantum-computing-in-practice/running-quantum-circuits",
           description: "Building and reading quantum circuits.",
           kind: "docs",
         },
@@ -758,7 +797,7 @@ const lesson4: Lesson = {
       correctFeedback:
         "Correct. One route is X then H \\( (|0\\rangle \\to |1\\rangle \\to |-\\rangle) \\); another is H then Z. Order and choice of gates both matter.",
       incorrectFeedback:
-        "Not \\( |-\\rangle \\) yet. Reach the equator first (X then H, or H), then make sure the phase is flipped.",
+        "Not yet. Recall equator states and how phase is set.",
       teaching: "Several short sequences can reach the same state; the order determines which.",
     },
     {
@@ -774,7 +813,7 @@ const lesson4: Lesson = {
       feedbackDefinite:
         "X alone keeps the qubit definite (all 0 or all 1). You need H to make an even split.",
       incorrectFeedback:
-        "Not 50/50 yet. The H gate produces an even superposition from a definite state.",
+        "Not yet. Recall what H does from a definite state.",
       teaching: "H is the gate that turns a definite state into a 50/50 measurement.",
     },
     {
@@ -787,7 +826,7 @@ const lesson4: Lesson = {
         "Order matters: most gates do not commute.",
         "Inverses cancel, e.g. \\( HH = I \\), which simplifies a sequence.",
       ],
-      next: "Reversibility — every gate sequence can be undone.",
+      next: "Reversibility,  every gate sequence can be undone.",
     },
   ],
 };
@@ -818,7 +857,7 @@ const lesson5: Lesson = {
         {
           id: "double",
           label: "It doubles",
-          feedback: "A natural guess, but probability is the amplitude squared — doubling α gives four times the probability.",
+          feedback: "A natural guess, but probability is the amplitude squared,  doubling α gives four times the probability.",
         },
         {
           id: "same",
@@ -834,7 +873,7 @@ const lesson5: Lesson = {
       title: "Slide the amplitude",
       body: "Drag the amplitude from \\( -1 \\) to \\( +1 \\) and watch \\( P = |\\alpha|^2 \\). Set it to 0.3, then 0.6, and compare.",
       teaching:
-        "Probability is the amplitude squared: \\( \\alpha = 0.3 \\) gives \\( P = 0.09 \\), while \\( \\alpha = 0.6 \\) gives \\( P = 0.36 \\) — four times as large. Negative amplitudes give the same probability as positive ones; the sign stays hidden until amplitudes interfere.",
+        "Probability is the amplitude squared: \\( \\alpha = 0.3 \\) gives \\( P = 0.09 \\), while \\( \\alpha = 0.6 \\) gives \\( P = 0.36 \\),  four times as large. Negative amplitudes give the same probability as positive ones; the sign stays hidden until amplitudes interfere.",
     },
     {
       type: "prediction",
@@ -845,18 +884,18 @@ const lesson5: Lesson = {
       options: [
         {
           id: "036",
-          label: "0.36 — about four times larger",
+          label: "0.36,  about four times larger",
           correct: true,
           feedback: "Correct. \\( (0.6)^2 = 0.36 \\). Doubling the amplitude quadrupled the probability.",
         },
         {
           id: "018",
-          label: "0.18 — twice as large",
+          label: "0.18,  twice as large",
           feedback: "Probability is the square, not the amplitude. \\( (0.6)^2 = 0.36 \\), four times \\( 0.09 \\).",
         },
         {
           id: "06",
-          label: "0.6 — equal to the amplitude",
+          label: "0.6,  equal to the amplitude",
           feedback: "The amplitude and probability are different numbers: \\( P = (0.6)^2 = 0.36 \\).",
         },
       ],
@@ -868,9 +907,13 @@ const lesson5: Lesson = {
       title: "What an amplitude is",
       body: [
         "Each outcome carries an amplitude, which can be positive or negative. The probability is its square: \\( P = |\\alpha|^2 \\).",
-        "Because of the square, amplitude and probability are not the same number — and the amplitude's sign, invisible to a single measurement, becomes decisive when amplitudes combine.",
+        "The amplitude also has a sign. That sign stays invisible to a single measurement, but it becomes decisive the moment two amplitudes combine.",
       ],
       misconception: "Amplitude is not probability. An amplitude of \\( 0.5 \\) gives a probability of \\( 0.25 \\), not \\( 0.5 \\).",
+      whyMatters:
+        "Amplitudes are the secret ingredient behind every quantum speedup. Because they can be negative, they can cancel, and that cancellation is where the power comes from.",
+      memoryConnection:
+        "Back in Unit 1, measurement only ever showed you probabilities. The sign of an amplitude is exactly the information a single measurement hides.",
       resources: [
         {
           label: "Probability amplitude (Wikipedia)",
@@ -913,13 +956,13 @@ const lesson5: Lesson = {
       options: [
         {
           id: "yes",
-          label: "Yes — both are 0.49",
+          label: "Yes,  both are 0.49",
           correct: true,
           feedback: "Correct. \\( (0.7)^2 = (-0.7)^2 = 0.49 \\). The sign is hidden in a single probability, but it matters when amplitudes meet.",
         },
         {
           id: "no",
-          label: "No — opposite signs give different probabilities",
+          label: "No,  opposite signs give different probabilities",
           feedback: "Squaring removes the sign, so both give \\( 0.49 \\). The sign only shows up through interference.",
         },
       ],
@@ -931,20 +974,20 @@ const lesson5: Lesson = {
       title: "Find the amplitude for a quarter",
       body: "Work it backwards. Drag the amplitude until the probability reads about \\( 0.25 \\). What amplitude did that take?",
       teaching:
-        "An amplitude of \\( \\pm 0.5 \\) gives \\( P = 0.25 \\) — both signs work, since \\( (0.5)^2 = (-0.5)^2 \\). To quarter the probability you do not quarter the amplitude.",
+        "An amplitude of \\( \\pm 0.5 \\) gives \\( P = 0.25 \\),  both signs work, since \\( (0.5)^2 = (-0.5)^2 \\). To quarter the probability you do not quarter the amplitude.",
     },
     {
       type: "challenge",
       id: "prepare-25",
       title: "Prepare a quarter",
       prompt:
-        "Translate amplitude into a prepared qubit: set its outcome so \\( P(1)=25\\% \\) — the probability an amplitude of \\( 0.5 \\) produces.",
+        "Translate amplitude into a prepared qubit: set its outcome so \\( P(1)=25\\% \\),  the probability an amplitude of \\( 0.5 \\) produces.",
       targetProbability: 25,
       tolerance: 5,
       correctFeedback:
         "Correct. \\( P(1)=25\\% \\) is exactly \\( |\\alpha|^2 \\) for \\( \\alpha=0.5 \\). Amplitude and probability are linked by the square.",
       incorrectFeedback:
-        "Not yet. Aim for \\( P(1) \\) near 25%, the value \\( (0.5)^2 \\) gives. Adjust and check again.",
+        "Not yet. Recall how amplitudes become probabilities.",
     },
     {
       type: "reflection",
@@ -983,7 +1026,7 @@ const lessonBloch: Lesson = {
           label: "On the equator, halfway between the poles",
           correct: true,
           feedback:
-            "Correct. Equal outcome probabilities place the state halfway between the poles — on the equator.",
+            "Correct. Equal outcome probabilities place the state halfway between the poles,  on the equator.",
         },
         {
           id: "pole",
@@ -1005,7 +1048,7 @@ const lessonBloch: Lesson = {
       type: "bloch-explorer",
       id: "explore",
       title: "Move the state around",
-      body: "Drag \\( θ \\) to move between the poles and watch \\( P(1)=sin^{2}(θ/2) \\). Then drag \\( φ \\) and watch carefully what the probabilities do — and do not do.",
+      body: "Drag \\( θ \\) to move between the poles and watch \\( P(1)=sin^{2}(θ/2) \\). Then drag \\( φ \\) and watch carefully what the probabilities do,  and do not do.",
       showPhi: true,
       teaching:
         "\\( θ \\) sets the measurement probabilities; \\( φ \\) rotates the state around the equator without changing \\( P(0) \\) or \\( P(1) \\). That second angle is the relative phase, the focus of the next lesson.",
@@ -1019,7 +1062,7 @@ const lessonBloch: Lesson = {
       options: [
         {
           id: "nothing",
-          label: "Nothing — they stayed fixed",
+          label: "Nothing,  they stayed fixed",
           correct: true,
           feedback:
             "Correct. \\( φ \\) slides the state around the equator without touching the Z-basis probabilities. Only \\( θ \\) moved the bars.",
@@ -1048,7 +1091,9 @@ const lessonBloch: Lesson = {
         "The azimuth \\( φ \\) is the relative phase. It slides the point around the equator without changing any probability measurable in the standard (Z) basis.",
       ],
       misconception:
-        "The Bloch sphere is not physical space. The arrow does not point anywhere in the lab — it is a compact map of the qubit's two real parameters, \\( θ \\) and \\( φ \\).",
+        "The Bloch sphere is not physical space. The arrow does not point anywhere in the lab; it is a compact map of the qubit's two real parameters, \\( θ \\) and \\( φ \\).",
+      realWorld:
+        "Real spin qubits in MRI and NMR machines are steered with pulses described exactly as rotations on this sphere, so it doubles as an engineer's control panel.",
       resources: [
         {
           label: "Bloch sphere (Wikipedia)",
@@ -1058,7 +1103,7 @@ const lessonBloch: Lesson = {
         },
         {
           label: "IBM Quantum Learning",
-          url: "https://learning.quantum.ibm.com/",
+          url: "https://learning.quantum.ibm.com/course/utility-scale-quantum-computing/lesson-02-bits-gates-and-circuits",
           description: "Single-qubit states and the Bloch sphere.",
           kind: "docs",
         },
@@ -1085,7 +1130,7 @@ const lessonBloch: Lesson = {
         {
           id: "equator",
           label: "\\( θ = 90° \\), \\( φ = 90° \\)",
-          feedback: "\\( θ=90° \\) is on the equator — an equal superposition, not the definite state \\( |1⟩ \\).",
+          feedback: "\\( θ=90° \\) is on the equator,  an equal superposition, not the definite state \\( |1⟩ \\).",
         },
       ],
       teaching: "At the poles the state is definite, and the relative phase has nothing to act on.",
@@ -1136,9 +1181,9 @@ const lessonBloch: Lesson = {
       targetProbability: 75,
       tolerance: 5,
       correctFeedback:
-        "Correct. That places the state off the equator toward the south pole, with \\( P(1)\\approx 75\\% \\) — a specific \\( θ \\) you dialed in.",
+        "Correct. That places the state off the equator toward the south pole, with \\( P(1)\\approx 75\\% \\),  a specific \\( θ \\) you dialed in.",
       incorrectFeedback:
-        "Not yet. Aim for \\( P(1) \\) near 75%, which leaves \\( P(0) \\) near 25%. Adjust and check again.",
+        "Not yet. Recall how amplitudes map to probabilities, then adjust.",
     },
     {
       type: "prediction",
@@ -1148,14 +1193,14 @@ const lessonBloch: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — they share \\( θ=90° \\) but can differ in \\( φ \\)",
+          label: "No,  they share \\( θ=90° \\) but can differ in \\( φ \\)",
           correct: true,
           feedback:
             "Correct. Z-basis data fixes \\( θ \\) only. The two could be \\( |+\\rangle \\) and \\( |-\\rangle \\), which differ entirely in \\( φ \\).",
         },
         {
           id: "yes",
-          label: "Yes — equal probabilities mean an identical state",
+          label: "Yes,  equal probabilities mean an identical state",
           feedback:
             "Equal Z-basis odds fix only \\( θ \\). The relative phase \\( φ \\) is unconstrained, so the states can differ.",
         },
@@ -1172,7 +1217,7 @@ const lessonBloch: Lesson = {
         "\\( θ \\) sets the measurement probabilities: \\( P(1)=sin^{2}(θ/2) \\).",
         "\\( φ \\) is the relative phase: invisible in the Z basis.",
       ],
-      next: "Global vs Relative Phase — why that second angle \\( φ \\) is physically real.",
+      next: "Global vs Relative Phase,  why that second angle \\( φ \\) is physically real.",
     },
   ],
 };
@@ -1192,11 +1237,11 @@ const lessonPhase: Lesson = {
       id: "hook",
       title: "A phase you can never see",
       prompt:
-        "On the Bloch sphere, \\( θ \\) set the probabilities and \\( φ \\) moved the state around the equator without changing them. So is phase just bookkeeping? Two labs prepare \\( |ψ⟩ \\) and \\( e^{iα}|ψ⟩ \\) — the same state times one overall phase factor. Can any experiment tell the two qubits apart?",
+        "On the Bloch sphere, \\( θ \\) set the probabilities and \\( φ \\) moved the state around the equator without changing them. So is phase just bookkeeping? Two labs prepare \\( |ψ⟩ \\) and \\( e^{iα}|ψ⟩ \\),  the same state times one overall phase factor. Can any experiment tell the two qubits apart?",
       options: [
         {
           id: "no",
-          label: "No — an overall phase has no observable consequence",
+          label: "No,  an overall phase has no observable consequence",
           correct: true,
           feedback:
             "Correct. A global phase multiplies every amplitude equally, so it cancels in every probability.",
@@ -1257,16 +1302,18 @@ const lessonPhase: Lesson = {
       id: "explain",
       title: "Global out, relative in",
       body: [
-        "A global phase multiplies the whole state: \\( e^{iα}|ψ⟩ \\). Because every probability is the squared magnitude of an amplitude, the factor \\( e^{iα} \\) (magnitude 1) cancels everywhere. It is not physical — which is why the Bloch sphere has no coordinate for it.",
+        "A global phase multiplies the whole state: \\( e^{iα}|ψ⟩ \\). Because every probability is the squared magnitude of an amplitude, the factor \\( e^{iα} \\) (magnitude 1) cancels everywhere. It is not physical,  which is why the Bloch sphere has no coordinate for it.",
         "A relative phase sits between the components: \\( cos(θ/2)|0⟩ + e^{iφ} sin(θ/2)|1⟩ \\). It is the azimuth \\( φ \\). It leaves Z-basis probabilities untouched but changes results in other bases.",
         "This relative phase is exactly the handle that interference will use later.",
       ],
       misconception:
-        "Global phase does not affect measurement statistics — in any basis. Only the relative phase between \\( |0⟩ \\) and \\( |1⟩ \\) is physical.",
+        "Global phase does not affect measurement statistics in any basis. Only the relative phase between \\( |0⟩ \\) and \\( |1⟩ \\) is physical.",
+      realWorld:
+        "Relative phase is what atomic clocks and quantum interferometers actually read out, and it is the quantity quantum algorithms steer to compute their answers.",
       resources: [
         {
-          label: "Global phase (Quantiki)",
-          url: "https://www.quantiki.org/wiki/global-phase",
+          label: "Global phase (Wikipedia)",
+          url: "https://en.wikipedia.org/wiki/Phase_factor#Global_phase",
           description: "Why global phase is physically irrelevant.",
           kind: "article",
         },
@@ -1291,7 +1338,7 @@ const lessonPhase: Lesson = {
         },
         {
           id: "neither",
-          label: "Neither — phases are only bookkeeping",
+          label: "Neither,  phases are only bookkeeping",
           feedback: "Relative phase is observable: \\( |+⟩ \\) and \\( |−⟩ \\) differ only by it, yet are perfectly distinguishable.",
         },
       ],
@@ -1318,7 +1365,7 @@ const lessonPhase: Lesson = {
         {
           id: "cant",
           label: "They cannot be distinguished",
-          feedback: "They are orthogonal, so they are perfectly distinguishable — just not in the Z basis.",
+          feedback: "They are orthogonal, so they are perfectly distinguishable,  just not in the Z basis.",
         },
       ],
       teaching: "Choosing the right basis turns a hidden relative phase into a definite outcome.",
@@ -1343,9 +1390,9 @@ const lessonPhase: Lesson = {
       start: "0",
       target: "-",
       correctFeedback:
-        "Correct. \\( |-\\rangle \\) sits opposite \\( |+\\rangle \\) on the equator — same 50/50 in Z, opposite phase. H then Z (or X then H) reaches it.",
+        "Correct. \\( |-\\rangle \\) sits opposite \\( |+\\rangle \\) on the equator,  same 50/50 in Z, opposite phase. H then Z (or X then H) reaches it.",
       incorrectFeedback:
-        "Not \\( |-\\rangle \\) yet. It is an equator state: first make a superposition with H, then flip its phase with Z.",
+        "Not yet. Recall how H and Z build equator states.",
       teaching: "\\( |-\\rangle \\) differs from \\( |+\\rangle \\) only by relative phase, yet H separates them cleanly.",
     },
     {
@@ -1357,7 +1404,7 @@ const lessonPhase: Lesson = {
       options: [
         {
           id: "none",
-          label: "No basis can — a global phase cancels everywhere",
+          label: "No basis can,  a global phase cancels everywhere",
           correct: true,
           feedback:
             "Correct. \\( e^{iα} \\) multiplies every amplitude equally, so it drops out of every probability in every basis.",
@@ -1380,7 +1427,7 @@ const lessonPhase: Lesson = {
         "A relative phase (the Bloch azimuth \\( φ \\)) is real: invisible in Z, decisive in other bases.",
         "Switching basis turns a hidden relative phase into a measurable outcome.",
       ],
-      next: "No-Cloning Theorem — why a state carrying this hidden structure cannot be copied.",
+      next: "No-Cloning Theorem,  why a state carrying this hidden structure cannot be copied.",
     },
   ],
 };
@@ -1400,22 +1447,22 @@ const lessonNoCloning: Lesson = {
       id: "hook",
       title: "Can you photocopy a qubit?",
       prompt:
-        "We have seen a qubit holds more than any single measurement reveals — a full \\( (θ, φ) \\), including a relative phase. Given an unknown state \\( |ψ⟩ \\) and a blank qubit \\( |0⟩ \\), can one circuit copy \\( |ψ⟩ \\) onto the blank qubit for every possible \\( |ψ⟩ \\)?",
+        "We have seen a qubit holds more than any single measurement reveals,  a full \\( (θ, φ) \\), including a relative phase. Given an unknown state \\( |ψ⟩ \\) and a blank qubit \\( |0⟩ \\), can one circuit copy \\( |ψ⟩ \\) onto the blank qubit for every possible \\( |ψ⟩ \\)?",
       options: [
         {
           id: "no",
-          label: "No — no single circuit can copy an arbitrary unknown state",
+          label: "No,  no single circuit can copy an arbitrary unknown state",
           correct: true,
           feedback: "Correct. This is the no-cloning theorem. A circuit can copy basis states, but not superpositions.",
         },
         {
           id: "cnot",
-          label: "Yes — a CNOT copies the first qubit onto the second",
+          label: "Yes,  a CNOT copies the first qubit onto the second",
           feedback: "CNOT copies \\( |0⟩ \\) and \\( |1⟩ \\), but on a superposition it entangles instead of copying, as you will see.",
         },
         {
           id: "measure",
-          label: "Yes — measure \\( |ψ⟩ \\), then prepare a matching qubit",
+          label: "Yes,  measure \\( |ψ⟩ \\), then prepare a matching qubit",
           feedback: "Measurement collapses \\( |ψ⟩ \\) to 0 or 1, destroying the superposition you wanted to copy.",
         },
       ],
@@ -1427,7 +1474,7 @@ const lessonNoCloning: Lesson = {
       title: "Try to build a copier",
       body: "A CNOT with q0 as control should copy q0 onto q1. Test it on \\( |0⟩ \\) and \\( |1⟩ \\) (use X on q0). Then put q0 into \\( |+⟩ \\) (press H on q0) before the CNOT and measure. If it truly copied, q1 would be an independent \\( |+⟩ \\).",
       teaching:
-        "On \\( |+⟩ \\), H then CNOT yields \\( (|00⟩ + |11⟩)/√2 \\) — only 00 and 11, perfectly correlated. That is an entangled Bell state, not two independent copies (which would give all four outcomes near 25%).",
+        "On \\( |+⟩ \\), H then CNOT yields \\( (|00⟩ + |11⟩)/√2 \\),  only 00 and 11, perfectly correlated. That is an entangled Bell state, not two independent copies (which would give all four outcomes near 25%).",
     },
     {
       type: "prediction",
@@ -1441,7 +1488,7 @@ const lessonNoCloning: Lesson = {
           label: "Only 00 and 11, about half each",
           correct: true,
           feedback:
-            "Correct. The two qubits are perfectly correlated — an entangled Bell state, not two independent copies.",
+            "Correct. The two qubits are perfectly correlated,  an entangled Bell state, not two independent copies.",
         },
         {
           id: "all",
@@ -1451,7 +1498,7 @@ const lessonNoCloning: Lesson = {
         {
           id: "plus",
           label: "Both qubits measured + every time",
-          feedback: "A Z-basis measurement returns 0s and 1s, not +. You saw correlated results — only 00 and 11.",
+          feedback: "A Z-basis measurement returns 0s and 1s, not +. You saw correlated results,  only 00 and 11.",
         },
       ],
       teaching: "Correlation (only 00/11) signals entanglement, not duplication.",
@@ -1461,12 +1508,14 @@ const lessonNoCloning: Lesson = {
       id: "explain",
       title: "Why copying fails",
       body: [
-        "Suppose one circuit copied every state: \\( |ψ⟩|0⟩ → |ψ⟩|ψ⟩ \\). Gates are linear, so fixing its action on \\( |0⟩ \\) and \\( |1⟩ \\) fixes it on every superposition. Copying \\( |0⟩→|00⟩ \\) and \\( |1⟩→|11⟩ \\) then forces \\( |+⟩|0⟩ → (|00⟩ + |11⟩)/√2 \\), which is entangled — not \\( |+⟩|+⟩ \\). The assumption breaks.",
+        "Suppose one circuit copied every state: \\( |ψ⟩|0⟩ → |ψ⟩|ψ⟩ \\). Gates are linear, so fixing its action on \\( |0⟩ \\) and \\( |1⟩ \\) fixes it on every superposition. Copying \\( |0⟩→|00⟩ \\) and \\( |1⟩→|11⟩ \\) then forces \\( |+⟩|0⟩ → (|00⟩ + |11⟩)/√2 \\), which is entangled,  not \\( |+⟩|+⟩ \\). The assumption breaks.",
         "Measurement is no escape: observing \\( |ψ⟩ \\) collapses it to a single outcome and erases the amplitudes you wanted to duplicate.",
         "This is the no-cloning theorem. It follows from linearity itself, and it underwrites quantum key distribution: an eavesdropper cannot copy qubits in transit without disturbing them.",
       ],
       misconception:
         "Copying the basis states \\( |0⟩ \\) and \\( |1⟩ \\) does not mean arbitrary states can be copied. The same circuit entangles a superposition instead of duplicating it.",
+      realWorld:
+        "No-cloning is the security behind quantum key distribution on real fiber and satellite links: an eavesdropper cannot copy qubits in transit without disturbing them and being noticed.",
       resources: [
         {
           label: "No-cloning theorem (Wikipedia)",
@@ -1531,9 +1580,9 @@ const lessonNoCloning: Lesson = {
       type: "two-qubit",
       id: "basis-copy",
       title: "When copying does work",
-      body: "Compare the easy case. Leave q0 as \\( |0\\rangle \\), or flip it to \\( |1\\rangle \\) with X, then apply CNOT and measure — no H this time.",
+      body: "Compare the easy case. Leave q0 as \\( |0\\rangle \\), or flip it to \\( |1\\rangle \\) with X, then apply CNOT and measure,  no H this time.",
       teaching:
-        "On a basis state the CNOT does copy: \\( |0\\rangle \\) gives 00 and \\( |1\\rangle \\) gives 11, every time. Copying \\( |0\\rangle \\) and \\( |1\\rangle \\) is fine — it is the superposition in between that cannot be cloned.",
+        "On a basis state the CNOT does copy: \\( |0\\rangle \\) gives 00 and \\( |1\\rangle \\) gives 11, every time. Copying \\( |0\\rangle \\) and \\( |1\\rangle \\) is fine,  it is the superposition in between that cannot be cloned.",
     },
     {
       type: "prediction",
@@ -1544,14 +1593,14 @@ const lessonNoCloning: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — on \\( |+\\rangle \\) it entangles instead of copying",
+          label: "No,  on \\( |+\\rangle \\) it entangles instead of copying",
           correct: true,
           feedback:
             "Correct. Linearity forces the same circuit to produce the entangled Bell state on \\( |+\\rangle \\), not a second \\( |+\\rangle \\).",
         },
         {
           id: "yes",
-          label: "Yes — if it copies the basis states, it copies everything",
+          label: "Yes,  if it copies the basis states, it copies everything",
           feedback:
             "Copying the basis states fixes the circuit by linearity, and that fixed circuit entangles \\( |+\\rangle \\) rather than copying it.",
         },
@@ -1568,7 +1617,7 @@ const lessonNoCloning: Lesson = {
         "On \\( |+⟩ \\), the copier produces an entangled Bell state, not two copies.",
         "No-cloning follows from linearity and enables secure quantum key distribution.",
       ],
-      next: "Unit 2: Transforming Information — the gates that change a qubit's state.",
+      next: "Unit 2: Transforming Information,  the gates that change a qubit's state.",
     },
   ],
 };
@@ -1584,7 +1633,7 @@ const lessonPauliZ: Lesson = {
       id: "hook",
       title: "A gate you can't see directly",
       prompt:
-        "X flipped \\( |0\\rangle \\) and \\( |1\\rangle \\). The Pauli Z gate is different. Apply Z to \\( |0\\rangle \\) and measure in the 0/1 basis — what changes?",
+        "X flipped \\( |0\\rangle \\) and \\( |1\\rangle \\). The Pauli Z gate is different. Apply Z to \\( |0\\rangle \\) and measure in the 0/1 basis,  what changes?",
       options: [
         {
           id: "nothing",
@@ -1604,13 +1653,13 @@ const lessonPauliZ: Lesson = {
           feedback: "Z is deterministic and leaves the 0/1 statistics of \\( |0\\rangle \\) untouched.",
         },
       ],
-      teaching: "Z does nothing visible to \\( |0\\rangle \\) or \\( |1\\rangle \\) in the 0/1 basis — its effect is on relative phase.",
+      teaching: "Z does nothing visible to \\( |0\\rangle \\) or \\( |1\\rangle \\) in the 0/1 basis,  its effect is on relative phase.",
     },
     {
       type: "gate-lab",
       id: "explore",
       title: "Z, then interference",
-      body: "Apply Z to \\( |0\\rangle \\) and to \\( |1\\rangle \\) and measure — nothing changes. Now apply H to reach \\( |+\\rangle \\), then Z, then H again, and measure.",
+      body: "Apply Z to \\( |0\\rangle \\) and to \\( |1\\rangle \\) and measure,  nothing changes. Now apply H to reach \\( |+\\rangle \\), then Z, then H again, and measure.",
       allowedGates: ["H", "Z"],
       allowStartToggle: true,
       start: "0",
@@ -1639,8 +1688,8 @@ const lessonPauliZ: Lesson = {
         },
         {
           id: "never",
-          label: "Never — Z has no measurable effect",
-          feedback: "It had no direct effect, but H, Z, H on \\( |0\\rangle \\) measured 1 — so Z is doing something real.",
+          label: "Never,  Z has no measurable effect",
+          feedback: "It had no direct effect, but H, Z, H on \\( |0\\rangle \\) measured 1,  so Z is doing something real.",
         },
       ],
       teaching: "Interference (the H gates) converts Z's hidden phase into a visible outcome.",
@@ -1655,6 +1704,8 @@ const lessonPauliZ: Lesson = {
       ],
       misconception:
         "A gate that leaves measurement probabilities unchanged is not doing nothing. Z changes relative phase, which becomes a real, measurable difference after interference.",
+      realWorld:
+        "Phase gates like Z are everyday tools on real hardware, used to tune interference and to fix phase errors inside error-correcting codes.",
       resources: [
         {
           label: "Pauli matrices (Wikipedia)",
@@ -1705,7 +1756,7 @@ const lessonPauliZ: Lesson = {
         {
           id: "mix",
           label: "50/50",
-          feedback: "The final H recombines the superposition into a definite state — here \\( |1\\rangle \\).",
+          feedback: "The final H recombines the superposition into a definite state,  here \\( |1\\rangle \\).",
         },
       ],
       teaching: "Interference converts a relative phase into a measurable outcome: \\( HZH = X \\).",
@@ -1721,7 +1772,7 @@ const lessonPauliZ: Lesson = {
       correctFeedback:
         "Correct. \\( H|0\\rangle = |+\\rangle \\), then \\( Z|+\\rangle = |-\\rangle \\). Z flipped the relative phase of the superposition.",
       incorrectFeedback:
-        "Not \\( |-\\rangle \\) yet. First make \\( |+\\rangle \\) with H, then apply Z to flip its phase.",
+        "Not yet. Recall how H and Z combine on the equator.",
       teaching: "Z acts on the equator: it turns \\( |+\\rangle \\) into \\( |-\\rangle \\).",
     },
     {
@@ -1735,7 +1786,7 @@ const lessonPauliZ: Lesson = {
       correctFeedback:
         "Correct. \\( H, Z, H \\) sends \\( |0\\rangle \\to |+\\rangle \\to |-\\rangle \\to |1\\rangle \\). The phase flip became a bit flip: \\( HZH = X \\).",
       incorrectFeedback:
-        "Not \\( |1\\rangle \\) yet. Wrap the Z in two H gates: H, then Z, then H.",
+        "Not yet. Recall how H gates wrap other operations.",
       teaching: "\\( HZH = X \\): two H gates turn Z's invisible phase flip into a visible bit flip.",
     },
     {
@@ -1747,14 +1798,14 @@ const lessonPauliZ: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — it changes relative phase, which interference can reveal",
+          label: "No,  it changes relative phase, which interference can reveal",
           correct: true,
           feedback:
             "Correct. The phase is invisible to a direct measurement but becomes a real, measurable difference after interference.",
         },
         {
           id: "yes",
-          label: "Yes — unchanged probabilities mean no effect",
+          label: "Yes,  unchanged probabilities mean no effect",
           feedback:
             "\\( HZH|0\\rangle = |1\\rangle \\) proves otherwise. Z changes phase, and interference turns that into a measurable flip.",
         },
@@ -1771,7 +1822,7 @@ const lessonPauliZ: Lesson = {
         "It is invisible to a direct 0/1 measurement but swaps \\( |+\\rangle \\) and \\( |-\\rangle \\).",
         "Interference exposes the phase: \\( HZH = X \\).",
       ],
-      next: "Hadamard — the gate that creates and undoes superposition.",
+      next: "Hadamard,  the gate that creates and undoes superposition.",
     },
   ],
 };
@@ -1787,7 +1838,7 @@ const lessonHadamard: Lesson = {
       id: "hook",
       title: "Making a superposition",
       prompt:
-        "Z needed a superposition to reveal its effect. The Hadamard gate creates one. Apply H to \\( |0\\rangle \\) and measure many fresh qubits — what distribution do you expect?",
+        "Z needed a superposition to reveal its effect. The Hadamard gate creates one. Apply H to \\( |0\\rangle \\) and measure many fresh qubits,  what distribution do you expect?",
       options: [
         {
           id: "half",
@@ -1850,11 +1901,13 @@ const lessonHadamard: Lesson = {
       id: "explain",
       title: "The Hadamard gate",
       body: [
-        "H maps \\( |0\\rangle \\) to \\( |+\\rangle \\) and \\( |1\\rangle \\) to \\( |-\\rangle \\), and back again — it is its own inverse, \\( HH = I \\).",
+        "H maps \\( |0\\rangle \\) to \\( |+\\rangle \\) and \\( |1\\rangle \\) to \\( |-\\rangle \\), and back again,  it is its own inverse, \\( HH = I \\).",
         "Creating superposition and then recombining it is the heart of every interference-based algorithm.",
       ],
       misconception:
         "A 50/50 result after one H is not 'the qubit is secretly 0 or 1.' It is the definite superposition \\( |+\\rangle \\): a second H recovers \\( |0\\rangle \\) every time, which a hidden coin flip never could.",
+      realWorld:
+        "The Hadamard gate opens almost every real quantum algorithm: it spreads a qubit across both values so interference can later concentrate on the answer.",
       resources: [
         {
           label: "Hadamard transform (Wikipedia)",
@@ -1892,14 +1945,14 @@ const lessonHadamard: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — it was the definite superposition \\( |+\\rangle \\)",
+          label: "No,  it was the definite superposition \\( |+\\rangle \\)",
           correct: true,
           feedback:
-            "Correct. A coin flip can't be undone, but \\( HH \\) deterministically recovers \\( |0\\rangle \\) — so it was a real superposition, not hidden randomness.",
+            "Correct. A coin flip can't be undone, but \\( HH \\) deterministically recovers \\( |0\\rangle \\),  so it was a real superposition, not hidden randomness.",
         },
         {
           id: "yes",
-          label: "Yes — H just randomizes the bit",
+          label: "Yes,  H just randomizes the bit",
           feedback:
             "If H merely randomized, applying it twice couldn't reliably return \\( |0\\rangle \\). Reversibility shows it was a genuine superposition.",
         },
@@ -1917,7 +1970,7 @@ const lessonHadamard: Lesson = {
       correctFeedback:
         "Correct. \\( H|0\\rangle = |+\\rangle \\): an equal superposition that measures 50/50, yet is a single definite state.",
       incorrectFeedback:
-        "Not \\( |+\\rangle \\) yet. A single H on \\( |0\\rangle \\) creates the even superposition.",
+        "Not yet. Recall what H does to \\( |0\\rangle \\).",
       teaching: "One H builds the equal superposition \\( |+\\rangle \\) from \\( |0\\rangle \\).",
     },
     {
@@ -1932,7 +1985,7 @@ const lessonHadamard: Lesson = {
       correctFeedback:
         "Correct. A second H recombines \\( |+\\rangle \\) into \\( |0\\rangle \\): \\( HH = I \\). A coin flip could never be undone this way.",
       incorrectFeedback:
-        "Not \\( |0\\rangle \\) yet. H is its own inverse, so one more H recombines the superposition.",
+        "Not yet. Recall why H applied twice undoes itself.",
       teaching: "Recombining a superposition with H is what separates it from hidden randomness.",
     },
     {
@@ -1945,7 +1998,7 @@ const lessonHadamard: Lesson = {
         "H is its own inverse: \\( HH = I \\), so it also recombines superposition.",
         "Reversibility shows superposition is not hidden randomness.",
       ],
-      next: "Gate Sequences — ordering gates into short circuits.",
+      next: "Gate Sequences,  ordering gates into short circuits.",
     },
   ],
 };
@@ -1961,17 +2014,17 @@ const lessonReversibility: Lesson = {
       id: "hook",
       title: "Can you always undo it?",
       prompt:
-        "Classical logic can destroy information — an AND gate throws away its inputs. Quantum gates are different. If a circuit scrambles \\( |0\\rangle \\) into some state, can you always recover \\( |0\\rangle \\)?",
+        "Classical logic can destroy information,  an AND gate throws away its inputs. Quantum gates are different. If a circuit scrambles \\( |0\\rangle \\) into some state, can you always recover \\( |0\\rangle \\)?",
       options: [
         {
           id: "yes",
-          label: "Yes — every gate has an inverse",
+          label: "Yes,  every gate has an inverse",
           correct: true,
           feedback: "Correct. Quantum gates are reversible: each has an inverse, so any sequence can be undone.",
         },
         {
           id: "no",
-          label: "No — information is lost",
+          label: "No,  information is lost",
           feedback: "Quantum gates do not lose information; each is reversible. (Measurement is the irreversible step.)",
         },
         {
@@ -1980,7 +2033,7 @@ const lessonReversibility: Lesson = {
           feedback: "Every quantum gate is reversible, so any sequence of them can be undone.",
         },
       ],
-      teaching: "Quantum gates are reversible transformations — unlike classical AND or OR.",
+      teaching: "Quantum gates are reversible transformations,  unlike classical AND or OR.",
     },
     {
       type: "gate-lab",
@@ -1994,7 +2047,7 @@ const lessonReversibility: Lesson = {
       correctFeedback:
         "You inverted it. Each of \\( H \\), \\( X \\), \\( Z \\) is its own inverse, so applying the gates in reverse order undoes the circuit: here Z then H returns \\( |0\\rangle \\).",
       incorrectFeedback:
-        "Not \\( |0\\rangle \\) yet. The circuit was H then Z. Each gate here is its own inverse, so undo in reverse order: apply Z, then H.",
+        "Not yet. Undo gates in reverse order of the circuit.",
       teaching:
         "To reverse a sequence, apply the inverse of each gate in reverse order. Since \\( H \\), \\( X \\), and \\( Z \\) are self-inverse, you re-apply them backwards.",
     },
@@ -2007,13 +2060,13 @@ const lessonReversibility: Lesson = {
       options: [
         {
           id: "reverse",
-          label: "Z then H — the gates in reverse order",
+          label: "Z then H,  the gates in reverse order",
           correct: true,
           feedback: "Correct. Undo a sequence by inverting each gate in reverse order. Here that is Z then H.",
         },
         {
           id: "same",
-          label: "H then Z — the same order again",
+          label: "H then Z,  the same order again",
           feedback: "Repeating the original order does not undo it. Reverse the order: Z then H.",
         },
         {
@@ -2029,11 +2082,13 @@ const lessonReversibility: Lesson = {
       id: "explain",
       title: "Why gates are reversible",
       body: [
-        "Every quantum gate is unitary, which means it has an inverse — no information is destroyed.",
+        "Every quantum gate is unitary, which means it has an inverse,  no information is destroyed.",
         "To undo a circuit, apply the inverse gates in reverse order. For \\( H \\), \\( X \\), and \\( Z \\), each is its own inverse.",
       ],
       misconception:
         "Reversibility is about gates, not measurement. Gates can be undone; measurement collapses the state and cannot be reversed.",
+      realWorld:
+        "Reversible logic also drives research into ultra-low-power classical chips, because erasing information is what fundamentally costs energy (Landauer's principle).",
       resources: [
         {
           label: "Quantum logic gate (Wikipedia)",
@@ -2053,7 +2108,7 @@ const lessonReversibility: Lesson = {
           id: "xh",
           label: "X then H",
           correct: true,
-          feedback: "Correct. Undo in reverse order with inverses: undo X with X, then undo H with H — so X then H.",
+          feedback: "Correct. Undo in reverse order with inverses: undo X with X, then undo H with H,  so X then H.",
         },
         {
           id: "hx",
@@ -2076,13 +2131,13 @@ const lessonReversibility: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — measurement collapses the state irreversibly",
+          label: "No,  measurement collapses the state irreversibly",
           correct: true,
           feedback: "Correct. Gates are reversible; measurement is the one irreversible operation.",
         },
         {
           id: "yes",
-          label: "Yes — apply the inverse gate",
+          label: "Yes,  apply the inverse gate",
           feedback: "There is no inverse for measurement: it discards the superposition and keeps a single outcome.",
         },
       ],
@@ -2124,9 +2179,9 @@ const lessonReversibility: Lesson = {
       preset: ["X", "H"],
       target: "0",
       correctFeedback:
-        "Correct. Reverse the order and invert each gate: undo H with H, then undo X with X — so H then X returns \\( |0\\rangle \\).",
+        "Correct. Reverse the order and invert each gate: undo H with H, then undo X with X,  so H then X returns \\( |0\\rangle \\).",
       incorrectFeedback:
-        "Not \\( |0\\rangle \\) yet. The circuit was X then H. Undo it in reverse order: H first, then X.",
+        "Not yet. Undo the circuit in reverse gate order.",
       teaching: "Longer circuits invert the same way: last gate first, each replaced by its inverse.",
     },
     {
@@ -2139,7 +2194,7 @@ const lessonReversibility: Lesson = {
         "Undo a sequence with inverse gates in reverse order.",
         "Measurement, unlike a gate, is irreversible.",
       ],
-      next: "Universal Gates — why a small set of gates is enough.",
+      next: "Universal Gates,  why a small set of gates is enough.",
     },
   ],
 };
@@ -2158,13 +2213,13 @@ const lessonUniversal: Lesson = {
       options: [
         {
           id: "small",
-          label: "No — a small universal set can build (or approximate) any operation",
+          label: "No,  a small universal set can build (or approximate) any operation",
           correct: true,
           feedback: "Correct. As in classical computing, a few well-chosen gates suffice to build everything else.",
         },
         {
           id: "each",
-          label: "Yes — one gate per operation",
+          label: "Yes,  one gate per operation",
           feedback: "That would be impossible. A small universal set composes to reach any operation.",
         },
         {
@@ -2198,7 +2253,7 @@ const lessonUniversal: Lesson = {
           label: "All three",
           correct: true,
           feedback:
-            "Correct. X, H, and Z already compose to reach every state in this set — a small set goes a long way.",
+            "Correct. X, H, and Z already compose to reach every state in this set,  a small set goes a long way.",
         },
         {
           id: "two",
@@ -2211,7 +2266,7 @@ const lessonUniversal: Lesson = {
           feedback: "Each is reachable by a short sequence. Try H, then H then Z, then X.",
         },
       ],
-      teaching: "A few gates compose to reach many states — the seed of universality.",
+      teaching: "A few gates compose to reach many states,  the seed of universality.",
     },
     {
       type: "informative",
@@ -2223,6 +2278,8 @@ const lessonUniversal: Lesson = {
       ],
       misconception:
         "Universal does not mean every operation is reached exactly in finitely many gates. It means any operation can be approximated as closely as you like (the Solovay–Kitaev theorem).",
+      realWorld:
+        "Universality is why one quantum chip can, in principle, run any quantum program, just as a handful of classical gates can build any classical computer.",
       resources: [
         {
           label: "Quantum logic gate: universal gates (Wikipedia)",
@@ -2236,7 +2293,7 @@ const lessonUniversal: Lesson = {
       type: "prediction",
       id: "q-classical",
       title: "A classical parallel",
-      prompt: "Classically, which single gate type is universal — able to build any Boolean circuit?",
+      prompt: "Classically, which single gate type is universal,  able to build any Boolean circuit?",
       options: [
         {
           id: "nand",
@@ -2293,7 +2350,7 @@ const lessonUniversal: Lesson = {
       correctFeedback:
         "Correct. \\( |-\\rangle \\) is reachable by H then Z (or X then H). A handful of gates composes to the state you want.",
       incorrectFeedback:
-        "Not \\( |-\\rangle \\) yet. Make a superposition with H, then flip its phase with Z.",
+        "Not yet. Recall the gate sequence for equator states.",
       teaching: "Reaching a specific state by composing gates is universality in miniature.",
     },
     {
@@ -2309,7 +2366,7 @@ const lessonUniversal: Lesson = {
       feedbackSuperposition:
         "An H leaves a 50/50 superposition, not a guaranteed 1. Use a flip (X) with no leftover H.",
       incorrectFeedback:
-        "Not a guaranteed 1 yet. A single X flips |0⟩ to |1⟩.",
+        "Not yet. Recall which gate flips \\( |0\\rangle \\) to \\( |1\\rangle \\).",
       teaching: "X composes a guaranteed flip; small gate sets reach definite targets too.",
     },
     {
@@ -2322,7 +2379,7 @@ const lessonUniversal: Lesson = {
         "A standard choice is \\( \\{H, T, \\text{CNOT}\\} \\); classically, NAND is universal.",
         "Universality is about expressiveness, achieved by composing a few gates.",
       ],
-      next: "Unit 3: Why Quantum Works — interference, where these gates earn their power.",
+      next: "Unit 3: Why Quantum Works,  interference, where these gates earn their power.",
     },
   ],
 };
@@ -2369,7 +2426,7 @@ const lessonConstructive: Lesson = {
       title: "Add two amplitudes",
       body: "Set amplitudes \\( A_1 \\) and \\( A_2 \\) to the same sign. Watch \\( A_{\\text{total}} = A_1 + A_2 \\) and \\( P = |A_{\\text{total}}|^2 \\) grow.",
       teaching:
-        "When two amplitudes share a sign, the total amplitude grows and the probability — its square — grows faster still. This is constructive interference.",
+        "When two amplitudes share a sign, the total amplitude grows and the probability,  its square,  grows faster still. This is constructive interference.",
     },
     {
       type: "prediction",
@@ -2407,6 +2464,8 @@ const lessonConstructive: Lesson = {
         "Same-sign amplitudes reinforce, and squaring the larger total gives a disproportionately larger probability.",
       ],
       misconception: "Probabilities are not what add. Amplitudes add first; the probability is the square of their sum, \\( P = |A_1 + A_2|^2 \\).",
+      realWorld:
+        "Noise-cancelling headphones and anti-reflective lens coatings combine waves exactly this way; quantum algorithms reinforce the right answer with the same math.",
       resources: [
         {
           label: "Wave interference (Wikipedia)",
@@ -2445,7 +2504,7 @@ const lessonConstructive: Lesson = {
           feedback: "0.25 is one path alone (\\( 0.5^2 \\)). Add the amplitudes before squaring.",
         },
       ],
-      teaching: "Amplitudes add before squaring, so same-sign paths reinforce — constructive interference.",
+      teaching: "Amplitudes add before squaring, so same-sign paths reinforce,  constructive interference.",
     },
     {
       type: "prediction",
@@ -2462,7 +2521,7 @@ const lessonConstructive: Lesson = {
         {
           id: "2x",
           label: "Twice as large",
-          feedback: "The amplitude doubles, but the probability is its square — it quadruples.",
+          feedback: "The amplitude doubles, but the probability is its square,  it quadruples.",
         },
         {
           id: "same",
@@ -2481,19 +2540,19 @@ const lessonConstructive: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — amplitudes add first, then square",
+          label: "No,  amplitudes add first, then square",
           correct: true,
           feedback:
             "Correct. The amplitudes \\( +0.5 \\) and \\( +0.5 \\) add to \\( +1.0 \\); squaring gives \\( P=1.0 \\), not \\( 0.5 \\).",
         },
         {
           id: "yes",
-          label: "Yes — 0.25 + 0.25 = 0.5",
+          label: "Yes,  0.25 + 0.25 = 0.5",
           feedback:
             "Probabilities do not add directly. The amplitudes add to \\( +1.0 \\) and then square to \\( P=1.0 \\).",
         },
       ],
-      teaching: "Add amplitudes, then square — adding probabilities skips the interference.",
+      teaching: "Add amplitudes, then square,  adding probabilities skips the interference.",
     },
     {
       type: "path-amplitudes",
@@ -2505,7 +2564,7 @@ const lessonConstructive: Lesson = {
       correctFeedback:
         "Correct. Two +1 paths sum to +2, the largest combined amplitude, so the target is reached every time.",
       incorrectFeedback:
-        "Not the strongest yet. Opposite signs partly cancel. For the largest signal, give both paths the same sign.",
+        "Not yet. Recall how same-sign paths interfere.",
       teaching:
         "Same-sign amplitudes reinforce into the strongest possible signal at the target.",
     },
@@ -2542,7 +2601,7 @@ const lessonConstructive: Lesson = {
       intro: "You watched amplitudes reinforce:",
       points: [
         "Amplitudes for one outcome add: \\( A_{\\text{total}} = A_1 + A_2 \\).",
-        "Same-sign amplitudes reinforce — constructive interference.",
+        "Same-sign amplitudes reinforce,  constructive interference.",
         "Squaring the larger total gives a disproportionately larger probability.",
       ],
       next: "Same-sign amplitudes reinforce. Next, what happens when they point opposite ways.",
@@ -2591,7 +2650,7 @@ const lessonDestructive: Lesson = {
       title: "Make them cancel",
       body: "Set \\( A_1 \\) and \\( A_2 \\) to opposite signs. Watch \\( A_{\\text{total}} = A_1 + A_2 \\) shrink toward zero, and \\( P = |A_{\\text{total}}|^2 \\) with it.",
       teaching:
-        "Equal and opposite amplitudes sum to zero, so the probability of that outcome drops to zero — destructive interference. Both paths are still present; their amplitudes simply cancel.",
+        "Equal and opposite amplitudes sum to zero, so the probability of that outcome drops to zero,  destructive interference. Both paths are still present; their amplitudes simply cancel.",
     },
     {
       type: "prediction",
@@ -2626,9 +2685,11 @@ const lessonDestructive: Lesson = {
       title: "Cancellation",
       body: [
         "When \\( A_1 \\) and \\( A_2 \\) are equal and opposite, \\( A_{\\text{total}} = 0 \\), so \\( P = 0 \\).",
-        "The outcome becomes impossible — not because a path was removed, but because the contributions cancel.",
+        "The outcome becomes impossible,  not because a path was removed, but because the contributions cancel.",
       ],
       misconception: "The paths do not disappear. Both still contribute; it is their amplitudes that cancel, leaving zero probability for that outcome.",
+      realWorld:
+        "Destructive cancellation is how noise-cancelling headphones silence sound, and how quantum search wipes out the wrong answers.",
       resources: [
         {
           label: "Wave interference (Wikipedia)",
@@ -2671,13 +2732,13 @@ const lessonDestructive: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — both paths still contribute; their amplitudes cancel",
+          label: "No,  both paths still contribute; their amplitudes cancel",
           correct: true,
           feedback: "Correct. Both paths are present. The zero comes from cancellation, not deletion.",
         },
         {
           id: "yes",
-          label: "Yes — one path was eliminated",
+          label: "Yes,  one path was eliminated",
           feedback: "Nothing is removed. The amplitudes are equal and opposite, so they sum to zero.",
         },
       ],
@@ -2689,11 +2750,11 @@ const lessonDestructive: Lesson = {
       title: "Drive the probability to zero",
       mode: "build-destructive",
       body:
-        "Two paths reach the same target with amplitude +1 or -1. Set them so the target becomes impossible — probability zero — then check.",
+        "Two paths reach the same target with amplitude +1 or -1. Set them so the target becomes impossible,  probability zero,  then check.",
       correctFeedback:
         "Correct. +1 and -1 sum to 0, so the amplitudes cancel and the target is never reached.",
       incorrectFeedback:
-        "Not zero yet. Same-sign amplitudes reinforce. To cancel the outcome, give the two paths opposite signs.",
+        "Not yet. Recall how opposite signs cancel amplitudes.",
       teaching:
         "Opposite-sign amplitudes cancel, driving the target's probability to zero while both paths remain.",
     },
@@ -2706,20 +2767,20 @@ const lessonDestructive: Lesson = {
       options: [
         {
           id: "partial",
-          label: "No — they partly cancel to a total of \\( +0.5 \\)",
+          label: "No,  they partly cancel to a total of \\( +0.5 \\)",
           correct: true,
           feedback:
             "Correct. \\( +0.8 + (-0.3) = +0.5 \\). Cancellation is total only when the amplitudes are equal and opposite.",
         },
         {
           id: "full",
-          label: "Yes — opposite signs always cancel to zero",
+          label: "Yes,  opposite signs always cancel to zero",
           feedback:
             "Only equal-and-opposite amplitudes vanish. Here the total is \\( +0.5 \\), a partial cancellation.",
         },
         {
           id: "add",
-          label: "No — they add to \\( +1.1 \\)",
+          label: "No,  they add to \\( +1.1 \\)",
           feedback: "Opposite signs subtract: \\( +0.8 - 0.3 = +0.5 \\), not \\( +1.1 \\).",
         },
       ],
@@ -2732,7 +2793,7 @@ const lessonDestructive: Lesson = {
       intro: "You watched amplitudes cancel:",
       points: [
         "Opposite-sign amplitudes subtract: equal and opposite gives \\( A_{\\text{total}} = 0 \\).",
-        "A zero total amplitude means zero probability — destructive interference.",
+        "A zero total amplitude means zero probability,  destructive interference.",
         "Both paths still exist; only their amplitudes cancel.",
       ],
       next: "Amplitudes can reinforce or cancel. Next, how a computation uses both at once.",
@@ -2759,13 +2820,13 @@ const lessonAdvantage: Lesson = {
       options: [
         {
           id: "yes",
-          label: "Yes — interference can amplify one answer while cancelling others",
+          label: "Yes,  interference can amplify one answer while cancelling others",
           correct: true,
           feedback: "Correct. Interference redistributes probability: it can build up one amplitude while cancelling the rest.",
         },
         {
           id: "no",
-          label: "No — every answer rises together",
+          label: "No,  every answer rises together",
           feedback: "Interference is selective. With the right phases, one amplitude grows while others cancel.",
         },
         {
@@ -2782,7 +2843,7 @@ const lessonAdvantage: Lesson = {
       title: "Amplify a target",
       body: "Four answers start equally likely. Mark a target, flip its phase, then interfere. Watch the target grow while the others cancel.",
       teaching:
-        "Flipping the target's phase and then interfering builds up the target's amplitude while the others cancel toward zero. The total probability stays at 100% — it is redistributed onto the answer you marked, not created.",
+        "Flipping the target's phase and then interfering builds up the target's amplitude while the others cancel toward zero. The total probability stays at 100%,  it is redistributed onto the answer you marked, not created.",
     },
     {
       type: "prediction",
@@ -2796,7 +2857,7 @@ const lessonAdvantage: Lesson = {
           label: "The target's probability rose while the others fell",
           correct: true,
           feedback:
-            "Correct. Interference amplified the marked answer and cancelled the rest — without adding any new probability.",
+            "Correct. Interference amplified the marked answer and cancelled the rest,  without adding any new probability.",
         },
         {
           id: "alltogether",
@@ -2806,7 +2867,7 @@ const lessonAdvantage: Lesson = {
         {
           id: "nothing",
           label: "Nothing changed",
-          feedback: "After the phase flip, interfering reshaped the amplitudes — the target's bar jumped up.",
+          feedback: "After the phase flip, interfering reshaped the amplitudes,  the target's bar jumped up.",
         },
       ],
       teaching: "Interference moves probability between answers; it does not create it.",
@@ -2817,9 +2878,11 @@ const lessonAdvantage: Lesson = {
       title: "Where the advantage comes from",
       body: [
         "Every path is explored as an amplitude, and interference is engineered so the wanted answer's amplitude grows while the rest cancel.",
-        "The probability that was spread across all answers is concentrated onto the useful one — all before a single measurement.",
+        "The probability that was spread across all answers is concentrated onto the useful one,  all before a single measurement.",
       ],
       misconception: "A quantum computer does not try every answer and then pick the right one. All paths contribute as amplitudes, and interference concentrates probability on the useful answer before you measure.",
+      realWorld:
+        "This is the engine behind real speedups like Shor's factoring and Grover's search: shape the amplitudes so the useful answer survives.",
       resources: [
         {
           label: "Quantum algorithm (Wikipedia)",
@@ -2864,12 +2927,12 @@ const lessonAdvantage: Lesson = {
           id: "interfere",
           label: "Interference among amplitudes before measurement",
           correct: true,
-          feedback: "Correct. Interference concentrates probability on useful answers before measurement — the heart of quantum advantage.",
+          feedback: "Correct. Interference concentrates probability on useful answers before measurement,  the heart of quantum advantage.",
         },
         {
           id: "all",
           label: "Checking all answers at once and reading the right one",
-          feedback: "Amplitudes explore all paths, but the advantage is interference shaping them — not reading every answer.",
+          feedback: "Amplitudes explore all paths, but the advantage is interference shaping them,  not reading every answer.",
         },
         {
           id: "fast",
@@ -2885,11 +2948,11 @@ const lessonAdvantage: Lesson = {
       title: "Cancel an unwanted answer",
       mode: "build-destructive",
       body:
-        "Zoom in on the mechanism. Two paths feed one unwanted answer, each with amplitude +1 or -1. Set them to erase that answer — probability zero — then check.",
+        "Zoom in on the mechanism. Two paths feed one unwanted answer, each with amplitude +1 or -1. Set them to erase that answer,  probability zero,  then check.",
       correctFeedback:
         "Correct. Opposite-sign amplitudes cancel the unwanted answer to zero. Repeated across many answers, this is how interference clears away the wrong ones.",
       incorrectFeedback:
-        "Not erased yet. To cancel the unwanted answer, give its two paths opposite signs so they sum to zero.",
+        "Not yet. Recall destructive interference on unwanted paths.",
       teaching:
         "The amplification you saw is just this cancellation, applied to every answer except the target.",
     },
@@ -2902,19 +2965,19 @@ const lessonAdvantage: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — interference concentrates probability before any readout",
+          label: "No,  interference concentrates probability before any readout",
           correct: true,
           feedback:
             "Correct. All paths contribute as amplitudes, and interference amplifies the useful answer before you measure. There is no parallel readout of every answer.",
         },
         {
           id: "yes",
-          label: "Yes — it evaluates every answer and picks the best",
+          label: "Yes,  it evaluates every answer and picks the best",
           feedback:
             "A measurement returns just one outcome. The advantage is interference shaping the amplitudes beforehand, not reading all answers.",
         },
       ],
-      teaching: "Amplitudes explore all paths, but interference — not parallel readout — delivers the answer.",
+      teaching: "Amplitudes explore all paths, but interference,  not parallel readout,  delivers the answer.",
     },
     {
       type: "reflection",
@@ -2924,9 +2987,9 @@ const lessonAdvantage: Lesson = {
       points: [
         "All answers are explored as amplitudes, with a fixed total probability.",
         "Interference amplifies a target's amplitude while cancelling the rest.",
-        "Probability is concentrated on the useful answer before measurement — that is the advantage.",
+        "Probability is concentrated on the useful answer before measurement,  that is the advantage.",
       ],
-      next: "Unit 4: Multiple Qubits — where interference meets correlation between qubits.",
+      next: "Unit 4: Multiple Qubits,  where interference meets correlation between qubits.",
     },
   ],
 };
@@ -2973,7 +3036,7 @@ const lessonClassicalCorrelation: Lesson = {
       title: "Generate correlated pairs",
       body: "Pick a source and flip pairs. Compare a perfectly correlated source with two independent coins.",
       teaching:
-        "A correlated source only ever gives 00 or 11. Each coin still shows a definite value — a shared cause set them together when they were made.",
+        "A correlated source only ever gives 00 or 11. Each coin still shows a definite value,  a shared cause set them together when they were made.",
     },
     {
       type: "prediction",
@@ -3010,6 +3073,8 @@ const lessonClassicalCorrelation: Lesson = {
       ],
       misconception:
         "Correlation does not merge two bits into one shared state. Each bit has its own definite value; they were simply set together.",
+      realWorld:
+        "This is the everyday kind of correlation: two halves of a torn ticket, or matching gloves mailed in separate boxes. Opening one tells you the other because they were set together.",
       resources: [
         {
           label: "Correlation (Wikipedia)",
@@ -3085,13 +3150,13 @@ const lessonClassicalCorrelation: Lesson = {
       options: [
         {
           id: "shared",
-          label: "No — a shared cause set both values together in advance",
+          label: "No,  a shared cause set both values together in advance",
           correct: true,
           feedback: "Correct. Nothing travels between the coins; their agreement was arranged when they were prepared.",
         },
         {
           id: "control",
-          label: "Yes — A determines B at the moment you look",
+          label: "Yes,  A determines B at the moment you look",
           feedback: "No influence passes between them. The match was built in when the pair was made.",
         },
       ],
@@ -3131,7 +3196,7 @@ const lessonEntanglement: Lesson = {
       options: [
         {
           id: "joint",
-          label: "Neither qubit alone — only the pair has a definite state",
+          label: "Neither qubit alone,  only the pair has a definite state",
           correct: true,
           feedback: "Correct. H then CNOT produces an entangled state that does not split into separate qubits.",
         },
@@ -3143,7 +3208,7 @@ const lessonEntanglement: Lesson = {
         {
           id: "after",
           label: "Only definite after you measure",
-          feedback: "The pair has a perfectly definite joint state before measurement — it just isn't separable.",
+          feedback: "The pair has a perfectly definite joint state before measurement,  it just isn't separable.",
         },
       ],
       teaching: "Some two-qubit states cannot be written as qubit A times qubit B.",
@@ -3172,7 +3237,7 @@ const lessonEntanglement: Lesson = {
           id: "bell",
           label: "\\( \\frac{|00\\rangle+|11\\rangle}{\\sqrt2} \\)",
           correct: true,
-          feedback: "Correct. Only 00 and 11 have amplitude — an entangled superposition of the pair.",
+          feedback: "Correct. Only 00 and 11 have amplitude,  an entangled superposition of the pair.",
         },
         {
           id: "00",
@@ -3193,10 +3258,14 @@ const lessonEntanglement: Lesson = {
       title: "What entanglement is",
       body: [
         "A separable state factors into qubit A times qubit B. The state \\( \\frac{|00\\rangle+|11\\rangle}{\\sqrt2} \\) cannot be factored that way.",
-        "When it cannot be split, neither qubit has its own state — only the pair does. That is entanglement.",
+        "When you cannot split it, neither qubit has a state of its own. Only the pair does. That is entanglement.",
       ],
       misconception:
         "Entanglement is more than strong correlation. The qubits have no individual states to correlate; the description belongs to the pair as a whole.",
+      realWorld:
+        "Entanglement is the engine behind quantum teleportation, superdense coding, and the ultra-secure key sharing used in quantum cryptography.",
+      whyMatters:
+        "Entanglement is the resource classical computers simply do not have. Every quantum advantage in the next unit leans on it.",
       resources: [
         {
           label: "Quantum entanglement (Wikipedia)",
@@ -3217,7 +3286,7 @@ const lessonEntanglement: Lesson = {
       allowMeasureBoth: true,
       allowHistogram: true,
       teaching:
-        "H on each qubit gives \\( |{+}{+}\\rangle = \\tfrac{1}{2}(|00\\rangle+|01\\rangle+|10\\rangle+|11\\rangle) \\) — separable, all four outcomes. Adding a CNOT entangles it.",
+        "H on each qubit gives \\( |{+}{+}\\rangle = \\tfrac{1}{2}(|00\\rangle+|01\\rangle+|10\\rangle+|11\\rangle) \\),  separable, all four outcomes. Adding a CNOT entangles it.",
     },
     {
       type: "prediction",
@@ -3239,7 +3308,7 @@ const lessonEntanglement: Lesson = {
         {
           id: "01",
           label: "\\( |01\\rangle \\)",
-          feedback: "That is just q0 in \\( |0\\rangle \\) and q1 in \\( |1\\rangle \\) — separable.",
+          feedback: "That is just q0 in \\( |0\\rangle \\) and q1 in \\( |1\\rangle \\),  separable.",
         },
       ],
       teaching: "A state is entangled exactly when it cannot be written as A times B.",
@@ -3252,7 +3321,7 @@ const lessonEntanglement: Lesson = {
       options: [
         {
           id: "none",
-          label: "It has none — only the pair has a state",
+          label: "It has none,  only the pair has a state",
           correct: true,
           feedback: "Correct. An entangled qubit has no state of its own; the information lives in the pair.",
         },
@@ -3278,13 +3347,13 @@ const lessonEntanglement: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — the entangled pair's outcomes are linked; the separable ones are not",
+          label: "No,  the entangled pair's outcomes are linked; the separable ones are not",
           correct: true,
           feedback: "Correct. Same single-qubit statistics, but only the entangled pair always agrees when measured.",
         },
         {
           id: "yes",
-          label: "Yes — identical 50/50 means identical states",
+          label: "Yes,  identical 50/50 means identical states",
           feedback: "Single-qubit statistics match, but the joint behavior differs: entangled outcomes are correlated.",
         },
       ],
@@ -3297,10 +3366,10 @@ const lessonEntanglement: Lesson = {
       intro: "You created an inseparable joint state:",
       points: [
         "A separable state factors into A times B; an entangled state does not.",
-        "In an entangled pair, neither qubit has its own state — only the pair does.",
+        "In an entangled pair, neither qubit has its own state,  only the pair does.",
         "H then CNOT turns \\( |00\\rangle \\) into the entangled \\( \\frac{|00\\rangle+|11\\rangle}{\\sqrt2} \\).",
       ],
-      next: "This is one of four Bell states — the simplest examples of entanglement. Next, build them all.",
+      next: "This is one of four Bell states,  the simplest examples of entanglement. Next, build them all.",
     },
   ],
 };
@@ -3330,7 +3399,7 @@ const lessonBellStates: Lesson = {
         },
         {
           id: "many",
-          label: "Many — entanglement is hard to produce",
+          label: "Many,  entanglement is hard to produce",
           feedback: "Entanglement is cheap here: a single H and a single CNOT suffice.",
         },
         {
@@ -3384,6 +3453,8 @@ const lessonBellStates: Lesson = {
       ],
       misconception:
         "The four Bell states are not one state relabeled. They are distinct and perfectly distinguishable from each other.",
+      realWorld:
+        "Bell states are the workhorses of real quantum networking: protocols like superdense coding and teleportation each single out one of these four.",
       resources: [
         {
           label: "Bell state (Wikipedia)",
@@ -3402,7 +3473,7 @@ const lessonBellStates: Lesson = {
       correctFeedback:
         "Correct. \\( H \\) on q0 then CNOT gives \\( |\\Phi^+\\rangle = \\frac{|00\\rangle+|11\\rangle}{\\sqrt2} \\).",
       incorrectFeedback:
-        "Not \\( |\\Phi^+\\rangle \\) yet. Make a superposition on q0 with H, then link the qubits with CNOT.",
+        "Not yet. Recall how H and CNOT create entanglement.",
       teaching: "H then CNOT is the standard recipe for \\( |\\Phi^+\\rangle \\).",
     },
     {
@@ -3438,9 +3509,9 @@ const lessonBellStates: Lesson = {
       body: "Now build \\( |\\Psi^-\\rangle = \\frac{|01\\rangle-|10\\rangle}{\\sqrt2} \\), then check.",
       target: "psi-",
       correctFeedback:
-        "Correct. One route: H on q0, CNOT, then X on q1 and Z on q0 — the qubits now disagree, with a minus sign.",
+        "Correct. One route: H on q0, CNOT, then X on q1 and Z on q0,  the qubits now disagree, with a minus sign.",
       incorrectFeedback:
-        "Not \\( |\\Psi^-\\rangle \\) yet. Start from \\( |\\Phi^+\\rangle \\), swap a bit with X (to get \\( |\\Psi\\rangle \\)), and add the minus sign with Z.",
+        "Not yet. Recall the steps from \\( |\\Phi^+\\rangle \\) to \\( |\\Psi^-\\rangle \\).",
       teaching: "\\( |\\Psi^-\\rangle \\) has the qubits disagreeing, with opposite-sign amplitudes.",
     },
     {
@@ -3533,7 +3604,7 @@ const lessonMeasuringEntangled: Lesson = {
       allowMeasureBoth: false,
       allowHistogram: false,
       teaching:
-        "Measuring A gives a random 0 or 1, but the state collapses to \\( |00\\rangle \\) or \\( |11\\rangle \\) — so B instantly matches. Reset and repeat: the value is random, the agreement is certain.",
+        "Measuring A gives a random 0 or 1, but the state collapses to \\( |00\\rangle \\) or \\( |11\\rangle \\),  so B instantly matches. Reset and repeat: the value is random, the agreement is certain.",
     },
     {
       type: "prediction",
@@ -3543,7 +3614,7 @@ const lessonMeasuringEntangled: Lesson = {
       options: [
         {
           id: "random",
-          label: "Random — sometimes 0, sometimes 1",
+          label: "Random,  sometimes 0, sometimes 1",
           correct: true,
           feedback: "Correct. Each individual outcome is unpredictable, even though B always follows A.",
         },
@@ -3574,7 +3645,7 @@ const lessonMeasuringEntangled: Lesson = {
       allowMeasureBoth: true,
       allowHistogram: true,
       teaching:
-        "Only 00 and 11 appear, about 50/50. Each shot is random, but the qubits always agree — the correlation shows up only when you compare both results.",
+        "Only 00 and 11 appear, about 50/50. Each shot is random, but the qubits always agree,  the correlation shows up only when you compare both results.",
     },
     {
       type: "informative",
@@ -3582,10 +3653,12 @@ const lessonMeasuringEntangled: Lesson = {
       title: "Collapse and correlation",
       body: [
         "Measuring one qubit of an entangled pair collapses the whole state at once. A \\( |\\Phi^+\\rangle \\) pair always agrees.",
-        "Each individual outcome is random. The correlation is invisible in either qubit alone — it appears only when the two records are compared.",
+        "Each individual outcome is random. The correlation is invisible in either qubit alone,  it appears only when the two records are compared.",
       ],
       misconception:
         "Collapse does not push a value onto qubit B. Neither result is decided until measurement, and B's own statistics stay 50/50 until you compare them with A.",
+      realWorld:
+        "Comparing entangled measurements is how quantum teleportation moves a state, and how certified random-number generators produce numbers nobody can predict in advance.",
       resources: [
         {
           label: "Measurement in quantum mechanics (Wikipedia)",
@@ -3705,19 +3778,19 @@ const lessonNoSignaling: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — Bob's local statistics never change",
+          label: "No,  Bob's local statistics never change",
           correct: true,
           feedback: "Correct. Nothing Alice does shifts Bob's own measurement probabilities, so no message gets through.",
         },
         {
           id: "yes",
-          label: "Yes — collapse is instant, so the message is too",
+          label: "Yes,  collapse is instant, so the message is too",
           feedback: "Collapse is instant, but it leaves Bob's statistics untouched. There is nothing for him to read.",
         },
         {
           id: "lightspeed",
           label: "Yes, but only at the speed of light",
-          feedback: "No information flows through the entanglement at all — Bob's marginal is fixed regardless.",
+          feedback: "No information flows through the entanglement at all,  Bob's marginal is fixed regardless.",
         },
       ],
       teaching: "Test it as an experiment: watch whether anything Alice does changes Bob's statistics.",
@@ -3727,7 +3800,7 @@ const lessonNoSignaling: Lesson = {
       id: "alice-acts",
       title: "Let Alice act on her qubit",
       body:
-        "The pair is \\( |\\Phi^+\\rangle \\). Alice controls qubit A: apply H or Z to it, or measure it. Watch qubit B's marginal — Bob's local statistics.",
+        "The pair is \\( |\\Phi^+\\rangle \\). Alice controls qubit A: apply H or Z to it, or measure it. Watch qubit B's marginal,  Bob's local statistics.",
       preset: [
         { gate: "H", qubit: 0 },
         { gate: "CNOT", qubit: 0 },
@@ -3739,7 +3812,7 @@ const lessonNoSignaling: Lesson = {
       allowHistogram: false,
       showMarginals: true,
       teaching:
-        "Whatever Alice does to qubit A — H, Z, measure, or nothing — qubit B's marginal stays at 50%. Bob sees pure noise; none of Alice's choices leak through.",
+        "Whatever Alice does to qubit A,  H, Z, measure, or nothing,  qubit B's marginal stays at 50%. Bob sees pure noise; none of Alice's choices leak through.",
     },
     {
       type: "prediction",
@@ -3761,7 +3834,7 @@ const lessonNoSignaling: Lesson = {
         {
           id: "tracked",
           label: "It tracked Alice's gate",
-          feedback: "Bob's marginal is insensitive to Alice's gates — it stayed at 50%.",
+          feedback: "Bob's marginal is insensitive to Alice's gates,  it stayed at 50%.",
         },
       ],
       teaching: "No local operation on one qubit changes the other qubit's marginal.",
@@ -3781,7 +3854,7 @@ const lessonNoSignaling: Lesson = {
       allowMeasureBoth: true,
       allowHistogram: true,
       teaching:
-        "Bob's digit is 50/50 in every run. The 00/11 correlation only appears once Alice's and Bob's records are compared — over an ordinary channel limited by light speed.",
+        "Bob's digit is 50/50 in every run. The 00/11 correlation only appears once Alice's and Bob's records are compared,  over an ordinary channel limited by light speed.",
     },
     {
       type: "informative",
@@ -3793,6 +3866,8 @@ const lessonNoSignaling: Lesson = {
       ],
       misconception:
         "Collapse is not a signal. The correlations are real, but they appear only after the parties compare results over an ordinary channel, which is limited by the speed of light.",
+      realWorld:
+        "No-signaling is why entanglement cannot send faster-than-light messages: real quantum networks still need an ordinary, light-speed channel to finish the job.",
       resources: [
         {
           label: "No-communication theorem (Wikipedia)",
@@ -3810,13 +3885,13 @@ const lessonNoSignaling: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — Bob's statistics are unchanged",
+          label: "No,  Bob's statistics are unchanged",
           correct: true,
           feedback: "Correct. Alice's basis choice cannot affect Bob's marginal, so his histogram is the same.",
         },
         {
           id: "yes",
-          label: "Yes — a different basis sends a different signal",
+          label: "Yes,  a different basis sends a different signal",
           feedback: "Bob's marginal is fixed at 50/50 for any basis Alice picks. No signal is sent.",
         },
         {
@@ -3841,7 +3916,7 @@ const lessonNoSignaling: Lesson = {
         },
         {
           id: "nothing",
-          label: "Nothing — Bob already knows from his own data",
+          label: "Nothing,  Bob already knows from his own data",
           feedback: "Bob's own data is just noise. The correlation appears only by comparing with Alice.",
         },
         {
@@ -3860,17 +3935,17 @@ const lessonNoSignaling: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — only correlations, revealed by later comparison",
+          label: "No,  only correlations, revealed by later comparison",
           correct: true,
           feedback: "Correct. Entanglement creates correlations, not a communication channel.",
         },
         {
           id: "yes",
-          label: "Yes — the instant collapse carries the message",
+          label: "Yes,  the instant collapse carries the message",
           feedback: "Collapse changes no one's local statistics, so it carries no message.",
         },
       ],
-      teaching: "Entanglement gives correlation without communication — no faster-than-light signaling.",
+      teaching: "Entanglement gives correlation without communication,  no faster-than-light signaling.",
     },
     {
       type: "reflection",
@@ -3882,7 +3957,7 @@ const lessonNoSignaling: Lesson = {
         "No local operation changes the distant qubit's probabilities, so no information flows.",
         "Correlations appear only by comparing records over an ordinary channel.",
       ],
-      next: "Unit 5: Algorithms — putting interference and entanglement to work.",
+      next: "Unit 5: Algorithms,  putting interference and entanglement to work.",
     },
   ],
 };
@@ -3966,6 +4041,12 @@ const lessonQuantumAlgorithm: Lesson = {
       ],
       misconception:
         "An algorithm is not the qubits secretly holding every answer. It is the gate sequence that shapes interference toward the answer you want.",
+      realWorld:
+        "This is exactly how real processors at Google and IBM run: load a state, apply a gate sequence, measure, then repeat many times to read out the distribution.",
+      whyMatters:
+        "Once you see an algorithm as choreographed interference, the famous algorithms ahead stop looking like magic and start looking like design.",
+      memoryConnection:
+        "This is interference from Unit 3 put to work. The gates steer amplitudes so the answers you want reinforce and the rest cancel.",
       resources: [
         {
           label: "Quantum algorithm (Wikipedia)",
@@ -3984,9 +4065,9 @@ const lessonQuantumAlgorithm: Lesson = {
       showCnot: true,
       goalIndex: 3,
       correctFeedback:
-        "Correct. Two X gates send \\( |00\\rangle \\) to \\( |11\\rangle \\), measured every time — a deterministic little algorithm.",
+        "Correct. Two X gates send \\( |00\\rangle \\) to \\( |11\\rangle \\), measured every time,  a deterministic little algorithm.",
       incorrectFeedback:
-        "Not always \\( |11\\rangle \\) yet. To force both qubits to 1, flip each with an X gate.",
+        "Not yet. Recall which gate forces \\( |1\\rangle \\) on each qubit.",
       teaching: "Even a trivial program is a gate sequence with a designed, predictable output.",
     },
     {
@@ -4047,13 +4128,13 @@ const lessonQuantumAlgorithm: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — gate sequences shape interference toward the answer",
+          label: "No,  gate sequences shape interference toward the answer",
           correct: true,
           feedback: "Correct. There is no parallel store of answers; there is interference, designed by the gates.",
         },
         {
           id: "yes",
-          label: "Yes — superposition holds all answers and the computer reads the right one",
+          label: "Yes,  superposition holds all answers and the computer reads the right one",
           feedback: "Superposition is not a lookup table. The advantage comes from interference, not storage.",
         },
       ],
@@ -4069,7 +4150,7 @@ const lessonQuantumAlgorithm: Lesson = {
         "The gates shape interference so useful outcomes are the likely measurements.",
         "Power comes from interference, not from storing every answer.",
       ],
-      next: "An algorithm is a gate sequence. Next, the first one to beat classical — Deutsch–Jozsa — with a single interference experiment.",
+      next: "An algorithm is a gate sequence. Next, the first one to beat classical,  Deutsch–Jozsa,  with a single interference experiment.",
     },
   ],
 };
@@ -4138,7 +4219,7 @@ const lessonDeutschJozsa: Lesson = {
         {
           id: "never",
           label: "You can never be certain",
-          feedback: "You can — once more than half agree, it must be constant. It just takes many checks.",
+          feedback: "You can,  once more than half agree, it must be constant. It just takes many checks.",
         },
       ],
       teaching: "Classical certainty about a global property can cost many queries.",
@@ -4149,10 +4230,12 @@ const lessonDeutschJozsa: Lesson = {
       title: "One interference experiment",
       body: [
         "Deutsch–Jozsa asks only one yes/no question: is the function constant or balanced?",
-        "A quantum circuit evaluates the function in superposition and lets the results interfere — constant and balanced produce different patterns, distinguishable in a single measurement.",
+        "A quantum circuit evaluates the function in superposition and lets the results interfere,  constant and balanced produce different patterns, distinguishable in a single measurement.",
       ],
       misconception:
         "The speedup is not from checking every input at once and reading them all. Interference combines the results so that only the constant-vs-balanced answer survives.",
+      realWorld:
+        "This was the first proof that a quantum computer can beat every classical one at a task, and the trick it introduced (evaluate in superposition, then interfere) reappears in Shor's and Grover's algorithms.",
       resources: [
         {
           label: "Deutsch–Jozsa algorithm (Wikipedia)",
@@ -4168,7 +4251,7 @@ const lessonDeutschJozsa: Lesson = {
       title: "Classify with one experiment",
       body: "Load a different hidden function and classify it with a single quantum experiment. Confirm with a few classical queries.",
       teaching:
-        "One quantum experiment settles the question no matter how many inputs the function has — an exponential gap in the number of queries.",
+        "One quantum experiment settles the question no matter how many inputs the function has,  an exponential gap in the number of queries.",
     },
     {
       type: "prediction",
@@ -4210,7 +4293,7 @@ const lessonDeutschJozsa: Lesson = {
         {
           id: "slow",
           label: "It is actually slower than classical",
-          feedback: "It is faster — exponentially fewer queries. It is just not a problem anyone needs solved.",
+          feedback: "It is faster,  exponentially fewer queries. It is just not a problem anyone needs solved.",
         },
         {
           id: "qubits",
@@ -4228,13 +4311,13 @@ const lessonDeutschJozsa: Lesson = {
       options: [
         {
           id: "global",
-          label: "No — only the one global property: constant or balanced",
+          label: "No,  only the one global property: constant or balanced",
           correct: true,
           feedback: "Correct. Interference extracts a single global fact, not the whole table.",
         },
         {
           id: "all",
-          label: "Yes — it reads every output at once",
+          label: "Yes,  it reads every output at once",
           feedback: "It cannot read every output. It extracts only the constant-vs-balanced answer.",
         },
       ],
@@ -4250,7 +4333,7 @@ const lessonDeutschJozsa: Lesson = {
         "A quantum circuit answers it in one interference experiment.",
         "It extracts a global property, not the whole function.",
       ],
-      next: "One experiment replaced many checks. Next, Grover's search — watch interference concentrate probability on a hidden answer.",
+      next: "One experiment replaced many checks. Next, Grover's search,  watch interference concentrate probability on a hidden answer.",
     },
   ],
 };
@@ -4276,7 +4359,7 @@ const lessonGrover: Lesson = {
           id: "half",
           label: "About half of them on average",
           correct: true,
-          feedback: "Correct. With no structure, you check boxes one by one — about N/2 on average.",
+          feedback: "Correct. With no structure, you check boxes one by one,  about N/2 on average.",
         },
         {
           id: "one",
@@ -4286,7 +4369,7 @@ const lessonGrover: Lesson = {
         {
           id: "all",
           label: "All of them, every time",
-          feedback: "Only in the worst case. On average it's about half — still growing with N.",
+          feedback: "Only in the worst case. On average it's about half,  still growing with N.",
         },
       ],
       teaching: "Unstructured classical search costs about N checks for N boxes.",
@@ -4297,7 +4380,7 @@ const lessonGrover: Lesson = {
       title: "Search by hand",
       body: "Try it classically. Open boxes until you find the target, then start a new target.",
       teaching:
-        "With no clues you can only check boxes one at a time — about N/2 on average, N in the worst case.",
+        "With no clues you can only check boxes one at a time,  about N/2 on average, N in the worst case.",
     },
     {
       type: "prediction",
@@ -4319,7 +4402,7 @@ const lessonGrover: Lesson = {
         {
           id: "const",
           label: "A constant, independent of \\( N \\)",
-          feedback: "Without clues, more boxes means more checks — it grows with \\( N \\).",
+          feedback: "Without clues, more boxes means more checks,  it grows with \\( N \\).",
         },
       ],
       teaching: "Classical unstructured search is linear in \\( N \\).",
@@ -4330,7 +4413,7 @@ const lessonGrover: Lesson = {
       title: "Amplify the answer",
       body: "Now the quantum approach. All answers start equally likely. Apply Grover iterations and watch the target's probability.",
       teaching:
-        "Each iteration flips the target's phase, then reflects all amplitudes about their mean. Interference grows the target and shrinks the rest — this is amplitude amplification.",
+        "Each iteration flips the target's phase, then reflects all amplitudes about their mean. Interference grows the target and shrinks the rest,  this is amplitude amplification.",
     },
     {
       type: "prediction",
@@ -4363,10 +4446,12 @@ const lessonGrover: Lesson = {
       title: "Amplitude amplification",
       body: [
         "Grover marks the target by flipping the sign of its amplitude, then reflects all amplitudes about their average.",
-        "Repeating concentrates probability on the target — finding it in about \\( \\sqrt{N} \\) steps instead of \\( N \\).",
+        "Repeating concentrates probability on the target,  finding it in about \\( \\sqrt{N} \\) steps instead of \\( N \\).",
       ],
       misconception:
         "A quantum computer does not look inside every box at once and 'see' the answer. Every box is explored as an amplitude, and interference makes the target the most likely measurement.",
+      realWorld:
+        "Grover's quadratic speedup applies to real search-like work: scanning unsorted data, brute-forcing keys, and accelerating optimization and constraint solvers.",
       resources: [
         {
           label: "Grover's algorithm (Wikipedia)",
@@ -4396,7 +4481,7 @@ const lessonGrover: Lesson = {
         {
           id: "one",
           label: "Just one, regardless of \\( N \\)",
-          feedback: "Not constant — it needs about \\( \\sqrt{N} \\) iterations.",
+          feedback: "Not constant,  it needs about \\( \\sqrt{N} \\) iterations.",
         },
       ],
       teaching: "Grover gives a quadratic speedup: about \\( \\sqrt{N} \\) steps.",
@@ -4405,7 +4490,7 @@ const lessonGrover: Lesson = {
       type: "amplitude-amplifier",
       id: "grover-overshoot",
       title: "Can you over-amplify?",
-      body: "Try a larger search. Apply iterations until the target is most likely — then keep going and watch what happens.",
+      body: "Try a larger search. Apply iterations until the target is most likely,  then keep going and watch what happens.",
       size: 16,
       teaching:
         "More iterations is not always better: past the peak, interference reverses and the target's probability falls. There is an optimal number of iterations.",
@@ -4418,17 +4503,17 @@ const lessonGrover: Lesson = {
       options: [
         {
           id: "quad",
-          label: "No — it's a quadratic (about \\( \\sqrt{N} \\)) speedup, real but modest",
+          label: "No,  it's a quadratic (about \\( \\sqrt{N} \\)) speedup, real but modest",
           correct: true,
           feedback: "Correct. Grover is quadratic, not exponential. Still useful, but not a magic shortcut.",
         },
         {
           id: "exp",
-          label: "Yes — it's exponential",
+          label: "Yes,  it's exponential",
           feedback: "Search is only quadratic. Exponential speedups need special structure, like Shor's.",
         },
       ],
-      teaching: "Grover's speedup is quadratic — meaningful, but bounded.",
+      teaching: "Grover's speedup is quadratic,  meaningful, but bounded.",
     },
     {
       type: "reflection",
@@ -4440,7 +4525,7 @@ const lessonGrover: Lesson = {
         "Grover amplifies the target's amplitude, finding it in about \\( \\sqrt{N} \\) steps.",
         "The speedup is quadratic, and over-iterating undoes it.",
       ],
-      next: "Grover amplified one answer. Next, Shor's algorithm uses interference to find a hidden period — and break encryption.",
+      next: "Grover amplified one answer. Next, Shor's algorithm uses interference to find a hidden period,  and break encryption.",
     },
   ],
 };
@@ -4485,14 +4570,14 @@ const lessonShor: Lesson = {
       type: "pattern-explorer",
       id: "find-period",
       title: "Find the hidden period",
-      body: "A sequence built from \\( N = 15 \\) repeats. Find how often it repeats — its period.",
+      body: "A sequence built from \\( N = 15 \\) repeats. Find how often it repeats,  its period.",
       n: 15,
       cycle: [7, 4, 13, 1],
       period: 4,
       factors: [3, 5],
       terms: 12,
       teaching:
-        "Once you know the period, the factors fall out by simple arithmetic. Finding the period is the hard part — and the part a quantum computer does fast.",
+        "Once you know the period, the factors fall out by simple arithmetic. Finding the period is the hard part,  and the part a quantum computer does fast.",
     },
     {
       type: "prediction",
@@ -4509,7 +4594,7 @@ const lessonShor: Lesson = {
         {
           id: "bigger",
           label: "A larger number to factor",
-          feedback: "No new problem appears — the period hands you the factors.",
+          feedback: "No new problem appears,  the period hands you the factors.",
         },
         {
           id: "nothing",
@@ -4524,11 +4609,15 @@ const lessonShor: Lesson = {
       id: "explain",
       title: "Factoring as period-finding",
       body: [
-        "Shor turns factoring into period-finding. A quantum circuit builds a superposition over a repeating sequence and uses interference to expose its period in one go.",
-        "From the period, ordinary arithmetic produces the factors — no quantum magic in that last step.",
+        "Shor turns factoring into period-finding. A quantum circuit builds a superposition over a repeating sequence and uses interference to expose its period in one shot.",
+        "Once you know the period, ordinary arithmetic produces the factors. There is no quantum magic in that last step.",
       ],
       misconception:
         "Shor does not try every possible factor in parallel. Interference reveals the sequence's hidden period; the factoring follows from that period classically.",
+      realWorld:
+        "Most internet security rests on factoring being too slow for classical machines. A large enough quantum computer running Shor would break RSA, which is why agencies are already moving to post-quantum cryptography.",
+      whyMatters:
+        "Shor is the clearest proof that the right quantum algorithm can be exponentially faster, not just a little faster, than anything classical.",
       resources: [
         {
           label: "Shor's algorithm (Wikipedia)",
@@ -4561,7 +4650,7 @@ const lessonShor: Lesson = {
           id: "crypto",
           label: "It factors exponentially faster, threatening today's public-key encryption",
           correct: true,
-          feedback: "Correct. Much of modern cryptography rests on factoring being hard — Shor undermines that.",
+          feedback: "Correct. Much of modern cryptography rests on factoring being hard,  Shor undermines that.",
         },
         {
           id: "sort",
@@ -4609,13 +4698,13 @@ const lessonShor: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — it finds a period by interference; the factors follow",
+          label: "No,  it finds a period by interference; the factors follow",
           correct: true,
           feedback: "Correct. There's no parallel factor-testing; there's interference revealing a period.",
         },
         {
           id: "yes",
-          label: "Yes — superposition checks every factor at once",
+          label: "Yes,  superposition checks every factor at once",
           feedback: "Superposition is not parallel checking. The speedup is interference exposing a period.",
         },
       ],
@@ -4631,7 +4720,7 @@ const lessonShor: Lesson = {
         "Interference exposes the period; arithmetic then gives the factors.",
         "Its exponential speedup threatens factoring-based cryptography.",
       ],
-      next: "Interference broke a hard problem. But quantum computers don't speed up everything — next, when quantum wins and when it doesn't.",
+      next: "Interference broke a hard problem. But quantum computers don't speed up everything,  next, when quantum wins and when it doesn't.",
     },
   ],
 };
@@ -4655,13 +4744,13 @@ const lessonQuantumWins: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — only where interference can exploit a problem's structure",
+          label: "No,  only where interference can exploit a problem's structure",
           correct: true,
           feedback: "Correct. Quantum advantage is selective, not universal.",
         },
         {
           id: "yes",
-          label: "Yes — they speed up any computation",
+          label: "Yes,  they speed up any computation",
           feedback: "Most tasks see no advantage. Quantum wins only where interference fits the structure.",
         },
         {
@@ -4690,7 +4779,7 @@ const lessonQuantumWins: Lesson = {
           id: "factsim",
           label: "Factoring and simulating quantum systems",
           correct: true,
-          feedback: "Correct. Both have structure interference exploits — periods and quantum dynamics.",
+          feedback: "Correct. Both have structure interference exploits,  periods and quantum dynamics.",
         },
         {
           id: "sort",
@@ -4715,6 +4804,8 @@ const lessonQuantumWins: Lesson = {
       ],
       misconception:
         "A quantum computer is not a universal speed-up. For most tasks it offers no advantage; it shines only where interference fits the problem's structure.",
+      realWorld:
+        "This is why experts expect quantum machines to act as accelerators for specific jobs, like simulating molecules for drug and materials discovery, working beside classical computers rather than replacing them.",
       resources: [
         {
           label: "Quantum advantage (Wikipedia)",
@@ -4731,7 +4822,7 @@ const lessonQuantumWins: Lesson = {
       body: "Recall search: even Grover's best is quadratic. Apply iterations and notice how modest the gain is next to factoring.",
       size: 16,
       teaching:
-        "Search concentrates probability with interference, but only quadratically — about \\( \\sqrt{N} \\) vs \\( N \\). Exponential wins need special structure like Shor's periods.",
+        "Search concentrates probability with interference, but only quadratically,  about \\( \\sqrt{N} \\) vs \\( N \\). Exponential wins need special structure like Shor's periods.",
     },
     {
       type: "prediction",
@@ -4741,18 +4832,18 @@ const lessonQuantumWins: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — sorting gets no quantum speedup",
+          label: "No,  sorting gets no quantum speedup",
           correct: true,
           feedback: "Correct. Sorting is already efficient classically; quantum offers nothing here.",
         },
         {
           id: "huge",
-          label: "Yes — a huge speedup",
+          label: "Yes,  a huge speedup",
           feedback: "Sorting has no structure for interference to exploit; there is no quantum advantage.",
         },
         {
           id: "exp",
-          label: "Yes — exponentially faster",
+          label: "Yes,  exponentially faster",
           feedback: "No exponential win exists for sorting. It gains nothing from a quantum computer.",
         },
       ],
@@ -4762,17 +4853,17 @@ const lessonQuantumWins: Lesson = {
       type: "prediction",
       id: "q-simulate",
       title: "Simulating a molecule",
-      prompt: "Simulating a new molecule's quantum behavior — a job for a quantum computer?",
+      prompt: "Simulating a new molecule's quantum behavior,  a job for a quantum computer?",
       options: [
         {
           id: "yes",
-          label: "Yes — quantum simulation is a natural, exponential win",
+          label: "Yes,  quantum simulation is a natural, exponential win",
           correct: true,
           feedback: "Correct. Simulating quantum systems is where quantum computers most clearly excel.",
         },
         {
           id: "no",
-          label: "No — classical computers do it just as well",
+          label: "No,  classical computers do it just as well",
           feedback: "Classically this scales exponentially. It's a prime quantum use case.",
         },
         {
@@ -4818,7 +4909,7 @@ const lessonQuantumWins: Lesson = {
         "Exponential wins (factoring, simulation) exploit structure; search is only quadratic; sorting gains nothing.",
         "Interference helps when a problem's structure lets useful answers reinforce.",
       ],
-      next: "You've turned quantum mechanics into computation. Next unit: the real hardware — physical qubits, noise, and error correction.",
+      next: "You've turned quantum mechanics into computation. Next unit: the real hardware,  physical qubits, noise, and error correction.",
     },
   ],
 };
@@ -4875,7 +4966,7 @@ const lessonBuildingQC: Lesson = {
       options: [
         {
           id: "many",
-          label: "Many systems — superconducting circuits, trapped ions, atoms, photons",
+          label: "Many systems,  superconducting circuits, trapped ions, atoms, photons",
           correct: true,
           feedback: "Correct. A qubit is any controllable two-level physical system, and several kinds exist.",
         },
@@ -4890,7 +4981,7 @@ const lessonBuildingQC: Lesson = {
           feedback: "A qubit is physical hardware, not a piece of code running on a laptop.",
         },
       ],
-      teaching: "A qubit is a real, controllable physical system — and there are several ways to build one.",
+      teaching: "A qubit is a real, controllable physical system,  and there are several ways to build one.",
     },
     {
       type: "hardware-comparison",
@@ -4909,7 +5000,7 @@ const lessonBuildingQC: Lesson = {
       options: [
         {
           id: "isolation",
-          label: "Extreme isolation — near absolute zero, vacuum, or careful optics",
+          label: "Extreme isolation,  near absolute zero, vacuum, or careful optics",
           correct: true,
           feedback: "Correct. Qubits must be shielded from their environment, or they lose their quantum behavior.",
         },
@@ -4936,6 +5027,8 @@ const lessonBuildingQC: Lesson = {
       ],
       misconception:
         "A qubit is not a tiny classical bit or a line of code. It is a fragile physical system that must be shielded from the outside world.",
+      realWorld:
+        "Real qubits live in extreme conditions: superconducting chips chilled near absolute zero, or single ions held in vacuum by lasers, all heavily shielded so the outside world cannot disturb them.",
       resources: [
         {
           label: "Quantum computing: hardware (Wikipedia)",
@@ -5042,13 +5135,13 @@ const lessonBuildingQC: Lesson = {
       options: [
         {
           id: "false",
-          label: "False — it is a fragile quantum system needing isolation",
+          label: "False,  it is a fragile quantum system needing isolation",
           correct: true,
-          feedback: "Correct. Qubits hold superposition and phase, and lose them if disturbed — unlike classical bits.",
+          feedback: "Correct. Qubits hold superposition and phase, and lose them if disturbed,  unlike classical bits.",
         },
         {
           id: "true",
-          label: "True — just smaller and faster",
+          label: "True,  just smaller and faster",
           feedback: "A qubit is physically and behaviorally different: it is quantum, and fragile.",
         },
       ],
@@ -5094,16 +5187,16 @@ const lessonHardwarePlatforms: Lesson = {
         },
         {
           id: "super",
-          label: "Always superconducting — speed wins",
+          label: "Always superconducting,  speed wins",
           feedback: "Speed isn't everything; long coherence and high fidelity matter for many tasks.",
         },
         {
           id: "ion",
-          label: "Always trapped ions — accuracy wins",
+          label: "Always trapped ions,  accuracy wins",
           feedback: "Accuracy matters, but slow gates and hard scaling can rule ions out for some uses.",
         },
       ],
-      teaching: "There is no universally best qubit — only the best for a given job.",
+      teaching: "There is no universally best qubit,  only the best for a given job.",
     },
     {
       type: "hardware-comparison",
@@ -5144,6 +5237,8 @@ const lessonHardwarePlatforms: Lesson = {
       ],
       misconception:
         "There is no single best qubit. The right platform depends on what you need: speed, accuracy, memory, or scale.",
+      realWorld:
+        "These trade-offs play out commercially: superconducting machines from IBM and Google chase speed and scale, while trapped-ion machines from IonQ and Quantinuum chase accuracy and long memory.",
       resources: [
         {
           label: "Superconducting quantum computing (Wikipedia)",
@@ -5249,13 +5344,13 @@ const lessonHardwarePlatforms: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — each wins on different metrics",
+          label: "No,  each wins on different metrics",
           correct: true,
           feedback: "Correct. Speed, coherence, fidelity, and scalability pull in different directions.",
         },
         {
           id: "yes",
-          label: "Yes — one dominates on every metric",
+          label: "Yes,  one dominates on every metric",
           feedback: "Neither dominates everywhere; they trade strengths.",
         },
       ],
@@ -5310,7 +5405,7 @@ const lessonNoiseDecoherence: Lesson = {
           feedback: "Decoherence is not a clean flip; it blurs the state toward randomness.",
         },
       ],
-      teaching: "Quantum information leaks away over time — this is decoherence.",
+      teaching: "Quantum information leaks away over time,  this is decoherence.",
     },
     {
       type: "decoherence",
@@ -5319,7 +5414,7 @@ const lessonNoiseDecoherence: Lesson = {
       body: "Prepare a state and let it sit. Raise the noise and elapsed time, and watch the Bloch vector shrink.",
       showGates: false,
       teaching:
-        "As time passes and noise acts, the Bloch vector shrinks toward the center — the state drifts from definite toward random. These timescales are called \\( T_1 \\) and \\( T_2 \\).",
+        "As time passes and noise acts, the Bloch vector shrinks toward the center,  the state drifts from definite toward random. These timescales are called \\( T_1 \\) and \\( T_2 \\).",
     },
     {
       type: "prediction",
@@ -5329,18 +5424,18 @@ const lessonNoiseDecoherence: Lesson = {
       options: [
         {
           id: "fifty",
-          label: "50% — a coin flip",
+          label: "50%,  a coin flip",
           correct: true,
           feedback: "Correct. A fully decohered qubit is random: the intended outcome becomes just 50/50.",
         },
         {
           id: "hundred",
-          label: "100% — more certain",
+          label: "100%,  more certain",
           feedback: "Decoherence destroys certainty; it moves toward randomness, not toward 100%.",
         },
         {
           id: "zero",
-          label: "0% — the opposite outcome",
+          label: "0%,  the opposite outcome",
           feedback: "It does not flip to the opposite; it blurs to an even 50/50.",
         },
       ],
@@ -5351,11 +5446,17 @@ const lessonNoiseDecoherence: Lesson = {
       id: "explain",
       title: "Losing coherence",
       body: [
-        "Decoherence is the loss of quantum information to the environment. The Bloch vector shrinks and superpositions blur into classical randomness.",
-        "\\( T_1 \\) measures how fast a qubit loses energy; \\( T_2 \\) measures how fast it loses phase coherence — the part interference depends on.",
+        "Decoherence is the loss of quantum information to the environment. The Bloch vector shrinks and superpositions blur into ordinary randomness.",
+        "\\( T_1 \\) measures how fast a qubit leaks energy. \\( T_2 \\) measures how fast it loses phase coherence, which is the very thing interference depends on.",
       ],
       misconception:
         "Quantum computers do not always produce perfect answers. Every gate and every microsecond adds noise, so real results are probabilistic and degrade over time.",
+      realWorld:
+        "This is why quantum chips sit in dilution refrigerators near absolute zero. Heat and stray fields are exactly the environment that destroys coherence.",
+      whyMatters:
+        "Decoherence is the central obstacle to scaling quantum computers, which is why the next lesson on error correction exists at all.",
+      memoryConnection:
+        "Remember the Bloch sphere from Unit 1? Decoherence is literally that arrow shrinking toward the center as the qubit forgets its state.",
       resources: [
         {
           label: "Quantum decoherence (Wikipedia)",
@@ -5389,7 +5490,7 @@ const lessonNoiseDecoherence: Lesson = {
         {
           id: "memory",
           label: "The computer runs out of memory",
-          feedback: "It's not memory — it's noise. Depth and time degrade the quantum state.",
+          feedback: "It's not memory,  it's noise. Depth and time degrade the quantum state.",
         },
         {
           id: "slow",
@@ -5427,13 +5528,13 @@ const lessonNoiseDecoherence: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — noise makes outcomes probabilistic, so we repeat and average",
+          label: "No,  noise makes outcomes probabilistic, so we repeat and average",
           correct: true,
           feedback: "Correct. Results scatter due to noise; many runs are combined to extract the answer.",
         },
         {
           id: "yes",
-          label: "Yes — quantum computers are exact",
+          label: "Yes,  quantum computers are exact",
           feedback: "Noise makes every run imperfect. Real devices rely on repetition and statistics.",
         },
       ],
@@ -5449,7 +5550,7 @@ const lessonNoiseDecoherence: Lesson = {
         "\\( T_1 \\) and \\( T_2 \\) set how long a qubit stays useful; gates add still more noise.",
         "Real outcomes are probabilistic, recovered by repeating runs.",
       ],
-      next: "Noise erodes quantum information. But we can fight back — without copying it. Next, error correction.",
+      next: "Noise erodes quantum information. But we can fight back,  without copying it. Next, error correction.",
     },
   ],
 };
@@ -5473,13 +5574,13 @@ const lessonErrorCorrection: Lesson = {
       options: [
         {
           id: "spread",
-          label: "Yes — by spreading information across qubits, not copying it",
+          label: "Yes,  by spreading information across qubits, not copying it",
           correct: true,
           feedback: "Correct. Encoding spreads the logical state so errors can be detected and undone.",
         },
         {
           id: "no",
-          label: "No — No-Cloning makes error correction impossible",
+          label: "No,  No-Cloning makes error correction impossible",
           feedback: "Correction is possible; it spreads information rather than copying the unknown state.",
         },
         {
@@ -5496,7 +5597,7 @@ const lessonErrorCorrection: Lesson = {
       title: "Encode and recover",
       body: "Encode one logical qubit into several physical qubits. Inject a little noise, then recover by majority vote.",
       teaching:
-        "With low noise, at most one physical qubit flips, and the majority restores the logical value. The information is spread, not copied — checks read error patterns, not the data itself.",
+        "With low noise, at most one physical qubit flips, and the majority restores the logical value. The information is spread, not copied,  checks read error patterns, not the data itself.",
     },
     {
       type: "prediction",
@@ -5533,6 +5634,8 @@ const lessonErrorCorrection: Lesson = {
       ],
       misconception:
         "Error correction does not copy the qubit, which No-Cloning forbids. It distributes the information so errors can be detected and reversed.",
+      realWorld:
+        "Error correction is the make-or-break technology for useful quantum computers: recent experiments have shown that adding more physical qubits can finally start lowering the logical error rate.",
       resources: [
         {
           label: "Quantum error correction (Wikipedia)",
@@ -5548,7 +5651,7 @@ const lessonErrorCorrection: Lesson = {
       title: "Find the breaking point",
       body: "Now crank up the noise. Find the point where too many qubits flip and recovery fails.",
       teaching:
-        "When more than half the physical qubits flip, the majority vote gives the wrong answer. Correction works only while errors stay rare — below a threshold.",
+        "When more than half the physical qubits flip, the majority vote gives the wrong answer. Correction works only while errors stay rare,  below a threshold.",
     },
     {
       type: "prediction",
@@ -5560,11 +5663,11 @@ const lessonErrorCorrection: Lesson = {
           id: "tolerate",
           label: "Tolerates more errors, if the per-qubit error rate is low enough",
           correct: true,
-          feedback: "Correct. More redundancy corrects more errors — but only below the error threshold.",
+          feedback: "Correct. More redundancy corrects more errors,  but only below the error threshold.",
         },
         {
           id: "nothing",
-          label: "Nothing — redundancy never helps qubits",
+          label: "Nothing,  redundancy never helps qubits",
           feedback: "Redundancy does help, exactly as it did in the simulator, when noise is low enough.",
         },
         {
@@ -5590,7 +5693,7 @@ const lessonErrorCorrection: Lesson = {
         {
           id: "zero",
           label: "Exactly zero",
-          feedback: "It need not be zero — just low enough to be below the threshold.",
+          feedback: "It need not be zero,  just low enough to be below the threshold.",
         },
         {
           id: "any",
@@ -5608,13 +5711,13 @@ const lessonErrorCorrection: Lesson = {
       options: [
         {
           id: "no",
-          label: "No — it spreads information without copying the state",
+          label: "No,  it spreads information without copying the state",
           correct: true,
           feedback: "Correct. The logical state is encoded across qubits, never duplicated.",
         },
         {
           id: "yes",
-          label: "Yes — it secretly copies the qubit",
+          label: "Yes,  it secretly copies the qubit",
           feedback: "It does not copy. Encoding distributes information; that is what makes it allowed.",
         },
       ],
@@ -5628,9 +5731,9 @@ const lessonErrorCorrection: Lesson = {
       points: [
         "One logical qubit is encoded across several physical qubits.",
         "Majority-style recovery fixes errors while they stay below a threshold.",
-        "Information is spread, not copied — consistent with No-Cloning.",
+        "Information is spread, not copied,  consistent with No-Cloning.",
       ],
-      next: "Redundancy protects qubits without copying them. Next, where all of this is heading — the future of quantum computing.",
+      next: "Redundancy protects qubits without copying them. Next, where all of this is heading,  the future of quantum computing.",
     },
   ],
 };
@@ -5656,7 +5759,7 @@ const lessonFutureQuantum: Lesson = {
           id: "structured",
           label: "A specific few with the right structure, like chemistry and cryptography",
           correct: true,
-          feedback: "Correct. Quantum advantage is targeted, not universal — it follows the structure of the problem.",
+          feedback: "Correct. Quantum advantage is targeted, not universal,  it follows the structure of the problem.",
         },
         {
           id: "everything",
@@ -5691,7 +5794,7 @@ const lessonFutureQuantum: Lesson = {
           id: "materials",
           label: "Materials science (new quantum materials)",
           answer: "strong",
-          note: "Like chemistry, this is quantum simulation — a strong fit.",
+          note: "Like chemistry, this is quantum simulation,  a strong fit.",
         },
         {
           id: "crypto",
@@ -5709,7 +5812,7 @@ const lessonFutureQuantum: Lesson = {
           id: "web",
           label: "Running everyday web and business apps",
           answer: "limited",
-          note: "These have no structure for interference to exploit — no advantage.",
+          note: "These have no structure for interference to exploit,  no advantage.",
         },
       ],
       teaching: "The biggest wins cluster around simulation and a few structured problems like factoring.",
@@ -5745,10 +5848,12 @@ const lessonFutureQuantum: Lesson = {
       title: "From NISQ to fault tolerance",
       body: [
         "Today's machines are noisy and intermediate-scale (NISQ): dozens to hundreds of imperfect qubits, with circuits kept shallow.",
-        "Reaching broadly useful, large computations needs fault tolerance — error correction at scale — which is the field's central engineering goal.",
+        "Reaching broadly useful, large computations needs fault tolerance,  error correction at scale,  which is the field's central engineering goal.",
       ],
       misconception:
         "Quantum computers will not replace classical computers. They are specialized accelerators that will work alongside classical machines for specific tasks.",
+      realWorld:
+        "You can already run small programs on real NISQ hardware over the cloud today, while the field races toward fault-tolerant machines that could one day break encryption or design new materials.",
       resources: [
         {
           label: "Noisy intermediate-scale quantum era (Wikipedia)",
@@ -5832,7 +5937,7 @@ const lessonFutureQuantum: Lesson = {
       body: "From Units 3 and 5: interference concentrates probability on the right answer. Apply a few iterations.",
       size: 8,
       teaching:
-        "Quantum power is here: amplitudes interfere before measurement, amplifying useful answers — not trying every answer at once.",
+        "Quantum power is here: amplitudes interfere before measurement, amplifying useful answers,  not trying every answer at once.",
     },
     {
       type: "two-qubit-explorer",
@@ -5845,7 +5950,7 @@ const lessonFutureQuantum: Lesson = {
       allowMeasureBoth: true,
       allowHistogram: true,
       teaching:
-        "Entanglement links qubits into one joint state — correlations with no classical counterpart, yet no faster-than-light signaling.",
+        "Entanglement links qubits into one joint state,  correlations with no classical counterpart, yet no faster-than-light signaling.",
     },
     {
       type: "prediction",
@@ -5857,7 +5962,7 @@ const lessonFutureQuantum: Lesson = {
           id: "interfere",
           label: "Amplitudes interfere before measurement, and qubits can entangle",
           correct: true,
-          feedback: "Correct. Interference and entanglement — not faster hardware — are the real difference.",
+          feedback: "Correct. Interference and entanglement,  not faster hardware,  are the real difference.",
         },
         {
           id: "faster",
@@ -5883,7 +5988,7 @@ const lessonFutureQuantum: Lesson = {
         "Why it is hard: qubits are fragile, noise causes decoherence, and error correction is demanding.",
         "Where it is heading: from noisy prototypes toward fault-tolerant, genuinely useful machines.",
       ],
-      next: "You've completed Quantum Computing Fundamentals — from superposition and measurement to algorithms and the hardware that will one day run them.",
+      next: "You've completed Quantum Computing Fundamentals,  from superposition and measurement to algorithms and the hardware that will one day run them.",
     },
   ],
 };
@@ -5892,13 +5997,19 @@ const chapters: Unit[] = [
   {
     id: "chapter-information",
     title: "Unit 1: Information",
-    description: "What a qubit is, how measurement works, and how a quantum state is described.",
-    lessonIds: [lesson1.id, lesson2.id, lessonBloch.id, lessonPhase.id, lessonNoCloning.id],
+    description: "Qubits, measurement, and quantum states.",
+    lessonIds: [
+      lesson1.id,
+      lesson2.id,
+      lessonBloch.id,
+      lessonPhase.id,
+      lessonNoCloning.id,
+    ],
   },
   {
     id: "chapter-transforming",
     title: "Unit 2: Transforming Information",
-    description: "Gates that change a qubit's state, and the circuits that combine them.",
+    description: "Gates and the circuits that combine them.",
     lessonIds: [
       lesson3.id,
       lessonPauliZ.id,
@@ -5911,7 +6022,7 @@ const chapters: Unit[] = [
   {
     id: "chapter-why-quantum",
     title: "Unit 3: Why Quantum Works",
-    description: "How probability amplitudes and interference give quantum computers their power.",
+    description: "How amplitudes and interference power quantum.",
     lessonIds: [
       lesson5.id,
       lessonConstructive.id,
@@ -5922,7 +6033,7 @@ const chapters: Unit[] = [
   {
     id: "chapter-multiple-qubits",
     title: "Unit 4: Multiple Qubits",
-    description: "Correlation, entanglement, and what measuring entangled qubits reveals.",
+    description: "Entanglement and correlated measurements.",
     lessonIds: [
       lessonClassicalCorrelation.id,
       lessonEntanglement.id,
@@ -5934,7 +6045,7 @@ const chapters: Unit[] = [
   {
     id: "chapter-algorithms",
     title: "Unit 5: Quantum Algorithms",
-    description: "See how quantum mechanics becomes computation.",
+    description: "How quantum mechanics becomes computation.",
     lessonIds: [
       lessonQuantumAlgorithm.id,
       lessonDeutschJozsa.id,
@@ -5946,8 +6057,7 @@ const chapters: Unit[] = [
   {
     id: "chapter-hardware",
     title: "Unit 6: Real Quantum Computers",
-    description:
-      "How today's quantum computers are built, why they are hard to engineer, and what remains before they are practical.",
+    description: "How real quantum computers are built and run.",
     lessonIds: [
       lessonBuildingQC.id,
       lessonHardwarePlatforms.id,

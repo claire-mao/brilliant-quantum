@@ -16,6 +16,11 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  overflow-x: clip;
+}
+
+html {
+  overflow-x: clip;
 }
 
 /* Keep display equations from overflowing narrow cards on mobile. */
@@ -741,8 +746,8 @@ body {
   0% {
     opacity: 0;
   }
-  15%,
-  78% {
+  10%,
+  86% {
     opacity: 1;
   }
   100% {
@@ -750,80 +755,59 @@ body {
   }
 }
 .ceremony-dim {
-  animation: ceremony-dim 2.6s ease both;
-}
-
-@keyframes ceremony-wizard {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.3);
-  }
-  12% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  70% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  86%,
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.4);
-  }
-}
-.ceremony-wizard {
-  animation: ceremony-wizard 2.6s ease both;
+  animation: ceremony-dim 3s ease both;
 }
 
 @keyframes ceremony-badge {
   0%,
-  22% {
+  20% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0);
   }
-  40% {
+  30% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.25);
+    transform: translate(-50%, -50%) scale(1.2);
   }
-  55% {
+  42% {
     transform: translate(-50%, -50%) scale(1);
   }
-  70% {
+  84% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(calc(-50% + 42vw), calc(-50% - 42vh)) scale(0.2);
+    transform: translate(calc(-50% + 44vw), calc(-50% - 34vh)) scale(0.2);
   }
 }
 .ceremony-badge {
-  animation: ceremony-badge 2.6s cubic-bezier(0.34, 1.25, 0.5, 1) both;
+  animation: ceremony-badge 3s cubic-bezier(0.34, 1.25, 0.5, 1) both;
 }
 
 @keyframes ceremony-glow {
   0%,
   100% {
-    opacity: 0.25;
+    opacity: 0.3;
+    transform: scale(0.95);
   }
   50% {
-    opacity: 0.75;
+    opacity: 0.85;
+    transform: scale(1.05);
   }
 }
 .ceremony-glow {
   filter: blur(8px);
-  animation: ceremony-glow 1s ease-in-out infinite;
+  animation: ceremony-glow 1.2s ease-in-out infinite;
 }
 
 @keyframes ceremony-title {
   0%,
-  30% {
+  42% {
     opacity: 0;
     transform: translate(-50%, 8px);
   }
-  45%,
-  78% {
+  52%,
+  86% {
     opacity: 1;
     transform: translate(-50%, 0);
   }
@@ -833,17 +817,248 @@ body {
   }
 }
 .ceremony-title {
-  animation: ceremony-title 2.6s ease both;
+  animation: ceremony-title 3s ease both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .avatar-aura,
   .avatar-wand-glow,
   .ceremony-dim,
-  .ceremony-wizard,
   .ceremony-badge,
   .ceremony-glow,
   .ceremony-title {
+    animation: none;
+  }
+}
+
+/* --- Profile relic spotlight (click a badge to enlarge it) --- */
+@keyframes badge-spotlight-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.badge-spotlight-backdrop {
+  animation: badge-spotlight-fade 0.2s ease both;
+}
+
+@keyframes badge-spotlight-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.badge-spotlight-card {
+  animation: badge-spotlight-pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes badge-spotlight-glow {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.04);
+  }
+}
+.badge-spotlight-glow {
+  filter: blur(10px);
+  animation: badge-spotlight-glow 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-spotlight-backdrop,
+  .badge-spotlight-card,
+  .badge-spotlight-glow {
+    animation: none;
+  }
+}
+
+/* --- Lesson step transitions, progress bar, and completion --- */
+@keyframes lesson-step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.lesson-step {
+  animation: lesson-step-enter 0.35s ease both;
+}
+
+@keyframes progress-pulse {
+  0% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.progress-pulse {
+  animation: progress-pulse 0.55s ease-out both;
+}
+
+@keyframes lesson-complete-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.lesson-complete-pop {
+  animation: lesson-complete-pop 0.45s cubic-bezier(0.34, 1.4, 0.5, 1) both;
+}
+
+@keyframes lesson-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.lesson-check {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: lesson-check-draw 0.5s 0.15s ease forwards;
+}
+
+@keyframes lesson-complete-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+.lesson-complete-bar {
+  width: 100%;
+  animation: lesson-complete-fill 0.8s 0.1s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lesson-step,
+  .progress-pulse,
+  .lesson-complete-pop {
+    animation: none;
+  }
+  .progress-pulse {
+    opacity: 0;
+  }
+  .lesson-check {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .lesson-complete-bar {
+    animation: none;
+    width: 100%;
+  }
+}
+
+/* --- Danger zone reveal (account deletion) --- */
+@keyframes danger-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.danger-reveal {
+  animation: danger-reveal 0.25s ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .danger-reveal {
+    animation: none;
+  }
+}
+
+/* --- Memory Grimoire & Wizard Journal (spellbook pages) --- */
+.grimoire-heading {
+  border-bottom: 1px solid rgba(196, 181, 253, 0.18);
+  padding-bottom: 4px;
+}
+@keyframes grimoire-spell-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+  }
+  50% {
+    box-shadow: 0 0 14px 0 rgba(251, 191, 36, 0.28);
+  }
+}
+.grimoire-spell {
+  animation: grimoire-spell-glow 2.6s ease-in-out infinite;
+}
+@keyframes grimoire-rune-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.grimoire-rune {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: grimoire-rune-spin 9s linear infinite;
+}
+.journal-page {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+@media (prefers-reduced-motion: reduce) {
+  .grimoire-spell,
+  .grimoire-rune {
+    animation: none;
+  }
+}
+
+/* --- Tower arena polish --- */
+@keyframes arena-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.arena-card-enter {
+  animation: arena-card-enter 0.3s ease both;
+}
+@keyframes arena-victory {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  60% {
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.arena-victory {
+  animation: arena-victory 0.45s cubic-bezier(0.34, 1.3, 0.5, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .arena-card-enter,
+  .arena-victory {
     animation: none;
   }
 }
@@ -1055,6 +1270,238 @@ body {
   animation: cat-wave-show 2.4s ease-in-out infinite;
 }
 
+/* --- Wizard familiar: a cuter cat + a Schrodinger cardboard box --- */
+@keyframes familiar-cat-in {
+  0% {
+    opacity: 0;
+    transform: translateY(5px) scale(0.25);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.familiar-cat-in {
+  animation: familiar-cat-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* idle: playful tail swish */
+@keyframes schro-tail {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-18deg);
+  }
+}
+.schro-tail {
+  animation: schro-tail 1.8s ease-in-out infinite;
+}
+
+/* idle: gentle head lift */
+@keyframes schro-head {
+  0%,
+  68%,
+  100% {
+    transform: translateY(0);
+  }
+  34% {
+    transform: translateY(-0.5px);
+  }
+}
+.schro-head {
+  animation: schro-head 3.4s ease-in-out infinite;
+}
+
+/* meow: a quick head nod, twice, then rest */
+@keyframes schro-cat-meow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  15% {
+    transform: translateY(-0.8px);
+  }
+  30% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(-0.5px);
+  }
+  60% {
+    transform: translateY(0);
+  }
+}
+.schro-cat-meow {
+  animation: schro-cat-meow 1.1s ease-in-out;
+}
+
+/* meow sound lines fade out as they drift away */
+@keyframes schro-meow-lines {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  20% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.8;
+    transform: translateX(-1.5px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-2.5px);
+  }
+}
+.schro-meow-lines {
+  animation: schro-meow-lines 1.1s ease-out;
+}
+
+/* blocky run: whole-cat body bob with alternating legs (steps = pixel feel) */
+@keyframes schro-run-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+.schro-run {
+  animation: schro-run-bob 0.28s steps(2, end) infinite;
+}
+@keyframes schro-leg {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.4px);
+  }
+}
+.schro-run .schro-leg-a {
+  animation: schro-leg 0.26s steps(2, end) infinite;
+}
+.schro-run .schro-leg-b {
+  animation: schro-leg 0.26s steps(2, end) infinite 0.13s;
+}
+
+/* cat arrival hop (after chasing the wizard) */
+@keyframes schro-bounce {
+  0% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-5px);
+  }
+  55% {
+    transform: translateY(0);
+  }
+  72% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+.schro-bounce {
+  animation: schro-bounce 0.5s ease-out;
+}
+
+/* profile study-focus card expand */
+@keyframes focus-card-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.focus-card-body {
+  animation: focus-card-in 0.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .focus-card-body {
+    animation: none;
+  }
+}
+
+/* leaving: the cat lifts up above the box, hovers, then shrinks as it drops
+   inside. The shrink keeps the (taller-than-the-box) cat fully behind the box
+   front while it settles, and it fades to nothing before the box itself fades,
+   so no part of the cat is ever left poking out. */
+@keyframes schro-cat-leaving {
+  0%,
+  12% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  44% {
+    transform: translateY(-18px) scale(1);
+    opacity: 1;
+  }
+  56% {
+    transform: translateY(-19px) scale(1);
+    opacity: 1;
+  }
+  72% {
+    transform: translateY(0) scale(0.82);
+    opacity: 1;
+  }
+  82% {
+    transform: translateY(11px) scale(0.5);
+    opacity: 1;
+  }
+  88% {
+    transform: translateY(13px) scale(0.42);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(13px) scale(0.42);
+    opacity: 0;
+  }
+}
+.schro-cat-leaving {
+  animation: schro-cat-leaving 2.4s cubic-bezier(0.45, 0, 0.3, 1) forwards;
+}
+
+/* leaving: a cardboard box pops up into place from below and waits there while
+   the cat drops in, then fades away (the cat is now both here and not). */
+@keyframes schro-box {
+  0% {
+    transform: translateY(12px) scaleY(0.6);
+    opacity: 0;
+  }
+  12% {
+    transform: translateY(0) scaleY(1.06);
+    opacity: 1;
+  }
+  18% {
+    transform: translateY(0) scaleY(1);
+    opacity: 1;
+  }
+  94% {
+    transform: translateY(0) scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+    opacity: 0;
+  }
+}
+.schro-box {
+  transform-origin: 50% 100%;
+  animation: schro-box 2.4s cubic-bezier(0.34, 1.1, 0.64, 1) forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .aura-fx-pulse,
   .aura-spin-cw,
@@ -1072,7 +1519,18 @@ body {
   .avatar-wizard:hover .meow-tail,
   .meow-active .meow-tail,
   .avatar-wizard:hover .meow-wave,
-  .meow-active .meow-wave {
+  .meow-active .meow-wave,
+  .familiar-cat-in,
+  .schro-tail,
+  .schro-head,
+  .schro-cat-meow,
+  .schro-meow-lines,
+  .schro-run,
+  .schro-run .schro-leg-a,
+  .schro-run .schro-leg-b,
+  .schro-bounce,
+  .schro-cat-leaving,
+  .schro-box {
     animation: none;
   }
   .aura-heart {
@@ -1291,6 +1749,1760 @@ body {
   .brand-pulsing .brand-atom-glow {
     opacity: 0.55;
     transform: none;
+  }
+}
+
+/* --- Landing tower scene: wizards fly off on hover (no frame/window glow) --- */
+.hero-moon,
+.hero-spark,
+.hero-broom {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.hero-spark,
+.hero-broom {
+  opacity: 0;
+}
+@keyframes hero-beam-flare {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+@keyframes hero-moon-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+@keyframes hero-spark-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+/* soar right to left, accelerating from the start speed to ~3x by the time it
+   exits. Positions are hand-set per keyframe (linear timing) so the speed only
+   ever increases — no mid-flight pause. */
+@keyframes hero-broom-fly {
+  0% {
+    opacity: 0;
+    transform: translate(30px, 0) rotate(-5deg);
+  }
+  10% {
+    opacity: 1;
+  }
+  20% {
+    transform: translate(-4px, -1.6px) rotate(-5deg);
+  }
+  40% {
+    transform: translate(-48px, -3.2px) rotate(-5deg);
+  }
+  60% {
+    transform: translate(-104px, -4.8px) rotate(-5deg);
+  }
+  80% {
+    transform: translate(-172px, -6.4px) rotate(-5deg);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-252px, -8px) rotate(-5deg);
+  }
+}
+.tower-scene:hover .hero-beam {
+  animation: hero-beam-flare 1.4s ease-in-out infinite;
+}
+.tower-scene:hover .hero-moon {
+  animation: hero-moon-pulse 1.6s ease-in-out infinite;
+}
+.tower-scene:hover .hero-spark {
+  animation: hero-spark-twinkle 1.2s ease-in-out infinite;
+}
+.tower-scene:hover .hero-broom {
+  animation: hero-broom-fly 1.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tower-scene:hover .hero-beam,
+  .tower-scene:hover .hero-moon,
+  .tower-scene:hover .hero-spark,
+  .tower-scene:hover .hero-broom {
+    animation: none;
+  }
+}
+
+/* ===================================================================
+   Tower: cinematic pixel dungeon
+   =================================================================== */
+
+/* Old, mysterious typeface for the whole Tower scene. */
+.font-arcane {
+  font-family: var(--font-arcane), "Iowan Old Style", "Palatino Linotype", serif;
+  letter-spacing: 0.01em;
+}
+
+/* Torches + candles: the flame is static (no flicker); only the circular hue
+   around it breathes, growing and shrinking in radius. */
+.torch-flame {
+  animation: none;
+}
+@keyframes torch-glow {
+  0%,
+  100% {
+    transform: scale(0.88);
+    opacity: 0.16;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.24;
+  }
+}
+.torch-glow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: torch-glow 2.6s ease-in-out infinite;
+}
+
+/* Glowing runes / accents */
+@keyframes dungeon-rune {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.dungeon-rune {
+  animation: dungeon-rune 3.2s ease-in-out infinite;
+}
+
+/* Drifting dust + mist */
+@keyframes dungeon-dust {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(-22px);
+    opacity: 0;
+  }
+}
+.dungeon-dust {
+  animation: dungeon-dust 6s ease-in-out infinite;
+}
+@keyframes dungeon-mist {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: translateX(-3%);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(3%);
+  }
+}
+.dungeon-mist {
+  animation: dungeon-mist 9s ease-in-out infinite;
+}
+
+/* Spell projectile traveling left -> right */
+@keyframes spell-bolt {
+  0% {
+    left: 20%;
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    left: 74%;
+    transform: scale(1.15);
+    opacity: 0.2;
+  }
+}
+.spell-bolt {
+  animation: spell-bolt 0.62s cubic-bezier(0.4, 0, 0.4, 1) forwards;
+}
+.spell-bolt-miss {
+  animation: spell-bolt 0.62s cubic-bezier(0.35, 0, 0.5, 1) forwards;
+  opacity: 0.85;
+}
+
+/* Enemy counter-attack pulse from the monster side */
+@keyframes dark-pulse {
+  0% {
+    background: radial-gradient(70% 70% at 74% 52%, rgba(20, 8, 32, 0), transparent);
+    opacity: 0;
+  }
+  40% {
+    background: radial-gradient(85% 85% at 74% 52%, rgba(30, 10, 44, 0.55), transparent 70%);
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.dark-pulse {
+  animation: dark-pulse 0.6s ease-out forwards;
+}
+
+/* Learning-science micro feedback */
+@keyframes battle-toast {
+  0% {
+    transform: translate(-50%, 6px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -14px);
+    opacity: 0;
+  }
+}
+.battle-toast {
+  animation: battle-toast 1.5s ease-out forwards;
+}
+
+/* Alice (hero) */
+@keyframes alice-idle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+.alice-idle {
+  animation: alice-idle 2.4s ease-in-out infinite;
+}
+@keyframes alice-cast {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-2px) rotate(-3deg);
+  }
+  60% {
+    transform: translateY(0) rotate(2deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+.alice-cast {
+  animation: alice-cast 0.7s ease-out;
+}
+@keyframes alice-hit {
+  0%,
+  100% {
+    transform: translateX(0);
+    filter: none;
+  }
+  25% {
+    transform: translateX(-4px) rotate(-2deg);
+    filter: brightness(1.5);
+  }
+  60% {
+    transform: translateX(3px);
+  }
+}
+.alice-hit {
+  animation: alice-hit 0.6s ease-in-out;
+}
+@keyframes alice-victory {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-8px);
+  }
+  55% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(-4px);
+  }
+}
+.alice-victory {
+  animation: alice-victory 0.9s ease-out;
+}
+@keyframes alice-wand {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-4deg);
+  }
+}
+.alice-wand {
+  animation: alice-wand 2.4s ease-in-out infinite;
+}
+@keyframes alice-wand-cast {
+  0% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(-20deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+.alice-wand-cast {
+  animation: alice-wand-cast 0.7s ease-out;
+}
+@keyframes alice-wand-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.25);
+  }
+}
+.alice-wand-glow {
+  animation: alice-wand-glow 1.6s ease-in-out infinite;
+}
+@keyframes alice-star {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.alice-star {
+  animation: alice-star 1.8s ease-in-out infinite;
+}
+
+/* Bob (ally) */
+@keyframes bob-idle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+.bob-idle {
+  animation: bob-idle 2s ease-in-out infinite;
+}
+@keyframes bob-support {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.05);
+  }
+}
+.bob-support {
+  animation: bob-support 0.6s ease-in-out infinite;
+}
+@keyframes bob-support-glow {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+.bob-support-glow {
+  animation: bob-support-glow 0.7s ease-in-out infinite;
+}
+
+/* Eve (boss) */
+@keyframes eve-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.eve-float {
+  animation: eve-float 3s ease-in-out infinite;
+}
+@keyframes eve-enraged {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.03);
+    filter: brightness(1.5) drop-shadow(0 0 8px rgba(196, 181, 253, 0.7));
+  }
+}
+.eve-enraged {
+  animation: eve-enraged 0.7s ease-in-out infinite;
+}
+@keyframes eve-halo {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.eve-halo {
+  animation: eve-halo 14s linear infinite;
+}
+@keyframes eve-beam {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+.eve-beam {
+  animation: eve-beam 2.4s ease-in-out infinite;
+}
+@keyframes eve-eye {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.eve-eye {
+  animation: eve-eye 2s ease-in-out infinite;
+}
+
+/* Tower entrance gate */
+.tower-gate .gate-frame {
+  transition: transform 0.7s ease-in 0.35s, opacity 0.7s ease-in 0.35s;
+}
+.tower-gate.opening .gate-frame {
+  transform: scale(1.18);
+  opacity: 0;
+}
+/* the two leaves swing outward from their outer hinges */
+.gate-leaf-l,
+.gate-leaf-r {
+  transition: transform 0.8s cubic-bezier(0.6, 0, 0.4, 1);
+}
+.tower-gate.opening .gate-leaf-l,
+.tower-gate.opening .gate-leaf-r {
+  transform: scaleX(0.08);
+}
+/* The black void behind the doors is static: it never scales or fades. */
+/* once the doors are parting, white light fills the whole view */
+.gate-flash {
+  opacity: 0;
+  transition: opacity 0.5s ease-in 0.45s;
+}
+.tower-gate.opening .gate-flash {
+  opacity: 1;
+}
+.gate-rune {
+  animation: dungeon-rune 2.4s ease-in-out infinite;
+}
+@keyframes gate-seam-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.gate-seam {
+  animation: gate-seam-pulse 1.8s ease-in-out infinite;
+}
+@keyframes gate-enter-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 24px rgba(103, 232, 249, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 36px rgba(103, 232, 249, 0.6);
+  }
+}
+.gate-enter {
+  animation: gate-enter-pulse 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .torch-flame,
+  .torch-glow,
+  .dungeon-rune,
+  .dungeon-dust,
+  .dungeon-mist,
+  .spell-bolt,
+  .dark-pulse,
+  .battle-toast,
+  .alice-idle,
+  .alice-cast,
+  .alice-hit,
+  .alice-victory,
+  .alice-wand,
+  .alice-wand-cast,
+  .alice-wand-glow,
+  .alice-star,
+  .bob-idle,
+  .bob-support,
+  .bob-support-glow,
+  .eve-float,
+  .eve-enraged,
+  .eve-halo,
+  .eve-beam,
+  .eve-eye,
+  .gate-rune,
+  .gate-seam,
+  .gate-enter {
+    animation: none;
+  }
+  .tower-gate .gate-frame,
+  .gate-leaf-l,
+  .gate-leaf-r,
+  .gate-flash {
+    transition: none;
+  }
+}
+
+/* ===================================================================
+   Tower additions: varied pixel monsters, larger Bob, floor climbing
+   & leave cinematics. Appended as a self-contained block to avoid
+   collisions with other concurrent edits; selectors are tower-*, bob-*,
+   and alice-* only.
+   =================================================================== */
+
+/* --- Generic monster states (idle / attack / hit / defeated) --- */
+@keyframes tower-mon-idle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+.tower-mon-idle {
+  animation: tower-mon-idle 2.6s ease-in-out infinite;
+}
+@keyframes tower-mon-attack {
+  0% {
+    transform: translateX(0) scale(1);
+  }
+  35% {
+    transform: translateX(-16px) scale(1.06);
+  }
+  60% {
+    transform: translateX(-6px);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+  }
+}
+.tower-mon-attack {
+  animation: tower-mon-attack 0.55s ease-in-out;
+}
+@keyframes tower-mon-hit {
+  0% {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+  20% {
+    transform: translateX(10px) rotate(3deg);
+    filter: brightness(1.9);
+  }
+  50% {
+    transform: translateX(-4px);
+  }
+  100% {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+}
+.tower-mon-hit {
+  animation: tower-mon-hit 0.5s ease-out;
+}
+@keyframes tower-mon-defeated {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  55% {
+    opacity: 0.6;
+    transform: scale(1.15) translateY(-4px);
+    filter: brightness(1.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.4) translateY(-8px);
+    filter: brightness(2.2);
+  }
+}
+.tower-mon-defeated {
+  animation: tower-mon-defeated 0.9s ease-out forwards;
+}
+
+@keyframes tower-mon-glitch {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    filter: brightness(1);
+    opacity: 1;
+  }
+  12% {
+    transform: translate(-3px, 1px);
+    filter: brightness(1.8) hue-rotate(20deg);
+    opacity: 0.85;
+  }
+  24% {
+    transform: translate(4px, -2px);
+    filter: brightness(0.6) hue-rotate(-30deg);
+    opacity: 0.95;
+  }
+  36% {
+    transform: translate(-2px, 2px);
+    filter: brightness(2) saturate(1.4);
+    opacity: 0.7;
+  }
+  48% {
+    transform: translate(3px, 0);
+    filter: brightness(1.2);
+    opacity: 0.9;
+  }
+  60% {
+    transform: translate(-4px, -1px);
+    filter: brightness(1.6) hue-rotate(15deg);
+    opacity: 0.8;
+  }
+  72% {
+    transform: translate(2px, 1px);
+    filter: brightness(0.8);
+    opacity: 0.95;
+  }
+}
+.tower-mon-glitch {
+  animation: tower-mon-glitch 0.52s steps(2, end) 2;
+}
+
+/* --- Per-monster flourishes --- */
+@keyframes tower-mon-wisp {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translateY(-3px);
+    opacity: 0.4;
+  }
+}
+.tower-mon-wisp {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tower-mon-wisp 2.2s ease-in-out infinite;
+}
+@keyframes tower-reaper-scythe {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-7deg);
+  }
+}
+.tower-reaper-scythe {
+  animation: tower-reaper-scythe 3.2s ease-in-out infinite;
+}
+@keyframes tower-imp-static {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  40% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.4;
+  }
+}
+.tower-imp-static {
+  animation: tower-imp-static 0.5s steps(2, end) infinite;
+}
+@keyframes tower-oracle-iris {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+.tower-oracle-iris {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tower-oracle-iris 3.4s ease-in-out infinite;
+}
+@keyframes tower-hydra-head {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(-3deg);
+  }
+}
+.tower-hydra-head {
+  animation: tower-hydra-head 2.4s ease-in-out infinite;
+}
+@keyframes tower-twin-link {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.tower-twin-link {
+  animation: tower-twin-link 1.8s ease-in-out infinite;
+}
+
+/* --- Bob (larger scholar ally): block, walk, ward shield, glowing book --- */
+@keyframes bob-block {
+  0% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(-3px) translateY(-1px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+.bob-block {
+  animation: bob-block 0.5s ease-in-out;
+}
+@keyframes bob-walk {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-2px) rotate(-2deg);
+  }
+  75% {
+    transform: translateY(-1px) rotate(2deg);
+  }
+}
+.bob-walk {
+  animation: bob-walk 0.6s ease-in-out infinite;
+}
+@keyframes bob-ward {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.bob-ward {
+  animation: bob-ward 0.5s ease-out;
+}
+@keyframes bob-book {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+.bob-book {
+  animation: bob-book 2.4s ease-in-out infinite;
+}
+@keyframes bob-book-cast {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-3px) scale(1.06);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+.bob-book-cast {
+  animation: bob-book-cast 0.8s ease-out;
+}
+@keyframes bob-book-glow {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+.bob-book-glow {
+  animation: bob-book-glow 0.8s ease-in-out infinite;
+}
+@keyframes bob-spark {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+}
+.bob-spark {
+  animation: bob-spark 1.1s ease-out infinite;
+}
+
+/* --- Alice walk (used in the climb / leave cinematics) --- */
+@keyframes alice-walk {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-2px) rotate(-2deg);
+  }
+  75% {
+    transform: translateY(-1px) rotate(2deg);
+  }
+}
+.alice-walk {
+  animation: alice-walk 0.6s ease-in-out infinite;
+}
+
+/* --- Climbing between floors + leaving the tower --- */
+@keyframes tower-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.tower-climb-overlay,
+.tower-leave-overlay {
+  animation: tower-fade-in 0.4s ease both;
+}
+@keyframes tower-climb-rise {
+  0% {
+    transform: translateY(40px) scale(1.05);
+    opacity: 0.2;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-60px) scale(0.82);
+    opacity: 0.9;
+  }
+}
+.tower-climb-rise {
+  animation: tower-climb-rise 2s cubic-bezier(0.4, 0, 0.4, 1) forwards;
+}
+@keyframes tower-climb-bg {
+  0% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.tower-climb-bg {
+  animation: tower-climb-bg 1.8s ease-out forwards;
+}
+@keyframes tower-leave-gate {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  55% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.15);
+    opacity: 0.1;
+  }
+}
+.tower-leave-gate {
+  animation: tower-leave-gate 1.45s ease-in forwards;
+}
+@keyframes tower-leave-portal-glow {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+.tower-leave-portal-glow {
+  animation: tower-leave-portal-glow 1.2s ease-in-out infinite;
+}
+@keyframes tower-hero-exit {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  45% {
+    transform: translateY(12px) scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(48px) scale(1.35);
+    opacity: 0;
+  }
+}
+.tower-hero-exit {
+  animation: tower-hero-exit 1.45s ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tower-mon-idle,
+  .tower-mon-attack,
+  .tower-mon-hit,
+  .tower-mon-wisp,
+  .tower-reaper-scythe,
+  .tower-imp-static,
+  .tower-oracle-iris,
+  .tower-hydra-head,
+  .tower-twin-link,
+  .bob-block,
+  .bob-walk,
+  .bob-ward,
+  .bob-book,
+  .bob-book-cast,
+  .bob-book-glow,
+  .bob-spark,
+  .alice-walk,
+  .tower-climb-overlay,
+  .tower-leave-overlay,
+  .tower-climb-rise,
+  .tower-climb-bg,
+  .tower-climb-stairs-enter,
+  .tower-climb-heroes-walk,
+  .tower-leave-gate,
+  .tower-hero-exit,
+  .tower-leave-portal-glow {
+    animation: none;
+  }
+  .tower-mon-defeated,
+  .tower-mon-glitch {
+    animation: none;
+  }
+  .tower-mon-defeated {
+    opacity: 0;
+  }
+  .tower-mon-glitch {
+    filter: brightness(1.5);
+  }
+}
+
+/* --- Tower intro: animated storybook --- */
+.tower-intro-root {
+  background: radial-gradient(120% 120% at 50% -10%, #0c1430 0%, #070a12 55%, #04060c 100%);
+}
+.tower-intro-ambient {
+  background: radial-gradient(ellipse 60% 40% at 50% 45%, rgba(103, 232, 249, 0.06) 0%, transparent 70%);
+}
+@keyframes tower-intro-ambient-drift {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+.tower-intro-ambient-anim {
+  animation: tower-intro-ambient-drift 6s ease-in-out infinite;
+}
+
+/* floating runes / particles */
+.tower-intro-rune {
+  position: absolute;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: rgba(167, 139, 250, 0.35);
+  pointer-events: none;
+}
+.tower-intro-rune-1 { left: 8%; top: 18%; }
+.tower-intro-rune-2 { right: 12%; top: 24%; }
+.tower-intro-rune-3 { left: 18%; bottom: 28%; }
+.tower-intro-rune-4 { right: 20%; bottom: 22%; }
+.tower-intro-rune-5 { left: 42%; top: 10%; }
+.tower-intro-rune-6 { right: 38%; bottom: 14%; }
+.tower-intro-rune-7 { left: 55%; top: 32%; font-size: 9px; opacity: 0.5; }
+@keyframes tower-intro-rune-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(-8px) rotate(3deg);
+    opacity: 0.55;
+  }
+}
+.tower-intro-rune {
+  animation: tower-intro-rune-float 4.5s ease-in-out infinite;
+}
+.tower-intro-rune-2 { animation-delay: 0.6s; }
+.tower-intro-rune-3 { animation-delay: 1.2s; }
+.tower-intro-rune-4 { animation-delay: 0.3s; }
+.tower-intro-rune-5 { animation-delay: 1.8s; }
+.tower-intro-rune-6 { animation-delay: 0.9s; }
+.tower-intro-rune-7 { animation-delay: 2.1s; }
+
+/* book structure */
+.tower-intro-book-wrap {
+  perspective: 1200px;
+  width: min(92vw, 380px);
+  transition: opacity 1.4s ease, transform 1.4s ease;
+}
+.tower-intro-book {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  transform-style: preserve-3d;
+}
+.tower-intro-spine {
+  position: absolute;
+  left: 0;
+  top: 2%;
+  bottom: 2%;
+  width: 14px;
+  background: linear-gradient(90deg, #1a1030 0%, #2d1f4a 40%, #1a1030 100%);
+  border-radius: 3px 0 0 3px;
+  box-shadow: inset -2px 0 6px rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+.tower-intro-back-cover {
+  position: absolute;
+  inset: 0;
+  margin-left: 12px;
+  background: linear-gradient(145deg, #1e1240 0%, #0f0a22 60%, #1a1035 100%);
+  border: 2px solid #3d3560;
+  border-radius: 4px 8px 8px 4px;
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.65),
+    inset 0 0 30px rgba(103, 232, 249, 0.04);
+}
+.tower-intro-pages-stack {
+  position: absolute;
+  inset: 3% 3% 3% 16px;
+  z-index: 2;
+}
+.tower-intro-page-edge {
+  position: absolute;
+  inset: 0;
+  background: #d4c4a8;
+  border-radius: 2px;
+  box-shadow: 1px 1px 0 #b8a88c;
+}
+.tower-intro-page-edge-1 { transform: translate(3px, -2px); opacity: 0.7; }
+.tower-intro-page-edge-2 { transform: translate(6px, -4px); opacity: 0.45; }
+
+/* front cover */
+.tower-intro-cover {
+  position: absolute;
+  inset: 0;
+  margin-left: 12px;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  z-index: 10;
+  background: linear-gradient(145deg, #2a1248 0%, #12082a 45%, #1a0e38 100%);
+  border: 2px solid #5a4088;
+  border-radius: 4px 10px 10px 4px;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.7),
+    inset 0 0 40px rgba(167, 139, 250, 0.1),
+    inset -4px 0 12px rgba(103, 232, 249, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  transition: transform 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backface-visibility: hidden;
+}
+.tower-intro-cover-seam {
+  position: absolute;
+  left: 0;
+  top: 6%;
+  bottom: 6%;
+  width: 3px;
+  background: linear-gradient(180deg, transparent, #67e8f9 20%, #c4b5fd 50%, #67e8f9 80%, transparent);
+  box-shadow: 0 0 10px rgba(103, 232, 249, 0.55);
+  opacity: 0.85;
+  pointer-events: none;
+}
+.tower-intro-cover-light {
+  position: absolute;
+  inset: 8px;
+  border-radius: 2px 6px 6px 2px;
+  background: linear-gradient(135deg, rgba(103, 232, 249, 0.12) 0%, transparent 50%);
+  pointer-events: none;
+}
+.tower-intro-cover-open,
+.tower-intro-book-opening .tower-intro-cover {
+  transform: rotateY(-158deg);
+  box-shadow: -8px 8px 30px rgba(0, 0, 0, 0.4);
+}
+.tower-intro-cover-art {
+  width: 55%;
+  max-width: 160px;
+  margin-bottom: 0.75rem;
+}
+.tower-intro-cover-title {
+  font-family: ui-serif, Georgia, serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  color: #e2d9f3;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+  text-shadow: 0 0 12px rgba(167, 139, 250, 0.4);
+}
+
+/* readable page */
+.tower-intro-page {
+  position: absolute;
+  inset: 3% 3% 3% 16px;
+  z-index: 5;
+  background: linear-gradient(180deg, #ede4d0 0%, #e0d2b8 100%);
+  border-radius: 2px 6px 6px 2px;
+  box-shadow:
+    inset 0 0 20px rgba(139, 105, 60, 0.12),
+    2px 2px 8px rgba(0, 0, 0, 0.25);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  overflow: hidden;
+}
+.tower-intro-page-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(252, 211, 77, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+@keyframes tower-intro-page-glow-spread {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.tower-intro-page-glow-anim {
+  animation: tower-intro-page-glow-spread 0.9s ease-out both;
+}
+.tower-intro-page-glow-step-1 .tower-intro-page-glow { opacity: 0.55; }
+.tower-intro-page-glow-step-2 .tower-intro-page-glow { opacity: 0.65; }
+.tower-intro-page-glow-step-3 .tower-intro-page-glow { opacity: 0.75; }
+.tower-intro-page-glow-step-4 .tower-intro-page-glow { opacity: 0.85; }
+.tower-intro-page-glow-step-5 .tower-intro-page-glow { opacity: 0.95; }
+.tower-intro-page-glow-step-6 .tower-intro-page-glow {
+  opacity: 1;
+  background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(103, 232, 249, 0.22) 0%, transparent 70%);
+}
+.tower-intro-page-text {
+  position: relative;
+  z-index: 1;
+}
+
+/* page turn between beats */
+@keyframes tower-intro-page-turn {
+  0% {
+    opacity: 0;
+    transform: rotateY(18deg) translateX(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateY(0) translateX(0);
+  }
+}
+.tower-intro-page-turn {
+  animation: tower-intro-page-turn 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: left center;
+}
+
+/* final page gate glow */
+.tower-intro-page-final {
+  box-shadow:
+    inset 0 0 30px rgba(103, 232, 249, 0.2),
+    2px 2px 8px rgba(0, 0, 0, 0.25);
+}
+@keyframes tower-intro-gate-window {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.tower-intro-gate-window {
+  animation: tower-intro-gate-window 1.6s ease-in-out infinite;
+}
+.tower-intro-ill-tower {
+  box-shadow: inset 0 -20px 30px rgba(103, 232, 249, 0.15);
+}
+
+/* exit: book fades to tower entrance */
+.tower-intro-root-exit {
+  background: radial-gradient(120% 120% at 50% 60%, #0c1430 0%, #070a12 55%, #04060c 100%);
+}
+.tower-intro-book-wrap-exit {
+  opacity: 0;
+  transform: scale(0.92) translateY(20px);
+}
+.tower-intro-page-exit {
+  box-shadow:
+    inset 0 0 60px rgba(103, 232, 249, 0.45),
+    0 0 40px rgba(103, 232, 249, 0.3);
+}
+.tower-intro-ill-exit {
+  filter: brightness(1.4);
+}
+.tower-intro-gate-portal {
+  position: absolute;
+  left: 50%;
+  bottom: 10%;
+  transform: translateX(-50%);
+  z-index: 20;
+  animation: tower-intro-portal-rise 1.8s ease-out both;
+}
+@keyframes tower-intro-portal-rise {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.1);
+  }
+}
+@keyframes tower-intro-portal-glow {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+.tower-intro-portal-glow {
+  animation: tower-intro-portal-glow 1.2s ease-in-out infinite;
+}
+
+/* illustration micro-animations */
+@keyframes tower-intro-signal-pulse {
+  0%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.7;
+  }
+  50% {
+    stroke-dashoffset: 10;
+    opacity: 1;
+  }
+}
+.tower-intro-signal-pulse {
+  animation: tower-intro-signal-pulse 2s ease-in-out infinite;
+}
+@keyframes tower-intro-particle-drift {
+  0% {
+    transform: translateX(0);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(24px);
+    opacity: 0.2;
+  }
+}
+.tower-intro-particle {
+  animation: tower-intro-particle-drift 2.4s ease-in-out infinite;
+}
+.tower-intro-particle-2 { animation-delay: 0.5s; }
+.tower-intro-particle-3 { animation-delay: 1s; }
+@keyframes tower-intro-eye-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+.tower-intro-eye-pulse {
+  animation: tower-intro-eye-pulse 2.2s ease-in-out infinite;
+}
+@keyframes tower-intro-shadow-drift {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateX(6px);
+    opacity: 0.65;
+  }
+}
+.tower-intro-shadow-drift {
+  animation: tower-intro-shadow-drift 3s ease-in-out infinite;
+}
+@keyframes tower-intro-light-pulse {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+.tower-intro-light-pulse {
+  animation: tower-intro-light-pulse 2.5s ease-in-out infinite;
+}
+@keyframes tower-intro-window-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+.tower-intro-window-pulse {
+  animation: tower-intro-window-pulse 1.8s ease-in-out infinite;
+}
+@keyframes tower-intro-tower-emerge-keyframes {
+  0% {
+    transform: translateY(56px) scaleY(0.15);
+    opacity: 0.15;
+  }
+  40% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+    opacity: 1;
+  }
+}
+.tower-intro-tower-emerge {
+  animation: tower-intro-tower-emerge-keyframes 2.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes tower-intro-ground-shake-keyframes {
+  0%,
+  35%,
+  100% {
+    transform: translate(0, 0);
+  }
+  38% {
+    transform: translate(-1px, 1px);
+  }
+  42% {
+    transform: translate(1px, -1px);
+  }
+  46% {
+    transform: translate(-1px, 0);
+  }
+  50% {
+    transform: translate(1px, 1px);
+  }
+  54% {
+    transform: translate(0, -1px);
+  }
+  58% {
+    transform: translate(-1px, 1px);
+  }
+  62% {
+    transform: translate(1px, 0);
+  }
+  66% {
+    transform: translate(0, 0);
+  }
+  70% {
+    transform: translate(-1px, -1px);
+  }
+  74% {
+    transform: translate(1px, 1px);
+  }
+  78% {
+    transform: translate(0, 0);
+  }
+}
+.tower-intro-ground-shake {
+  animation: tower-intro-ground-shake-keyframes 2.8s ease-out both;
+}
+@keyframes tower-intro-tower-rise-keyframes {
+  0% {
+    transform: translateY(16px);
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.tower-intro-tower-rise {
+  animation: tower-intro-tower-rise-keyframes 2.4s ease-out both;
+}
+@keyframes tower-intro-static-flicker-keyframes {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  25% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  75% {
+    opacity: 0.7;
+  }
+}
+.tower-intro-static-flicker {
+  animation: tower-intro-static-flicker-keyframes 1.6s ease-in-out infinite;
+}
+@keyframes tower-intro-cloud-drift-keyframes {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateX(8px);
+    opacity: 0.75;
+  }
+}
+.tower-intro-cloud-drift {
+  animation: tower-intro-cloud-drift-keyframes 5s ease-in-out infinite;
+}
+.tower-intro-cloud-drift-2 {
+  animation-delay: 1.2s;
+}
+.tower-intro-cloud-drift-3 {
+  animation-delay: 2.4s;
+}
+
+@keyframes tower-intro-spy-drift-keyframes {
+  0%,
+  100% {
+    transform: translateX(0) translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateX(4px) translateY(-2px);
+    opacity: 0.85;
+  }
+}
+.tower-intro-spy-drift {
+  animation: tower-intro-spy-drift-keyframes 2.8s ease-in-out infinite;
+}
+.tower-intro-spy-drift-2 {
+  animation-delay: 0.9s;
+}
+@keyframes tower-intro-shadow-flee-keyframes {
+  0% {
+    transform: translateX(0);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(18px);
+    opacity: 0.25;
+  }
+}
+.tower-intro-shadow-flee {
+  animation: tower-intro-shadow-flee-keyframes 2.2s ease-out infinite alternate;
+}
+
+@keyframes tower-intro-window-halo-keyframes {
+  0%,
+  100% {
+    opacity: 0.08;
+  }
+  50% {
+    opacity: 0.22;
+  }
+}
+.tower-intro-window-halo {
+  animation: tower-intro-window-halo-keyframes 3s ease-in-out infinite;
+}
+@keyframes tower-intro-beam-glow-keyframes {
+  0%,
+  100% {
+    opacity: 0.06;
+  }
+  50% {
+    opacity: 0.16;
+  }
+}
+.tower-intro-beam-glow {
+  animation: tower-intro-beam-glow-keyframes 2.8s ease-in-out infinite;
+}
+@keyframes tower-intro-mist-drift-keyframes {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateX(6px);
+    opacity: 0.45;
+  }
+}
+.tower-intro-mist-drift {
+  animation: tower-intro-mist-drift-keyframes 6s ease-in-out infinite;
+}
+.tower-intro-mist-drift-2 {
+  animation-delay: 2s;
+}
+@keyframes tower-intro-lantern-warm-keyframes {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.tower-intro-lantern-warm {
+  animation: tower-intro-lantern-warm-keyframes 2.2s ease-in-out infinite;
+}
+@keyframes tower-intro-cover-star-keyframes {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.tower-intro-cover-star {
+  animation: tower-intro-cover-star-keyframes 2.5s ease-in-out infinite;
+}
+@keyframes tower-intro-bubble-bob-keyframes {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.88;
+  }
+  50% {
+    transform: translateY(-1.5px);
+    opacity: 1;
+  }
+}
+.tower-intro-bubble-bob {
+  animation: tower-intro-bubble-bob-keyframes 2.4s ease-in-out infinite;
+}
+@keyframes tower-intro-gesture-flicker-keyframes {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+.tower-intro-gesture-flicker {
+  animation: tower-intro-gesture-flicker-keyframes 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tower-intro-ambient-anim,
+  .tower-intro-rune,
+  .tower-intro-page-glow-anim,
+  .tower-intro-page-turn,
+  .tower-intro-gate-window,
+  .tower-intro-portal-glow,
+  .tower-intro-signal-pulse,
+  .tower-intro-particle,
+  .tower-intro-eye-pulse,
+  .tower-intro-shadow-drift,
+  .tower-intro-light-pulse,
+  .tower-intro-window-pulse,
+  .tower-intro-tower-rise,
+  .tower-intro-tower-emerge,
+  .tower-intro-ground-shake,
+  .tower-intro-static-flicker,
+  .tower-intro-cloud-drift,
+  .tower-intro-spy-drift,
+  .tower-intro-shadow-flee,
+  .tower-intro-window-halo,
+  .tower-intro-beam-glow,
+  .tower-intro-mist-drift,
+  .tower-intro-lantern-warm,
+  .tower-intro-cover-star,
+  .tower-intro-bubble-bob,
+  .tower-intro-gesture-flicker,
+  .tower-intro-book-wrap-exit,
+  .tower-intro-gate-portal {
+    animation: none;
+  }
+  .tower-intro-cover-open,
+  .tower-intro-book-opening .tower-intro-cover {
+    transform: rotateY(-158deg);
+    transition: none;
+  }
+}
+
+/* --- Tower battle upgrade: game over, kneel, extended climb --- */
+@keyframes alice-kneel {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    transform: translateY(8px) scale(0.92);
+  }
+}
+.alice-kneel {
+  animation: alice-kneel 1.2s ease-out forwards;
+}
+@keyframes bob-defeated {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: translateY(6px) rotate(-4deg);
+  }
+}
+.bob-defeated {
+  animation: bob-defeated 1.4s ease-out forwards;
+}
+.tower-gameover-overlay {
+  animation: tower-fade-in 0.6s ease both;
+}
+.tower-gameover-bg-darken {
+  transition: opacity 0.7s ease;
+}
+.tower-gameover-panel {
+  animation: tower-fade-in 0.5s ease 0.15s both;
+}
+.tower-gameover-heroes {
+  animation: tower-fade-in 1s ease both;
+}
+.tower-gameover-eve {
+  animation: tower-fade-in 1.6s ease both;
+}
+@keyframes tower-climb-stairs-enter-keyframes {
+  0% {
+    opacity: 0.35;
+    transform: scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.tower-climb-stairs-enter {
+  animation: tower-climb-stairs-enter-keyframes 0.45s ease-out both;
+}
+@keyframes tower-climb-heroes-walk-keyframes {
+  0% {
+    transform: translate(0, 0);
+  }
+  18% {
+    transform: translate(8px, -14px);
+  }
+  36% {
+    transform: translate(18px, -30px);
+  }
+  54% {
+    transform: translate(28px, -46px);
+  }
+  72% {
+    transform: translate(38px, -60px);
+  }
+  88% {
+    transform: translate(44px, -72px);
+  }
+  100% {
+    transform: translate(48px, -78px);
+  }
+}
+.tower-climb-heroes-walk {
+  animation: tower-climb-heroes-walk-keyframes 2.1s ease-in-out 0.35s forwards;
+}
+.tower-climb-heroes-static {
+  transform: translate(48px, -78px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alice-kneel,
+  .bob-defeated,
+  .tower-gameover-panel,
+  .tower-gameover-heroes,
+  .tower-gameover-eve,
+  .tower-climb-stairs-enter,
+  .tower-climb-heroes-walk {
+    animation: none;
+  }
+  .tower-gameover-bg-darken {
+    transition: none;
   }
 }
 

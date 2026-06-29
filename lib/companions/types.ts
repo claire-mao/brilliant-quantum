@@ -37,6 +37,13 @@ export interface BubbleAction {
   variant?: "primary" | "ghost";
 }
 
+/**
+ * Where a bubble message came from. "manual-*" means a direct user action (a
+ * wizard click or a button press); "auto" means a proactive/automatic write.
+ * Auto writes are never allowed to overwrite a manual dashboard or profile message.
+ */
+export type MessageSource = "manual" | "manual-dashboard" | "manual-profile" | "manual-lesson" | "auto";
+
 export interface SummonRequest {
   /** Defaults to "wizard". */
   agent?: AgentId;
@@ -53,6 +60,8 @@ export interface SummonRequest {
   wandAim?: number;
   /** Show magic motes on appear. */
   showMotes?: boolean;
+  /** Who triggered this message (manual user action vs automatic). */
+  source?: MessageSource;
 }
 
 export interface CompanionUpdate {
@@ -64,6 +73,8 @@ export interface CompanionUpdate {
   bubbleActions?: BubbleAction[];
   wandAim?: number;
   showMotes?: boolean;
+  /** Who triggered this message (manual user action vs automatic). */
+  source?: MessageSource;
 }
 
 export interface ActiveCompanion {
@@ -77,6 +88,8 @@ export interface ActiveCompanion {
   bubbleActions?: BubbleAction[];
   wandAim?: number;
   showMotes?: boolean;
+  /** Who set the current bubble message (used to keep dashboard greetings pinned). */
+  messageSource?: MessageSource;
 }
 
 export interface CompanionApi {

@@ -12,6 +12,7 @@ import type { Lesson, LessonStep, UserProfile } from "@/lib/types";
 import {
   quantumBasicsCourse,
   getUnits,
+  getLessonsForUnit,
   getUnitLessonProgress,
   isUnitComplete,
   getCompletedLessonCount,
@@ -20,6 +21,7 @@ import {
   getTotalUnitCount,
   isCourseComplete,
 } from "@/content/lessons";
+import type { Unit } from "@/lib/types";
 import { CONCEPTS } from "@/lib/learning/concepts";
 import { getConceptSignals } from "@/lib/learning/signals";
 import { deriveTimeFacts, getLongestStreak, type TimeFacts } from "@/lib/profile/activity";
@@ -379,4 +381,55 @@ export function getUnlockedIds(profile: UserProfile | null): string[] {
   return evaluateAchievements(profile)
     .filter((a) => a.unlocked)
     .map((a) => a.def.id);
+}
+
+export interface UnitRelic {
+  id: string;
+  title: string;
+  icon: AchievementIcon;
+  /** Milliseconds when the unit was fully completed (latest lesson completion). */
+  earnedAt: number;
+}
+
+function tsMillis(ts: unknown): number {
+  if (!ts) return 0;
+  if (typeof ts === "number") return ts;
+  const obj = ts as { toMillis?: () => number; seconds?: number };
+  if (typeof obj.toMillis === "function") return obj.toMillis();
+  if (typeof obj.seconds === "number") return obj.seconds * 1000;
+  return 0;
+}
+
+/** When every lesson in the unit is done, the relic is earned at the last lesson's first completion. */
+export function getUnitEarnedAt(unit: Unit, profile: UserProfile | null): number {
+  let max = 0;
+  for (const lesson of getLessonsForUnit(unit)) {
+    const t = tsMillis(profile?.progress?.[lesson.id]?.completedAt);
+    if (t > max) max = t;
+  }
+  return max;
+}
+
+/** Up to `limit` unit-completion relics, newest earned first. */
+export function getRecentUnitRelics(profile: UserProfile | null, limit = 3): UnitRelic[] {
+  const units = getUnits();
+  return units
+    .map((unit, order) => ({ unit, order }))
+    .filter(({ unit }) => isUnitComplete(unit, profile) && UNIT_META[unit.id])
+    .map(({ unit, order }) => {
+      const meta = UNIT_META[unit.id];
+      return {
+        id: unit.id,
+        title: meta.title,
+        icon: meta.icon,
+        earnedAt: getUnitEarnedAt(unit, profile),
+        order,
+      };
+    })
+    .sort((a, b) => {
+      if (b.earnedAt !== a.earnedAt) return b.earnedAt - a.earnedAt;
+      return b.order - a.order;
+    })
+    .slice(0, limit)
+    .map(({ id, title, icon, earnedAt }) => ({ id, title, icon, earnedAt }));
 }
