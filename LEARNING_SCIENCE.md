@@ -6,8 +6,8 @@ app plays a distinct role:
 - **The lesson teaches.** Hand-built, interactive lessons are the source of truth.
 - **The wizard guides.** The Guide Wizard never lectures; it helps you retrieve,
   connect, and refine what you already know.
-- **The tower gives retrieval practice.** The Tower Arena is targeted recall, not
-  random trivia.
+- **The tower gives retrieval practice.** The Wizard Tower is a 60-floor
+  retrieval dungeon — targeted recall, not random trivia.
 - **The app adapts.** It tracks what you have shown you know and steers practice
   and review accordingly.
 
@@ -85,17 +85,34 @@ deliberately simple so it can grow into a fuller spaced-repetition scheduler.
 
 ## How the tower supports review
 
-The Tower Arena (`components/tower/TowerArena.tsx`) is the retrieval arena:
+The Wizard Tower (`components/tower/TowerDungeon.tsx`) is a 60-floor retrieval
+dungeon. Six climates of ten floors each map one-to-one onto the six course
+units, so a floor only ever tests concepts the learner has already met. Higher
+bands unlock as units are completed; within a band you climb one floor at a time.
 
-1. Builds a battle plan from `getRecommendedReview()` (struggled first, due
-   second, current lesson third, then the rest).
-2. Each concept manifests as a themed monster (Phase Phantom = relative phase,
-   Noise Gremlin = decoherence, Gate Golem = gate sequences, Oracle Mimic =
-   algorithms, Concept Wraith = a generic fragile concept).
-3. Asks a question (AI practice grounded in the concept, or the retrieval bank).
-4. Gives immediate feedback; wrong answers offer progressive guide hints.
-5. Correct answers damage the monster and **strengthen the mastery signal**.
-6. Victory shows a one-sentence reflection and an optional lore drop.
+For each floor, `buildFloorPlan()` (`lib/tower/challenges.ts`) turns the learner
+model into a personalized set of rooms:
+
+1. It draws concepts from `getRecommendedReview()` (struggled → due → stale),
+   the current unit's concepts, and older mastered concepts — a mix targeting
+   roughly **70% due/weak**, **20% interleaved mastery**, and **10% current
+   unit**, constrained to the climate's concept pool.
+2. Each room picks a learning-science challenge type (recall, predict,
+   identify-the-misconception, compare-circuits, build-circuit, Bloch/histogram
+   prediction, entanglement correlation, algorithm walkthrough, decoherence
+   scenario, …) and a difficulty that rises with the floor (eased for struggled
+   concepts, pressed for mastered ones — desirable difficulty).
+3. Each concept manifests as a themed monster; every tenth floor is a boss that
+   combines the previous ten floors across multiple rounds.
+
+In battle (`useBattle.ts`), each round asks an AI-personalized question grounded
+in the concept, difficulty, misconception, room type, and floor — falling back
+to the hand-written battle bank when AI is off. Correct answers cast a light
+attack and **strengthen the mastery signal** (`recordConceptResult`); wrong
+answers let the monster strike and unlock a progressive guide hint (productive
+struggle). Clearing floors and bosses earns learning-centered Tower badges via
+the existing achievement catalog and badge-unlock ceremony. All tower progress
+is stored locally (`lib/tower/progress.ts`) — no Firestore schema change.
 
 ## How AI is grounded in lesson state
 

@@ -3505,3 +3505,477 @@ html {
     transition: none;
   }
 }
+
+/* ===================== Wizard Tower dungeon ===================== */
+
+/* --- Monsters --- */
+@keyframes tower-mon-idle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.tower-mon-idle {
+  animation: tower-mon-idle 2.6s ease-in-out infinite;
+}
+@keyframes tower-mon-hit {
+  0% {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+  20% {
+    transform: translateX(5px);
+    filter: brightness(2.2);
+  }
+  45% {
+    transform: translateX(-5px);
+  }
+  70% {
+    transform: translateX(3px);
+    filter: brightness(1.5);
+  }
+  100% {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+}
+.tower-mon-hit {
+  animation: tower-mon-hit 0.5s ease-out;
+}
+@keyframes tower-mon-attack {
+  0% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(-14px) scale(1.05);
+  }
+  60% {
+    transform: translateX(5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+.tower-mon-attack {
+  animation: tower-mon-attack 0.5s ease-in-out;
+}
+@keyframes tower-mon-defeated {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.14);
+    filter: brightness(2.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.4) rotate(8deg);
+    filter: brightness(2.6);
+  }
+}
+.tower-mon-defeated {
+  animation: tower-mon-defeated 0.9s ease-out forwards;
+}
+@keyframes tower-aura-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.07);
+  }
+}
+.tower-boss-aura {
+  animation: tower-aura-pulse 3s ease-in-out infinite;
+}
+.tower-boss-ring,
+.tower-observer-rays {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: companion-spin 16s linear infinite;
+}
+.tower-observer-rays {
+  animation-duration: 22s;
+}
+.tower-observer-pupil {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tower-observer-look 4.5s ease-in-out infinite;
+}
+@keyframes tower-observer-look {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+.tower-shade-flicker {
+  animation: tower-shade-flicker 1.6s steps(2, end) infinite;
+}
+@keyframes tower-shade-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.tower-twin-link {
+  animation: tower-twin-link 1.4s ease-in-out infinite;
+}
+@keyframes tower-twin-link {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* --- Wizard combat --- */
+.tower-wizard-cast {
+  animation: tower-wizard-cast 0.5s ease-out;
+}
+@keyframes tower-wizard-cast {
+  0% {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+  30% {
+    transform: translateX(8px) scale(1.05);
+    filter: brightness(1.35);
+  }
+  100% {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+}
+.tower-wizard-hurt {
+  animation: tower-wizard-hurt 0.5s ease-in-out;
+}
+@keyframes tower-wizard-hurt {
+  0% {
+    transform: translateX(0) rotate(0);
+  }
+  30% {
+    transform: translateX(-8px) rotate(-5deg);
+  }
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+}
+.tower-wizard-shield {
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(165, 180, 252, 0.55), transparent 70%);
+  animation: tower-shield 0.5s ease-out;
+}
+@keyframes tower-shield {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+.tower-spell-bolt {
+  animation: tower-spell-bolt 0.5s ease-out;
+}
+@keyframes tower-spell-bolt {
+  0% {
+    opacity: 0;
+    transform: translate(-60px, -50%) scaleX(0.3);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(60px, -50%) scaleX(1);
+  }
+}
+
+/* --- Room map + staircase --- */
+@keyframes tower-room-current {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+.tower-room-current {
+  animation: tower-room-current 2.6s ease-in-out infinite;
+}
+@keyframes tower-stair-ready {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+.tower-stair-ready {
+  animation: tower-stair-ready 2.4s ease-in-out infinite;
+}
+.tower-relic {
+  animation: tower-relic-spin 8s linear infinite;
+}
+@keyframes tower-relic-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Entrance gate --- */
+.tower-gate-lift {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tower-gate-lift 1.4s ease-in-out 0.5s forwards;
+}
+@keyframes tower-gate-lift {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-150px);
+    opacity: 0;
+  }
+}
+.tower-gate-open {
+  transform: translateY(-150px);
+  opacity: 0;
+}
+.tower-gate-light {
+  opacity: 0;
+  animation: tower-gate-light 1.6s ease-out 1.2s forwards;
+}
+@keyframes tower-gate-light {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.tower-gate-light-static {
+  opacity: 0.9;
+}
+.tower-wizard-walkin {
+  opacity: 0;
+  animation: tower-wizard-walkin 1.2s ease-in 1.4s forwards;
+}
+@keyframes tower-wizard-walkin {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 30px) scale(0.8);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -8px) scale(0.95);
+  }
+}
+.tower-entrance-leaving {
+  animation: tower-entrance-fade 0.5s ease-in forwards;
+}
+@keyframes tower-entrance-fade {
+  to {
+    opacity: 0;
+  }
+}
+
+/* --- Climb transition --- */
+.tower-climb-mote {
+  animation: tower-climb-mote 1.3s ease-out infinite;
+}
+@keyframes tower-climb-mote {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-180px);
+  }
+}
+.tower-climb-rise {
+  animation: tower-climb-rise 1.5s ease-in-out forwards;
+}
+@keyframes tower-climb-rise {
+  0% {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-44px);
+    opacity: 0.15;
+  }
+}
+.tower-climb-wizard {
+  animation: tower-climb-wizard 1.1s ease-in-out infinite;
+}
+@keyframes tower-climb-wizard {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* --- Climate scene details --- */
+.tower-torch {
+  animation: tower-torch 1.8s ease-in-out infinite;
+}
+@keyframes tower-torch {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+.tower-detail-drift {
+  animation: tower-detail-drift 7s ease-in-out infinite;
+}
+@keyframes tower-detail-drift {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(8px, -10px) rotate(20deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0.5;
+  }
+}
+.tower-detail-rise {
+  animation: tower-detail-rise 5s ease-out infinite;
+}
+@keyframes tower-detail-rise {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+}
+.tower-detail-twinkle {
+  animation: tower-detail-twinkle 3.4s ease-in-out infinite;
+}
+@keyframes tower-detail-twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+.tower-detail-orbit {
+  animation: tower-detail-orbit 6s linear infinite;
+}
+@keyframes tower-detail-orbit {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(8px, -8px);
+  }
+  50% {
+    transform: translate(0, -12px);
+  }
+  75% {
+    transform: translate(-8px, -8px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tower-mon-idle,
+  .tower-mon-hit,
+  .tower-mon-attack,
+  .tower-boss-aura,
+  .tower-boss-ring,
+  .tower-observer-rays,
+  .tower-observer-pupil,
+  .tower-shade-flicker,
+  .tower-twin-link,
+  .tower-wizard-cast,
+  .tower-wizard-hurt,
+  .tower-wizard-shield,
+  .tower-spell-bolt,
+  .tower-room-current,
+  .tower-stair-ready,
+  .tower-relic,
+  .tower-gate-lift,
+  .tower-gate-light,
+  .tower-wizard-walkin,
+  .tower-entrance-leaving,
+  .tower-climb-mote,
+  .tower-climb-rise,
+  .tower-climb-wizard,
+  .tower-torch,
+  .tower-detail-drift,
+  .tower-detail-rise,
+  .tower-detail-twinkle,
+  .tower-detail-orbit {
+    animation: none;
+  }
+  /* Defeated monsters must still disappear without motion. */
+  .tower-mon-defeated {
+    animation: none;
+    opacity: 0;
+  }
+}

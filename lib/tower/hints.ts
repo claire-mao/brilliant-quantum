@@ -9,7 +9,7 @@ import {
   getProgressiveFeedback,
   type QuestionContext,
 } from "@/lib/learning/progressive-feedback";
-import type { LocalChallenge } from "@/lib/tower/challenges";
+import type { LocalChallenge } from "@/lib/tower/arena-challenges";
 
 export type TowerActiveChallenge =
   | { kind: "mcq"; question: PracticeQuestion; usedAI: boolean }

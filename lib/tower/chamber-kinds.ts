@@ -3,7 +3,7 @@
  * different interactions while boss floors mix everything.
  */
 
-import type { ChallengeKind } from "@/lib/tower/challenges";
+import type { ChallengeKind } from "@/lib/tower/arena-challenges";
 import type { ChamberType } from "@/lib/tower/progression";
 
 const MEMORY_KINDS: ChallengeKind[] = ["mcq", "prediction", "match"];

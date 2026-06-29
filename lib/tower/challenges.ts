@@ -1,809 +1,926 @@
 /**
- * Tower challenge bank: graded interactions beyond multiple choice. Each chamber
- * type pulls a different kind of challenge so retrieval practice stays varied:
+ * Battle challenges for the Wizard Tower — the learning-science core. A battle
+ * is targeted retrieval practice, not random trivia, so this module:
  *
- *   - "order"   order-the-steps (sequence the stages of a process)
- *   - "slots"   click gate chips into ordered slots (lightweight circuit build)
- *   - "mistake" identify-the-misconception (tap the false claim)
- *   - "explain" teach Alice & Bob (pick the explanation that is actually right)
+ *  1. Holds an accurate, hand-written bank of challenges keyed by concept,
+ *     challenge type, and difficulty (works fully with AI off).
+ *  2. Builds each floor's room plan from the learner model: it prioritises
+ *     struggled and due concepts, interleaves older mastered ones, and mixes in
+ *     the current unit — constrained to concepts the floor's climate has taught.
  *
- * Every challenge grades to a single correct/incorrect verdict so it feeds the
- * existing recordConceptResult flow unchanged; the learning model never sees a
- * difference between these and the AI/fallback MCQs. All content is hand-written,
- * accurate, and network-free, with a generic fallback so any concept is covered.
+ * Everything is grounded in `lib/learning/` so the tower strengthens the same
+ * per-concept signals the rest of the app uses.
  */
 
-import type { Difficulty } from "@/lib/ai/validators";
-import type { ConceptTag } from "@/lib/learning/concepts";
+import type { Difficulty, PracticeQuestion } from "@/lib/ai/validators";
+import {
+  CONCEPT_LABEL,
+  CONCEPT_PREREQ,
+  CONCEPT_RECALL,
+  type ConceptTag,
+} from "@/lib/learning/concepts";
+import {
+  getLearnerConceptProfile,
+  getRecommendedReview,
+  type ReviewReason,
+} from "@/lib/learning/learner-model";
+import { getConceptSignal } from "@/lib/learning/signals";
+import { getRetrievalForConcept } from "@/lib/learning/retrieval";
+import type { UserProfile } from "@/lib/types";
+import { climateForFloor } from "./climates";
+import { getFloorLayout, type ChallengeKind, type RoomSlot } from "./floors";
+import { bossForFloor } from "./monsters";
 
-export type ChallengeKind =
-  | "mcq"
-  | "order"
-  | "slots"
-  | "mistake"
-  | "explain"
-  | "prediction"
-  | "bloch"
-  | "match"
-  | "estimate"
-  | "interference"
-  | "fill";
+/* ------------------------------- Visuals -------------------------------- */
 
-interface BaseChallenge {
-  prompt: string;
-  explanation: string;
+export type ChallengeVisual =
+  | { kind: "circuit"; start: string; gates: string[]; measure?: boolean; caption?: string }
+  | { kind: "two-circuits"; start: string; a: string[]; b: string[]; aLabel?: string; bLabel?: string; caption?: string }
+  | { kind: "histogram"; bars: { label: string; value: number; highlight?: boolean }[]; caption?: string }
+  | { kind: "bloch"; vector: "0" | "1" | "+" | "-" | "+i" | "-i"; caption?: string }
+  | { kind: "pair"; relation: "same" | "opposite" | "independent"; caption?: string };
+
+/* ------------------------------ Challenge ------------------------------- */
+
+export interface BattleChallenge {
+  id: string;
+  concept: ConceptTag;
+  kind: ChallengeKind;
   difficulty: Difficulty;
-  /** Recorded as the learner's misconception when answered wrong. */
+  prompt: string;
+  choices: { id: string; label: string }[];
+  correctChoiceId: string;
+  explanation: string;
   misconception?: string;
+  /** Four progressive hints (retrieval → attention → concept → short walk). */
+  hintLadder?: [string, string, string, string];
+  visual?: ChallengeVisual;
 }
 
-export interface OrderChallenge extends BaseChallenge {
-  kind: "order";
-  /** Steps in the CORRECT order; the UI presents a shuffled copy. */
-  steps: string[];
+/**
+ * The hand-written battle bank. Accurate, conceptual, light on heavy math, and
+ * free of any copyrighted references. Selection falls back gracefully, so gaps
+ * for a given (concept, kind, difficulty) never break a battle.
+ */
+export const BATTLE_BANK: BattleChallenge[] = [
+  /* --------------------------------- qubits -------------------------------- */
+  {
+    id: "qubits-recall-1",
+    concept: "qubits",
+    kind: "recall",
+    difficulty: "easy",
+    prompt: "What makes a qubit different from a classical bit?",
+    choices: [
+      { id: "a", label: "It is always either 0 or 1, never both" },
+      { id: "b", label: "It can be 0, 1, or a superposition of both until measured" },
+      { id: "c", label: "It stores two classical bits at once" },
+      { id: "d", label: "It is just a slower bit" },
+    ],
+    correctChoiceId: "b",
+    explanation:
+      "A qubit holds amplitudes for 0 and 1 at the same time; only measurement forces a single definite outcome.",
+    misconception: "A qubit secretly stores two classical bits.",
+    hintLadder: [
+      "Recall the very first experiment: what could the qubit be before you measured it?",
+      "Think about what is true only up until the moment of measurement.",
+      "The key idea is superposition — amplitudes for both 0 and 1 coexist.",
+      "Unlike a bit, a qubit is not forced to one value until measured; before that it carries both.",
+    ],
+  },
+  {
+    id: "qubits-predict-1",
+    concept: "qubits",
+    kind: "predict",
+    difficulty: "easy",
+    prompt: "A qubit is freshly prepared in the state \\( |0\\rangle \\). You measure it once in the computational basis. The result is:",
+    choices: [
+      { id: "a", label: "0 with certainty" },
+      { id: "b", label: "1 with certainty" },
+      { id: "c", label: "0 or 1, each with probability 1/2" },
+      { id: "d", label: "A value between 0 and 1" },
+    ],
+    correctChoiceId: "a",
+    explanation: "\\( |0\\rangle \\) is a definite basis state, so measuring it returns 0 every time.",
+    visual: { kind: "bloch", vector: "0", caption: "State points to the north pole" },
+  },
+  {
+    id: "qubits-misc-1",
+    concept: "qubits",
+    kind: "misconception",
+    difficulty: "medium",
+    prompt: "Which statement about a qubit in superposition is the misconception to reject?",
+    choices: [
+      { id: "a", label: "It carries amplitudes for 0 and 1 simultaneously" },
+      { id: "b", label: "It is secretly already 0 or 1, we just don't know which" },
+      { id: "c", label: "Measurement yields a single definite outcome" },
+      { id: "d", label: "Its amplitudes determine measurement probabilities" },
+    ],
+    correctChoiceId: "b",
+    explanation:
+      "Superposition is not hidden ignorance of a pre-existing value. The qubit genuinely has no definite 0/1 value until measured — interference experiments prove a hidden value can't explain the results.",
+    misconception: "Superposition is just not knowing a value that already exists.",
+  },
+
+  /* ------------------------------ superposition ---------------------------- */
+  {
+    id: "superposition-hist-1",
+    concept: "superposition",
+    kind: "histogram-prediction",
+    difficulty: "easy",
+    prompt: "You prepare \\( |+\\rangle \\) (equal superposition) and measure 100 fresh copies in the 0/1 basis. The counts look most like:",
+    choices: [
+      { id: "a", label: "About 50 zeros and 50 ones" },
+      { id: "b", label: "About 100 zeros" },
+      { id: "c", label: "About 100 ones" },
+      { id: "d", label: "A smooth value near 0.5 each time" },
+    ],
+    correctChoiceId: "a",
+    explanation: "Equal amplitudes give equal probabilities, so across many shots you see roughly half 0 and half 1 — never a fractional reading.",
+    visual: {
+      kind: "histogram",
+      bars: [
+        { label: "0", value: 50, highlight: true },
+        { label: "1", value: 50, highlight: true },
+      ],
+      caption: "Equal superposition, 0/1 basis",
+    },
+  },
+  {
+    id: "superposition-misc-1",
+    concept: "superposition",
+    kind: "misconception",
+    difficulty: "medium",
+    prompt: "An apprentice says: \"A superposed qubit is rapidly flipping between 0 and 1.\" Why is this wrong?",
+    choices: [
+      { id: "a", label: "It flips slowly, not rapidly" },
+      { id: "b", label: "It holds both amplitudes at once; it is not switching in time" },
+      { id: "c", label: "It is actually always 0" },
+      { id: "d", label: "Flipping would need a measurement each time" },
+    ],
+    correctChoiceId: "b",
+    explanation:
+      "Superposition is a single state carrying both amplitudes simultaneously, not a fast time-sequence of 0s and 1s. The 'flipping' picture predicts the wrong interference behavior.",
+    misconception: "A superposition is a fast toggling between 0 and 1.",
+  },
+  {
+    id: "superposition-recall-1",
+    concept: "superposition",
+    kind: "recall",
+    difficulty: "easy",
+    prompt: "A qubit in an equal superposition is measured many times (fresh each time). The results are:",
+    choices: [
+      { id: "a", label: "Always the same value" },
+      { id: "b", label: "Roughly half 0 and half 1" },
+      { id: "c", label: "Always a value between 0 and 1" },
+      { id: "d", label: "Impossible to predict statistically" },
+    ],
+    correctChoiceId: "b",
+    explanation: "Equal amplitudes give equal probabilities — about 50% 0 and 50% 1 across many shots.",
+  },
+
+  /* ------------------------------ measurement ------------------------------ */
+  {
+    id: "measurement-recall-1",
+    concept: "measurement",
+    kind: "recall",
+    difficulty: "easy",
+    prompt: "You measure a qubit and read 1. Without changing it, you measure again. You get:",
+    choices: [
+      { id: "a", label: "0 or 1 with equal chance" },
+      { id: "b", label: "1 again" },
+      { id: "c", label: "A random value each time" },
+      { id: "d", label: "An error" },
+    ],
+    correctChoiceId: "b",
+    explanation: "Measurement collapses the state; the qubit is now in |1\\rangle, so repeated measurement keeps returning 1.",
+  },
+  {
+    id: "measurement-mistake-1",
+    concept: "measurement",
+    kind: "find-mistake",
+    difficulty: "medium",
+    prompt: "Spot the mistake: \"Measuring a superposed qubit simply reveals the value it secretly had all along.\"",
+    choices: [
+      { id: "a", label: "No mistake — measurement reads a hidden value" },
+      { id: "b", label: "The mistake: there was no definite value before measurement; collapse creates the outcome" },
+      { id: "c", label: "The mistake: measurement never changes the qubit" },
+      { id: "d", label: "The mistake: superposed qubits cannot be measured" },
+    ],
+    correctChoiceId: "b",
+    explanation:
+      "Before measurement the qubit has no definite 0/1 value. Measurement collapses the superposition and produces the outcome probabilistically — it does not read a pre-set value.",
+    misconception: "Measurement just reveals a value that already existed.",
+  },
+  {
+    id: "measurement-predict-1",
+    concept: "measurement",
+    kind: "predict",
+    difficulty: "medium",
+    prompt: "A qubit is in state \\( |+\\rangle \\). You measure it in the 0/1 basis and get 0. Immediately you measure again in the same basis. You get:",
+    choices: [
+      { id: "a", label: "0 (it collapsed to \\( |0\\rangle \\))" },
+      { id: "b", label: "1" },
+      { id: "c", label: "0 or 1, each 1/2" },
+      { id: "d", label: "\\( |+\\rangle \\) again" },
+    ],
+    correctChoiceId: "a",
+    explanation: "The first measurement collapsed \\( |+\\rangle \\) to \\( |0\\rangle \\). The repeated measurement now returns 0 with certainty.",
+  },
+
+  /* ------------------------------ bloch-sphere ----------------------------- */
+  {
+    id: "bloch-recall-1",
+    concept: "bloch-sphere",
+    kind: "recall",
+    difficulty: "easy",
+    prompt: "On the Bloch sphere, the north and south poles represent:",
+    choices: [
+      { id: "a", label: "The states \\( |0\\rangle \\) and \\( |1\\rangle \\)" },
+      { id: "b", label: "Two entangled qubits" },
+      { id: "c", label: "Measurement errors" },
+      { id: "d", label: "The amplitudes' phases" },
+    ],
+    correctChoiceId: "a",
+    explanation: "The poles are the basis states \\( |0\\rangle \\) and \\( |1\\rangle \\); superpositions live on the surface between them.",
+    visual: { kind: "bloch", vector: "0", caption: "North pole = \\( |0\\rangle \\)" },
+  },
+  {
+    id: "bloch-predict-1",
+    concept: "bloch-sphere",
+    kind: "bloch-prediction",
+    difficulty: "medium",
+    prompt: "A state sits on the Bloch sphere's equator (for example \\( |+\\rangle \\), pointing along +X). Measured in the 0/1 (Z) basis, it gives:",
+    choices: [
+      { id: "a", label: "0 with certainty" },
+      { id: "b", label: "1 with certainty" },
+      { id: "c", label: "0 or 1, each with probability 1/2" },
+      { id: "d", label: "Nothing — equator states can't be measured" },
+    ],
+    correctChoiceId: "c",
+    explanation: "Equator states are equal superpositions in the Z basis, so Z-measurement gives 0 or 1 with equal 1/2 probability.",
+    visual: { kind: "bloch", vector: "+", caption: "Equator state along +X" },
+    hintLadder: [
+      "Where on the sphere are the definite 0 and 1 outcomes? Where is this state relative to them?",
+      "An equator point is exactly between the poles — equally far from \\( |0\\rangle \\) and \\( |1\\rangle \\).",
+      "Z-basis probabilities depend on the polar angle; on the equator that angle is 90 degrees.",
+      "Equidistant from both poles means equal probabilities: 1/2 and 1/2.",
+    ],
+  },
+
+  /* --------------------------------- phase --------------------------------- */
+  {
+    id: "phase-recall-1",
+    concept: "phase",
+    kind: "recall",
+    difficulty: "medium",
+    prompt: "A relative phase between |0\\rangle and |1\\rangle becomes observable only when you:",
+    choices: [
+      { id: "a", label: "Measure immediately in the 0/1 basis" },
+      { id: "b", label: "Let the amplitudes interfere (e.g. apply H first)" },
+      { id: "c", label: "Multiply the whole state by a phase" },
+      { id: "d", label: "Wait long enough" },
+    ],
+    correctChoiceId: "b",
+    explanation: "Relative phase is invisible to a direct 0/1 measurement; interference (such as a Hadamard) converts it into measurable differences.",
+  },
+  {
+    id: "phase-predict-1",
+    concept: "phase",
+    kind: "predict",
+    difficulty: "medium",
+    prompt: "You compare \\( |+\\rangle \\) and \\( |-\\rangle \\) by measuring each directly in the 0/1 basis. The outcome statistics are:",
+    choices: [
+      { id: "a", label: "Identical — both give 50/50" },
+      { id: "b", label: "Opposite — one gives 0, the other gives 1" },
+      { id: "c", label: "\\( |+\\rangle \\) gives 0, \\( |-\\rangle \\) gives nothing" },
+      { id: "d", label: "Random and different every run" },
+    ],
+    correctChoiceId: "a",
+    explanation:
+      "\\( |+\\rangle \\) and \\( |-\\rangle \\) differ only by a relative phase, which a 0/1 measurement cannot see — both give 50/50. Apply H first and they separate completely.",
+    misconception: "Relative phase changes the direct 0/1 probabilities.",
+  },
+  {
+    id: "phase-misc-1",
+    concept: "phase",
+    kind: "misconception",
+    difficulty: "hard",
+    prompt: "Which statement about phase is the misconception?",
+    choices: [
+      { id: "a", label: "A global phase \\( e^{i\\theta} \\) on the whole state is unobservable" },
+      { id: "b", label: "Relative phase affects interference outcomes" },
+      { id: "c", label: "A global phase changes measurement probabilities" },
+      { id: "d", label: "Phase matters only once amplitudes recombine" },
+    ],
+    correctChoiceId: "c",
+    explanation:
+      "A global phase multiplies the entire state and never changes any probability (which depends on \\( |\\text{amplitude}|^2 \\)). Only relative phase between components is physical.",
+    misconception: "Global phase has observable effects.",
+  },
+
+  /* --------------------------------- gates --------------------------------- */
+  {
+    id: "gates-build-1",
+    concept: "gates",
+    kind: "build-circuit",
+    difficulty: "easy",
+    prompt: "Starting from \\( |0\\rangle \\), which single gate produces a 50/50 superposition?",
+    choices: [
+      { id: "a", label: "X (bit flip)" },
+      { id: "b", label: "H (Hadamard)" },
+      { id: "c", label: "Z (phase flip)" },
+      { id: "d", label: "Measure" },
+    ],
+    correctChoiceId: "b",
+    explanation: "H maps \\( |0\\rangle \\) to \\( |+\\rangle \\), an equal superposition that measures 0 or 1 with probability 1/2 each.",
+    visual: { kind: "circuit", start: "\\( |0\\rangle \\)", gates: ["H"], measure: true },
+  },
+  {
+    id: "gates-predict-1",
+    concept: "gates",
+    kind: "predict",
+    difficulty: "easy",
+    prompt: "Apply the X gate to \\( |0\\rangle \\). The result is:",
+    choices: [
+      { id: "a", label: "\\( |0\\rangle \\)" },
+      { id: "b", label: "\\( |1\\rangle \\)" },
+      { id: "c", label: "\\( |+\\rangle \\)" },
+      { id: "d", label: "A 50/50 superposition" },
+    ],
+    correctChoiceId: "b",
+    explanation: "X is the bit flip: it swaps \\( |0\\rangle \\) and \\( |1\\rangle \\), so \\( |0\\rangle \\) becomes \\( |1\\rangle \\).",
+    visual: { kind: "circuit", start: "\\( |0\\rangle \\)", gates: ["X"], measure: false },
+  },
+  {
+    id: "gates-recall-1",
+    concept: "gates",
+    kind: "recall",
+    difficulty: "medium",
+    prompt: "Applying the Hadamard gate twice in a row to a qubit does what?",
+    choices: [
+      { id: "a", label: "Measures it" },
+      { id: "b", label: "Returns it to its original state (identity)" },
+      { id: "c", label: "Flips it like an X gate" },
+      { id: "d", label: "Destroys the state" },
+    ],
+    correctChoiceId: "b",
+    explanation: "H is its own inverse, so \\( H\\cdot H = I \\) returns the qubit to where it started — gates are reversible.",
+    visual: { kind: "circuit", start: "\\( |0\\rangle \\)", gates: ["H", "H"], measure: false },
+  },
+  {
+    id: "gates-compare-1",
+    concept: "gates",
+    kind: "compare-circuits",
+    difficulty: "medium",
+    prompt: "Both circuits start from \\( |0\\rangle \\). Circuit A applies H then H. Circuit B applies nothing. Their final states are:",
+    choices: [
+      { id: "a", label: "The same — both are \\( |0\\rangle \\)" },
+      { id: "b", label: "Different — A is a superposition" },
+      { id: "c", label: "A is \\( |1\\rangle \\), B is \\( |0\\rangle \\)" },
+      { id: "d", label: "Both are \\( |+\\rangle \\)" },
+    ],
+    correctChoiceId: "a",
+    explanation: "\\( H\\cdot H = I \\), so circuit A returns \\( |0\\rangle \\) to \\( |0\\rangle \\) — identical to doing nothing.",
+    visual: { kind: "two-circuits", start: "\\( |0\\rangle \\)", a: ["H", "H"], b: ["I"], aLabel: "A", bLabel: "B" },
+  },
+  {
+    id: "gates-order-1",
+    concept: "gates",
+    kind: "order-gates",
+    difficulty: "medium",
+    prompt: "You want to take \\( |0\\rangle \\) to \\( |1\\rangle \\) and then into an equal superposition. Which gate order does it?",
+    choices: [
+      { id: "a", label: "X, then H" },
+      { id: "b", label: "H, then X" },
+      { id: "c", label: "Z, then X" },
+      { id: "d", label: "H, then H" },
+    ],
+    correctChoiceId: "a",
+    explanation: "X first sends \\( |0\\rangle \\to |1\\rangle \\), then H sends \\( |1\\rangle \\to |-\\rangle \\), an equal superposition (50/50 in the 0/1 basis).",
+    visual: { kind: "circuit", start: "\\( |0\\rangle \\)", gates: ["X", "H"], measure: true },
+  },
+  {
+    id: "gates-misc-1",
+    concept: "gates",
+    kind: "misconception",
+    difficulty: "medium",
+    prompt: "Which claim about gates is the misconception?",
+    choices: [
+      { id: "a", label: "Gates are reversible operations" },
+      { id: "b", label: "Measurement is just another reversible gate" },
+      { id: "c", label: "X swaps |0\\rangle and |1\\rangle" },
+      { id: "d", label: "H creates superposition from a basis state" },
+    ],
+    correctChoiceId: "b",
+    explanation: "Gates are reversible (unitary). Measurement is irreversible — it collapses the state and discards information, so it is not a gate.",
+    misconception: "Measurement is a reversible gate.",
+  },
+
+  /* ------------------------------ interference ----------------------------- */
+  {
+    id: "interference-recall-1",
+    concept: "interference",
+    kind: "recall",
+    difficulty: "medium",
+    prompt: "Two paths to the same outcome carry equal but opposite amplitudes. The outcome's probability is:",
+    choices: [
+      { id: "a", label: "Doubled" },
+      { id: "b", label: "Zero — they cancel" },
+      { id: "c", label: "Unchanged" },
+      { id: "d", label: "Always one half" },
+    ],
+    correctChoiceId: "b",
+    explanation: "Amplitudes add before squaring; equal-and-opposite amplitudes cancel, giving zero probability — destructive interference.",
+  },
+  {
+    id: "interference-misc-1",
+    concept: "interference",
+    kind: "misconception",
+    difficulty: "hard",
+    prompt: "Why is \"interference just adds the probabilities of each path\" wrong?",
+    choices: [
+      { id: "a", label: "Probabilities can be negative" },
+      { id: "b", label: "You add amplitudes (which can cancel), then square to get probability" },
+      { id: "c", label: "Paths never share an outcome" },
+      { id: "d", label: "Probabilities are added, then halved" },
+    ],
+    correctChoiceId: "b",
+    explanation:
+      "Amplitudes — not probabilities — combine. Because amplitudes can be negative (or complex) they can cancel; only after summing do you square to get the probability.",
+    misconception: "Interference adds probabilities rather than amplitudes.",
+  },
+  {
+    id: "interference-compare-1",
+    concept: "interference",
+    kind: "compare-circuits",
+    difficulty: "hard",
+    prompt: "Two paths reach an outcome. In case A the amplitudes are \\( +1/\\sqrt2 \\) and \\( +1/\\sqrt2 \\); in case B they are \\( +1/\\sqrt2 \\) and \\( -1/\\sqrt2 \\). The outcome probabilities are:",
+    choices: [
+      { id: "a", label: "A: reinforced (large), B: 0 (cancelled)" },
+      { id: "b", label: "Both 1/2" },
+      { id: "c", label: "A: 0, B: 1" },
+      { id: "d", label: "Both 1" },
+    ],
+    correctChoiceId: "a",
+    explanation:
+      "A: equal-sign amplitudes add and reinforce (constructive interference). B: equal-and-opposite amplitudes cancel to 0 (destructive interference).",
+    visual: {
+      kind: "histogram",
+      bars: [
+        { label: "A", value: 100, highlight: true },
+        { label: "B", value: 2 },
+      ],
+      caption: "Constructive vs destructive",
+    },
+  },
+
+  /* ------------------------------ entanglement ----------------------------- */
+  {
+    id: "entanglement-corr-1",
+    concept: "entanglement",
+    kind: "entanglement-correlation",
+    difficulty: "medium",
+    prompt: "Alice and Bob share the Bell state \\( (|00\\rangle + |11\\rangle)/\\sqrt2 \\). Alice measures her qubit and gets 0. Bob's qubit, when measured in the same basis, gives:",
+    choices: [
+      { id: "a", label: "0 with certainty" },
+      { id: "b", label: "1 with certainty" },
+      { id: "c", label: "0 or 1, each 1/2" },
+      { id: "d", label: "It depends how far apart they are" },
+    ],
+    correctChoiceId: "a",
+    explanation:
+      "This Bell state only has \\( |00\\rangle \\) and \\( |11\\rangle \\) terms, so the outcomes are perfectly correlated: Alice's 0 means Bob also gets 0.",
+    visual: { kind: "pair", relation: "same", caption: "\\( (|00\\rangle + |11\\rangle)/\\sqrt2 \\)" },
+  },
+  {
+    id: "entanglement-misc-1",
+    concept: "entanglement",
+    kind: "misconception",
+    difficulty: "hard",
+    prompt: "Why doesn't measuring an entangled qubit let Alice send Bob an instant message?",
+    choices: [
+      { id: "a", label: "The signal is just too weak to detect" },
+      { id: "b", label: "Bob's local outcomes look random; correlation shows up only when results are compared" },
+      { id: "c", label: "Entanglement breaks before the message arrives" },
+      { id: "d", label: "Light is faster than the correlation" },
+    ],
+    correctChoiceId: "b",
+    explanation:
+      "Bob sees random 0s and 1s no matter what Alice does. The correlation appears only after they compare results over a normal channel — so no information travels faster than light (no-signaling).",
+    misconception: "Entanglement transmits information instantly.",
+  },
+  {
+    id: "entanglement-compare-1",
+    concept: "entanglement",
+    kind: "compare-circuits",
+    difficulty: "hard",
+    prompt: "Which two-qubit state is entangled (cannot be written as one qubit's state combined with another's)?",
+    choices: [
+      { id: "a", label: "\\( (|00\\rangle + |11\\rangle)/\\sqrt2 \\)" },
+      { id: "b", label: "\\( |0\\rangle \\otimes |+\\rangle \\)" },
+      { id: "c", label: "\\( |1\\rangle \\otimes |1\\rangle \\)" },
+      { id: "d", label: "\\( |+\\rangle \\otimes |+\\rangle \\)" },
+    ],
+    correctChoiceId: "a",
+    explanation:
+      "The Bell state can't be factored into separate single-qubit states — that non-separability is exactly what entanglement means. The others are product states.",
+  },
+
+  /* ------------------------------- algorithms ------------------------------ */
+  {
+    id: "algorithms-recall-1",
+    concept: "algorithms",
+    kind: "recall",
+    difficulty: "hard",
+    prompt: "What gives a quantum algorithm its advantage on the right problem?",
+    choices: [
+      { id: "a", label: "Trying every answer in parallel and reading them all" },
+      { id: "b", label: "Using interference so wrong answers cancel and the right one stands out" },
+      { id: "c", label: "Running faster classical logic" },
+      { id: "d", label: "Storing more memory" },
+    ],
+    correctChoiceId: "b",
+    explanation:
+      "You can't read every branch — measurement gives one outcome. Algorithms arrange interference so amplitude concentrates on the correct answer before you measure.",
+  },
+  {
+    id: "algorithms-misc-1",
+    concept: "algorithms",
+    kind: "misconception",
+    difficulty: "hard",
+    prompt: "Which is the misconception about quantum algorithms?",
+    choices: [
+      { id: "a", label: "They explore many computational paths in superposition" },
+      { id: "b", label: "They try all answers at once and simply read out the best one" },
+      { id: "c", label: "They use interference to amplify correct answers" },
+      { id: "d", label: "Measurement collapses the result to one outcome" },
+    ],
+    correctChoiceId: "b",
+    explanation:
+      "Superposition explores many paths, but measurement returns only one. The work is engineering interference so the right answer is the likely measurement — not reading all answers.",
+    misconception: "Quantum computers read out all parallel answers at once.",
+  },
+  {
+    id: "algorithms-walk-1",
+    concept: "algorithms",
+    kind: "algorithm-walkthrough",
+    difficulty: "hard",
+    prompt: "In Grover-style search, one iteration does what to the marked answer's amplitude?",
+    choices: [
+      { id: "a", label: "Increases it (amplitude amplification)" },
+      { id: "b", label: "Sets it to zero" },
+      { id: "c", label: "Leaves all amplitudes equal" },
+      { id: "d", label: "Copies it to every other state" },
+    ],
+    correctChoiceId: "a",
+    explanation:
+      "Each Grover iteration nudges amplitude toward the marked item (and away from the rest), so after about \\( \\sqrt{N} \\) iterations measuring is very likely to give the answer.",
+  },
+
+  /* -------------------------------- hardware ------------------------------- */
+  {
+    id: "hardware-recall-1",
+    concept: "hardware",
+    kind: "recall",
+    difficulty: "medium",
+    prompt: "Decoherence in a real quantum computer refers to:",
+    choices: [
+      { id: "a", label: "Qubits running out of battery" },
+      { id: "b", label: "Fragile quantum information leaking into the environment over time" },
+      { id: "c", label: "Gates being applied too slowly" },
+      { id: "d", label: "Copying a qubit too many times" },
+    ],
+    correctChoiceId: "b",
+    explanation: "Interaction with the environment scrambles the delicate phases, so quantum information decays — the central engineering challenge.",
+  },
+  {
+    id: "hardware-decoh-1",
+    concept: "hardware",
+    kind: "decoherence-scenario",
+    difficulty: "hard",
+    prompt: "A qubit holds a fragile superposition, but the circuit idles far longer than the qubit's coherence time before the next gate. The most likely effect is:",
+    choices: [
+      { id: "a", label: "Nothing — qubits keep their state indefinitely" },
+      { id: "b", label: "The superposition decoheres, corrupting the result" },
+      { id: "c", label: "The qubit speeds up later gates" },
+      { id: "d", label: "The qubit is automatically corrected" },
+    ],
+    correctChoiceId: "b",
+    explanation:
+      "Beyond the coherence time, environmental coupling destroys the phase relationships. Real machines must finish (or error-correct) before decoherence ruins the computation.",
+    misconception: "Idle time doesn't matter for qubits.",
+  },
+  {
+    id: "hardware-misc-1",
+    concept: "hardware",
+    kind: "misconception",
+    difficulty: "hard",
+    prompt: "Which claim about quantum hardware is the misconception?",
+    choices: [
+      { id: "a", label: "Error correction spreads one logical qubit across many physical qubits" },
+      { id: "b", label: "Adding more noisy qubits always increases useful computing power" },
+      { id: "c", label: "Qubits must stay coherent long enough to finish the circuit" },
+      { id: "d", label: "Noise is the main obstacle to scaling" },
+    ],
+    correctChoiceId: "b",
+    explanation:
+      "More qubits help only if they are reliable. Without low enough error rates and error correction, adding noisy qubits adds more noise, not more usable power.",
+    misconception: "More qubits always means more power, regardless of noise.",
+  },
+];
+
+/* --------------------------- Selection helpers --------------------------- */
+
+function mod(n: number, m: number): number {
+  return ((n % m) + m) % m;
 }
 
-export interface SlotsChallenge extends BaseChallenge {
-  kind: "slots";
-  /** Chips the learner can choose from (includes distractors). */
-  palette: string[];
-  /** The correct ordered fill for the slots. */
-  solution: string[];
+/** Wrap a hand-written retrieval question as a recall battle challenge. */
+function fromRetrieval(concept: ConceptTag, seed: number): BattleChallenge | null {
+  const q = getRetrievalForConcept(concept, seed);
+  if (!q) return null;
+  return {
+    id: `retrieval-${concept}-${seed}`,
+    concept,
+    kind: "recall",
+    difficulty: q.difficulty,
+    prompt: q.prompt,
+    choices: q.choices,
+    correctChoiceId: q.correctChoiceId,
+    explanation: q.explanation,
+    misconception: q.misconception,
+  };
 }
 
-export interface MistakeChallenge extends BaseChallenge {
-  kind: "mistake";
-  /** Exactly one statement is flawed (the misconception to tap). */
-  statements: { text: string; flawed: boolean }[];
+export interface SelectArgs {
+  concept: ConceptTag;
+  kind: ChallengeKind;
+  difficulty: Difficulty;
+  seed: number;
+  excludeIds?: string[];
 }
 
-export interface ExplainChallenge extends BaseChallenge {
-  kind: "explain";
-  options: { id: string; label: string }[];
-  correctId: string;
-}
+/**
+ * Pick the best-fitting battle challenge for a room: exact (kind+difficulty)
+ * first, then progressively looser matches, then the retrieval bank, never
+ * failing. `seed` rotates among equally good matches; `excludeIds` avoids
+ * repeating items already used on the floor when possible.
+ */
+export function selectChallenge(args: SelectArgs): BattleChallenge {
+  const { concept, kind, difficulty, seed } = args;
+  const exclude = new Set(args.excludeIds ?? []);
+  const byConcept = BATTLE_BANK.filter((c) => c.concept === concept);
 
-export interface PredictionChallenge extends BaseChallenge {
-  kind: "prediction";
-  options: { id: string; label: string }[];
-  correctId: string;
-}
+  const tiers: BattleChallenge[][] = [
+    byConcept.filter((c) => c.kind === kind && c.difficulty === difficulty),
+    byConcept.filter((c) => c.kind === kind),
+    byConcept.filter((c) => c.difficulty === difficulty),
+    byConcept,
+  ];
 
-export interface BlochChallenge extends BaseChallenge {
-  kind: "bloch";
-  /** Polar/azimuth of the correct state (radians). */
-  theta: number;
-  phi: number;
-  options: { id: string; label: string; theta: number; phi: number }[];
-  correctId: string;
-}
-
-export interface MatchChallenge extends BaseChallenge {
-  kind: "match";
-  pairs: { left: string; right: string }[];
-  options: { id: string; label: string }[];
-  correctId: string;
-}
-
-export interface EstimateChallenge extends BaseChallenge {
-  kind: "estimate";
-  options: { id: string; label: string }[];
-  correctId: string;
-}
-
-export interface InterferenceChallenge extends BaseChallenge {
-  kind: "interference";
-  options: { id: string; label: string }[];
-  correctId: string;
-}
-
-export interface FillChallenge extends BaseChallenge {
-  kind: "fill";
-  /** Slots with one missing gate marked by "?". */
-  palette: string[];
-  solution: string[];
-  /** Index of the slot the learner must fill (others pre-filled). */
-  missingIndex: number;
-}
-
-export type LocalChallenge =
-  | OrderChallenge
-  | SlotsChallenge
-  | MistakeChallenge
-  | ExplainChallenge
-  | PredictionChallenge
-  | BlochChallenge
-  | MatchChallenge
-  | EstimateChallenge
-  | InterferenceChallenge
-  | FillChallenge;
-
-/* ----------------------------------------------------------------------------
- * Deterministic seeded shuffle (pure: no Math.random, safe in render scope).
- * -------------------------------------------------------------------------- */
-function seededShuffle<T>(items: readonly T[], seed: number): T[] {
-  const out = items.slice();
-  let s = (seed * 2654435761) >>> 0 || 1;
-  for (let i = out.length - 1; i > 0; i--) {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    const j = s % (i + 1);
-    [out[i], out[j]] = [out[j], out[i]];
+  for (const tier of tiers) {
+    const fresh = tier.filter((c) => !exclude.has(c.id));
+    const pool = fresh.length > 0 ? fresh : tier;
+    if (pool.length > 0) return pool[mod(seed, pool.length)];
   }
-  return out;
+
+  const retrieval = fromRetrieval(concept, seed);
+  if (retrieval) return retrieval;
+
+  // Absolute last resort: any item in the bank.
+  return BATTLE_BANK[mod(seed, BATTLE_BANK.length)];
 }
 
-/** Display order for an order-the-steps challenge (stable per seed). */
-export function shuffledSteps(challenge: OrderChallenge, seed: number): string[] {
-  // Guard against the rare identity shuffle so the task is never pre-solved.
-  const shuffled = seededShuffle(challenge.steps, seed);
-  const same = shuffled.every((s, i) => s === challenge.steps[i]);
-  return same && shuffled.length > 1 ? seededShuffle(challenge.steps, seed + 7) : shuffled;
+/** Convert a battle challenge to the PracticeQuestion shape (for shared UI/AI paths). */
+export function toPracticeQuestion(c: BattleChallenge): PracticeQuestion {
+  return {
+    prompt: c.prompt,
+    choices: c.choices,
+    correctChoiceId: c.correctChoiceId,
+    explanation: c.explanation,
+    conceptTag: c.concept,
+    difficulty: c.difficulty,
+    misconception: c.misconception,
+    prerequisite: CONCEPT_PREREQ[c.concept] ? CONCEPT_LABEL[CONCEPT_PREREQ[c.concept]!] : undefined,
+  };
 }
 
-/* ----------------------------------------------------------------------------
- * Banks. Each is keyed by concept with a GENERIC fallback array, so any concept
- * always resolves to a usable challenge.
- * -------------------------------------------------------------------------- */
+/* ----------------------------- Difficulty -------------------------------- */
 
-const ORDER_BANK: Partial<Record<ConceptTag, OrderChallenge[]>> = {
-  measurement: [
-    {
-      kind: "order",
-      prompt: "Order the stages of measuring a single qubit.",
-      steps: [
-        "Prepare the qubit in some superposition",
-        "Pick a measurement basis (e.g. 0/1)",
-        "Measure. The state collapses",
-        "Read one definite outcome, 0 or 1",
-      ],
-      explanation:
-        "Measurement is the bridge from amplitudes to a classical bit: a prepared state is read in a chosen basis, collapses, and yields one definite outcome.",
-      difficulty: "easy",
-      misconception: "Thinking a single measurement reveals the full superposition instead of collapsing it.",
-    },
-  ],
-  entanglement: [
-    {
-      kind: "order",
-      prompt: "Order the steps to build and use a Bell pair.",
-      steps: [
-        "Start with two qubits in |00\\rangle",
-        "Apply H to the first qubit",
-        "Apply CNOT (control first, target second)",
-        "Measure. Outcomes are perfectly correlated",
-      ],
-      explanation:
-        "H then CNOT entangles the pair into (|00\\rangle+|11\\rangle)/\\sqrt2, so measuring one instantly fixes the correlated result of the other.",
-      difficulty: "medium",
-      misconception: "Believing entanglement appears without an entangling (two-qubit) gate like CNOT.",
-    },
-  ],
-  algorithms: [
-    {
-      kind: "order",
-      prompt: "Order the shape of a typical quantum algorithm.",
-      steps: [
-        "Put qubits into superposition (e.g. H on each)",
-        "Apply the problem's oracle / operations",
-        "Use interference to amplify the right answer",
-        "Measure to read the likely solution",
-      ],
-      explanation:
-        "Quantum algorithms spread amplitude across possibilities, encode the problem, then choreograph interference so the correct answer dominates before measurement.",
-      difficulty: "hard",
-      misconception: "Assuming a quantum computer just reads every parallel branch at once.",
-    },
-  ],
-  interference: [
-    {
-      kind: "order",
-      prompt: "Order how interference produces an outcome's probability.",
-      steps: [
-        "List every path leading to the outcome",
-        "Add the paths' amplitudes (with sign/phase)",
-        "Square the magnitude of the total",
-        "That value is the outcome's probability",
-      ],
-      explanation:
-        "Amplitudes add before squaring, so equal-and-opposite paths can cancel (destructive) or reinforce (constructive). That is interference, not adding probabilities directly.",
-      difficulty: "medium",
-      misconception: "Adding probabilities directly instead of adding amplitudes first.",
-    },
-  ],
-};
+const DIFF_ORDER: Difficulty[] = ["easy", "medium", "hard"];
 
-const ORDER_GENERIC: OrderChallenge[] = [
-  {
-    kind: "order",
-    prompt: "Order the journey of a qubit through a tiny circuit.",
-    steps: [
-      "Initialize the qubit to |0\\rangle",
-      "Apply a gate to transform its state",
-      "Let amplitudes evolve (and possibly interfere)",
-      "Measure to collapse it to a classical bit",
-    ],
-    explanation:
-      "Initialize, transform with reversible gates, then measure: the only irreversible, randomness-introducing step is the final measurement.",
-    difficulty: "easy",
-    misconception: "Treating gates and measurement as the same kind of operation.",
-  },
-];
+function shift(d: Difficulty, by: number): Difficulty {
+  const i = DIFF_ORDER.indexOf(d);
+  return DIFF_ORDER[Math.max(0, Math.min(DIFF_ORDER.length - 1, i + by))];
+}
 
-const SLOTS_BANK: Partial<Record<ConceptTag, SlotsChallenge[]>> = {
-  superposition: [
-    {
-      kind: "slots",
-      prompt: "Fill the slot: turn |0\\rangle into an equal superposition.",
-      palette: ["H", "X", "Z", "I"],
-      solution: ["H"],
-      explanation:
-        "The Hadamard gate maps |0\\rangle to (|0\\rangle+|1\\rangle)/\\sqrt2, an equal superposition. X only flips, Z only adds phase, I does nothing.",
-      difficulty: "easy",
-      misconception: "Expecting X (a bit flip) to create a superposition.",
-    },
-  ],
-  gates: [
-    {
-      kind: "slots",
-      prompt: "Fill both slots: a sequence that returns |0\\rangle back to |0\\rangle.",
-      palette: ["H", "H", "X", "Z"],
-      solution: ["H", "H"],
-      explanation:
-        "H is its own inverse, so H·H = I leaves the qubit unchanged. Gates are reversible. Undo a gate by applying its inverse.",
-      difficulty: "medium",
-      misconception: "Forgetting that many quantum gates are their own inverse.",
-    },
-  ],
-  entanglement: [
-    {
-      kind: "slots",
-      prompt: "Build a Bell pair from |00\\rangle: fill the two slots in order.",
-      palette: ["H", "CNOT", "X", "Z"],
-      solution: ["H", "CNOT"],
-      explanation:
-        "Hadamard on the first qubit then CNOT entangles them into (|00\\rangle+|11\\rangle)/\\sqrt2, the canonical Bell state.",
-      difficulty: "medium",
-      misconception: "Trying to entangle with single-qubit gates only.",
-    },
-  ],
-  phase: [
-    {
-      kind: "slots",
-      prompt: "On |1\\rangle, fill the slot that flips its sign (adds a \\pi phase).",
-      palette: ["Z", "X", "H", "I"],
-      solution: ["Z"],
-      explanation:
-        "Z leaves |0\\rangle alone and sends |1\\rangle to -|1\\rangle, a relative phase flip that stays hidden until interference reveals it.",
-      difficulty: "medium",
-      misconception: "Thinking a phase flip changes 0/1 measurement probabilities by itself.",
-    },
-  ],
-};
+/** Base difficulty for a floor — the climb curve from recall to synthesis. */
+export function difficultyForFloor(floor: number): Difficulty {
+  if (floor <= 10) return "easy";
+  if (floor <= 30) return "medium";
+  return "hard";
+}
 
-const SLOTS_GENERIC: SlotsChallenge[] = [
-  {
-    kind: "slots",
-    prompt: "Fill the slot: make an equal superposition from |0\\rangle.",
-    palette: ["H", "X", "Z", "I"],
-    solution: ["H"],
-    explanation:
-      "Hadamard builds equal superpositions from a basis state. It is the starting move of most quantum circuits.",
-    difficulty: "easy",
-    misconception: "Confusing the Hadamard (superposition) with X (flip).",
-  },
-];
+/* --------------------------- Floor plan builder -------------------------- */
 
-const MISTAKE_BANK: Partial<Record<ConceptTag, MistakeChallenge[]>> = {
-  qubits: [
-    {
-      kind: "mistake",
-      prompt: "Three claims about qubits. Tap the false one.",
-      statements: [
-        { text: "A qubit can be in a superposition of |0\\rangle and |1\\rangle.", flawed: false },
-        { text: "Measuring a qubit yields a definite 0 or 1.", flawed: false },
-        { text: "A qubit secretly stores a number between 0 and 1 you can read out.", flawed: true },
-      ],
-      explanation:
-        "You never read out a hidden in-between value: a measurement returns 0 or 1. The 'between' lives in amplitudes, which only show up statistically.",
-      difficulty: "easy",
-      misconception: "Imagining a qubit holds a readable analog value between 0 and 1.",
-    },
-  ],
-  superposition: [
-    {
-      kind: "mistake",
-      prompt: "One claim about superposition is false. Tap it.",
-      statements: [
-        { text: "An equal superposition gives ~50/50 results over many shots.", flawed: false },
-        { text: "Superposition means the qubit is secretly already 0 or 1, we just don't know which.", flawed: true },
-        { text: "Superposition is destroyed by measurement.", flawed: false },
-      ],
-      explanation:
-        "Superposition is not mere ignorance of a hidden value. Interference experiments rule that out. The amplitudes genuinely coexist until measured.",
-      difficulty: "medium",
-      misconception: "Treating superposition as classical ignorance of a predetermined bit.",
-    },
-  ],
-  entanglement: [
-    {
-      kind: "mistake",
-      prompt: "Tap the false claim about entanglement.",
-      statements: [
-        { text: "Measuring one entangled qubit correlates with the other's result.", flawed: false },
-        { text: "Entanglement lets you send a usable message faster than light.", flawed: true },
-        { text: "Locally, each side's outcomes look random.", flawed: false },
-      ],
-      explanation:
-        "No-signaling: local results are random, so no information travels faster than light. Correlations appear only when results are later compared.",
-      difficulty: "hard",
-      misconception: "Believing entanglement enables faster-than-light communication.",
-    },
-  ],
-  phase: [
-    {
-      kind: "mistake",
-      prompt: "One claim about phase is false. Tap it.",
-      statements: [
-        { text: "A global phase has no observable effect.", flawed: false },
-        { text: "Relative phase can change interference outcomes.", flawed: false },
-        { text: "Relative phase changes 0/1 probabilities even with no further gates.", flawed: true },
-      ],
-      explanation:
-        "Relative phase is invisible to a direct 0/1 measurement; it only matters once amplitudes interfere (e.g. after a Hadamard).",
-      difficulty: "medium",
-      misconception: "Thinking relative phase alters measurement probabilities without interference.",
-    },
-  ],
-  measurement: [
-    {
-      kind: "mistake",
-      prompt: "Tap the false statement about measurement.",
-      statements: [
-        { text: "Measurement collapses the state to one basis outcome.", flawed: false },
-        { text: "Re-measuring right after (unchanged) repeats the same result.", flawed: false },
-        { text: "Measurement reveals the qubit's exact amplitudes.", flawed: true },
-      ],
-      explanation:
-        "A single measurement gives one bit, not the amplitudes. You'd need many identically prepared qubits to estimate the underlying probabilities.",
-      difficulty: "easy",
-      misconception: "Expecting one measurement to reveal the full quantum state.",
-    },
-  ],
-  hardware: [
-    {
-      kind: "mistake",
-      prompt: "Three claims about hardware. Tap the false one.",
-      statements: [
-        { text: "Decoherence leaks quantum information into the environment.", flawed: false },
-        { text: "Error correction spreads one logical qubit across many physical ones.", flawed: false },
-        { text: "Real qubits keep their state indefinitely with no upkeep.", flawed: true },
-      ],
-      explanation:
-        "Physical qubits are fragile and lose coherence quickly; keeping information alive needs isolation, fast gates, and error correction.",
-      difficulty: "medium",
-      misconception: "Assuming physical qubits are stable and need no error correction.",
-    },
-  ],
-};
+export type AssignmentReason = ReviewReason | "current" | "interleave";
 
-const MISTAKE_GENERIC: MistakeChallenge[] = [
-  {
-    kind: "mistake",
-    prompt: "Three claims. Tap the false one.",
-    statements: [
-      { text: "Quantum gates are reversible transformations of the state.", flawed: false },
-      { text: "Measurement generally introduces randomness and is irreversible.", flawed: false },
-      { text: "You can perfectly copy an unknown qubit with the right gate.", flawed: true },
-    ],
-    explanation:
-      "The no-cloning theorem forbids copying an arbitrary unknown state exactly. That is a cornerstone of quantum information.",
-    difficulty: "medium",
-    misconception: "Believing an unknown quantum state can be cloned exactly.",
-  },
-];
+export interface RoomAssignment {
+  concept: ConceptTag;
+  conceptLabel: string;
+  reason: AssignmentReason;
+  reasonText: string;
+  difficulty: Difficulty;
+  kind: ChallengeKind;
+}
 
-const EXPLAIN_BANK: Partial<Record<ConceptTag, ExplainChallenge[]>> = {
-  measurement: [
-    {
-      kind: "explain",
-      prompt: "Why can't one measurement reveal a superposition? Pick the best explanation.",
-      options: [
-        { id: "a", label: "Because measuring forces a collapse to a single basis outcome, one bit." },
-        { id: "b", label: "Because the qubit was always secretly 0 or 1." },
-        { id: "c", label: "Because measurement is too slow to see both values." },
-      ],
-      correctId: "a",
-      explanation:
-        "Measurement projects the state onto one basis result, so a single shot yields one bit. The amplitudes only surface across many prepared copies.",
-      difficulty: "medium",
-      misconception: "Explaining collapse as 'it was already definite' rather than projection.",
-    },
-  ],
-  interference: [
-    {
-      kind: "explain",
-      prompt: "Why can adding a path lower a probability? Pick the best explanation.",
-      options: [
-        { id: "a", label: "Because amplitudes add with sign, so paths can cancel before squaring." },
-        { id: "b", label: "Because more paths always means lower probability." },
-        { id: "c", label: "Because measurement subtracts the extra path." },
-      ],
-      correctId: "a",
-      explanation:
-        "Destructive interference: amplitudes of equal size and opposite sign cancel, so a new path can reduce or zero out an outcome's probability.",
-      difficulty: "medium",
-      misconception: "Thinking probabilities, not amplitudes, are what combine.",
-    },
-  ],
-  "bloch-sphere": [
-    {
-      kind: "explain",
-      prompt: "What does a point on the Bloch sphere represent? Pick the best explanation.",
-      options: [
-        { id: "a", label: "Any pure single-qubit state, with poles |0\\rangle and |1\\rangle." },
-        { id: "b", label: "Two entangled qubits at once." },
-        { id: "c", label: "The probability of a measurement error." },
-      ],
-      correctId: "a",
-      explanation:
-        "Every pure single-qubit state is a point on the Bloch sphere; the poles are |0\\rangle and |1\\rangle, and latitude/longitude encode superposition weight and relative phase.",
-      difficulty: "medium",
-      misconception: "Reading the Bloch sphere as a picture of two qubits.",
-    },
-  ],
-  qubits: [
-    {
-      kind: "explain",
-      prompt: "How is a qubit different from a classical bit? Pick the best explanation.",
-      options: [
-        { id: "a", label: "It can hold amplitudes for 0 and 1 at once, until measured." },
-        { id: "b", label: "It is just a faster classical bit." },
-        { id: "c", label: "It stores two classical bits permanently." },
-      ],
-      correctId: "a",
-      explanation:
-        "The correct answer is that a qubit can represent both 0 and 1 simultaneously until measured. This corrects the misconception that qubits read all values at once, as superposition is a fixed state until observation occurs.",
-      difficulty: "easy",
-      misconception: "Describing a qubit as merely a faster or doubled classical bit.",
-    },
-  ],
-};
+export interface PlannedRoom {
+  slot: RoomSlot;
+  assignment: RoomAssignment;
+}
 
-const EXPLAIN_GENERIC: ExplainChallenge[] = [
-  {
-    kind: "explain",
-    prompt: "Pick the best explanation of how quantum information works.",
-    options: [
-      { id: "a", label: "Amplitudes evolve and interfere; only measurement yields a definite outcome." },
-      { id: "b", label: "Qubits are classical bits that happen to be smaller." },
-      { id: "c", label: "Quantum computers read all answers at once and print them." },
-    ],
-    correctId: "a",
-    explanation:
-      "Amplitudes evolve and interfere. Measurement collapses to one result. Quantum computers do not read every branch at once.",
-    difficulty: "medium",
-    misconception: "Defaulting to the 'reads all answers at once' myth.",
-  },
-];
+export interface FloorPlan {
+  floor: number;
+  rooms: PlannedRoom[];
+  /** Ordered concepts a boss cycles through, weakest first (boss floors only). */
+  bossConcepts: ConceptTag[];
+}
 
-const PREDICTION_BANK: Partial<Record<ConceptTag, PredictionChallenge[]>> = {
-  measurement: [
-    {
-      kind: "prediction",
-      prompt: "Before measuring an equal superposition in the Z basis, predict the outcome.",
-      options: [
-        { id: "a", label: "Definitely 0" },
-        { id: "b", label: "Definitely 1" },
-        { id: "c", label: "50/50 chance of 0 or 1" },
-        { id: "d", label: "Both 0 and 1 at once" },
-      ],
-      correctId: "c",
-      explanation: "An equal superposition yields random 0 or 1 with equal probability on a single shot.",
-      difficulty: "easy",
-      misconception: "Expecting a definite outcome from one measurement of a superposition.",
-    },
-  ],
-};
-
-const PREDICTION_GENERIC: PredictionChallenge[] = [
-  {
-    kind: "prediction",
-    prompt: "Starting from |0⟩, you apply H once. Predict P(1) on the next Z measurement.",
-    options: [
-      { id: "a", label: "0%" },
-      { id: "b", label: "50%" },
-      { id: "c", label: "100%" },
-      { id: "d", label: "25%" },
-    ],
-    correctId: "b",
-    explanation: "H maps |0⟩ to an equal superposition, so P(1) = 50%.",
-    difficulty: "easy",
-    misconception: "Thinking H always gives a definite 1.",
-  },
-];
-
-const BLOCH_BANK: Partial<Record<ConceptTag, BlochChallenge[]>> = {
-  "bloch-sphere": [
-    {
-      kind: "bloch",
-      prompt: "Which Bloch-sphere state is |0⟩?",
-      theta: 0,
-      phi: 0,
-      options: [
-        { id: "a", label: "North pole (|0⟩)", theta: 0, phi: 0 },
-        { id: "b", label: "South pole (|1⟩)", theta: Math.PI, phi: 0 },
-        { id: "c", label: "Equator (|+⟩)", theta: Math.PI / 2, phi: 0 },
-        { id: "d", label: "Equator (|−⟩)", theta: Math.PI / 2, phi: Math.PI },
-      ],
-      correctId: "a",
-      explanation: "The north pole of the Bloch sphere is |0⟩; the south pole is |1⟩.",
-      difficulty: "easy",
-    },
-  ],
-  superposition: [
-    {
-      kind: "bloch",
-      prompt: "After H on |0⟩, where does the state vector sit on the Bloch sphere?",
-      theta: Math.PI / 2,
-      phi: 0,
-      options: [
-        { id: "a", label: "North pole", theta: 0, phi: 0 },
-        { id: "b", label: "On the equator (|+⟩ direction)", theta: Math.PI / 2, phi: 0 },
-        { id: "c", label: "South pole", theta: Math.PI, phi: 0 },
-        { id: "d", label: "Inside the sphere", theta: Math.PI / 4, phi: Math.PI / 4 },
-      ],
-      correctId: "b",
-      explanation: "H sends |0⟩ to |+⟩, which lies on the equator halfway between |0⟩ and |1⟩.",
-      difficulty: "medium",
-    },
-  ],
-};
-
-const BLOCH_GENERIC: BlochChallenge[] = [
-  {
-    kind: "bloch",
-    prompt: "Which point is the |1⟩ state on the Bloch sphere?",
-    theta: Math.PI,
-    phi: 0,
-    options: [
-      { id: "a", label: "North pole", theta: 0, phi: 0 },
-      { id: "b", label: "South pole", theta: Math.PI, phi: 0 },
-      { id: "c", label: "Equator |+⟩", theta: Math.PI / 2, phi: 0 },
-      { id: "d", label: "Equator |−⟩", theta: Math.PI / 2, phi: Math.PI },
-    ],
-    correctId: "b",
-    explanation: "The south pole represents |1⟩.",
-    difficulty: "easy",
-  },
-];
-
-const MATCH_BANK: Partial<Record<ConceptTag, MatchChallenge[]>> = {
-  gates: [
-    {
-      kind: "match",
-      prompt: "Match each gate to what it does starting from |0⟩.",
-      pairs: [{ left: "H", right: "Equal superposition" }],
-      options: [
-        { id: "a", label: "Equal superposition" },
-        { id: "b", label: "Flip to |1⟩" },
-        { id: "c", label: "Add π phase to |1⟩" },
-        { id: "d", label: "Do nothing" },
-      ],
-      correctId: "a",
-      explanation: "H on |0⟩ creates (|0⟩+|1⟩)/√2, an equal superposition.",
-      difficulty: "easy",
-    },
-  ],
-  entanglement: [
-    {
-      kind: "match",
-      prompt: "Match the Bell-pair circuit to its state.",
-      pairs: [{ left: "H then CNOT on |00⟩", right: "(|00⟩+|11⟩)/√2" }],
-      options: [
-        { id: "a", label: "(|00⟩+|11⟩)/√2" },
-        { id: "b", label: "|00⟩" },
-        { id: "c", label: "(|01⟩+|10⟩)/√2" },
-        { id: "d", label: "|11⟩" },
-      ],
-      correctId: "a",
-      explanation: "H then CNOT is the standard Bell-state recipe.",
-      difficulty: "medium",
-    },
-  ],
-};
-
-const MATCH_GENERIC: MatchChallenge[] = [
-  {
-    kind: "match",
-    prompt: "Match: X gate on |0⟩ → ?",
-    pairs: [{ left: "X on |0⟩", right: "|1⟩" }],
-    options: [
-      { id: "a", label: "|1⟩" },
-      { id: "b", label: "|0⟩" },
-      { id: "c", label: "Equal superposition" },
-      { id: "d", label: "−|1⟩" },
-    ],
-    correctId: "a",
-    explanation: "X is a bit flip: |0⟩ becomes |1⟩.",
-    difficulty: "easy",
-  },
-];
-
-const ESTIMATE_BANK: Partial<Record<ConceptTag, EstimateChallenge[]>> = {
-  measurement: [
-    {
-      kind: "estimate",
-      prompt: "Estimate P(1) after H on |0⟩, measured in the Z basis.",
-      options: [
-        { id: "a", label: "About 50%" },
-        { id: "b", label: "About 0%" },
-        { id: "c", label: "About 100%" },
-        { id: "d", label: "About 25%" },
-      ],
-      correctId: "a",
-      explanation: "Equal superposition gives P(0) ≈ P(1) ≈ 50% over many shots.",
-      difficulty: "easy",
-    },
-  ],
-  superposition: [
-    {
-      kind: "estimate",
-      prompt: "A qubit is in |1⟩. Estimate P(1) on a Z measurement.",
-      options: [
-        { id: "a", label: "About 100%" },
-        { id: "b", label: "About 50%" },
-        { id: "c", label: "About 0%" },
-        { id: "d", label: "Unknowable" },
-      ],
-      correctId: "a",
-      explanation: "A definite |1⟩ always measures 1 in the Z basis.",
-      difficulty: "easy",
-    },
-  ],
-};
-
-const ESTIMATE_GENERIC: EstimateChallenge[] = [
-  {
-    kind: "estimate",
-    prompt: "Estimate P(0) for |0⟩ measured in the Z basis.",
-    options: [
-      { id: "a", label: "About 100%" },
-      { id: "b", label: "About 50%" },
-      { id: "c", label: "About 0%" },
-      { id: "d", label: "Random each time only" },
-    ],
-    correctId: "a",
-    explanation: "|0⟩ is a definite Z-basis state, so P(0) = 100%.",
-    difficulty: "easy",
-  },
-];
-
-const INTERFERENCE_BANK: Partial<Record<ConceptTag, InterferenceChallenge[]>> = {
-  interference: [
-    {
-      kind: "interference",
-      prompt: "Two paths to the same outcome have equal amplitude but opposite sign. What happens?",
-      options: [
-        { id: "a", label: "Destructive interference; probability can drop to zero" },
-        { id: "b", label: "Probabilities always add" },
-        { id: "c", label: "Measurement fixes the sign mismatch" },
-        { id: "d", label: "The extra path always raises probability" },
-      ],
-      correctId: "a",
-      explanation: "Amplitudes add before squaring; opposite signs cancel (destructive interference).",
-      difficulty: "medium",
-    },
-  ],
-  phase: [
-    {
-      kind: "interference",
-      prompt: "A relative π phase between two paths that recombine tends to…",
-      options: [
-        { id: "a", label: "Flip the sign of one path's amplitude" },
-        { id: "b", label: "Change Z measurement odds with no further gates" },
-        { id: "c", label: "Send information faster than light" },
-        { id: "d", label: "Clone the qubit" },
-      ],
-      correctId: "a",
-      explanation: "Relative phase rotates amplitude sign; it matters when paths interfere.",
-      difficulty: "medium",
-    },
-  ],
-};
-
-const INTERFERENCE_GENERIC: InterferenceChallenge[] = [
-  {
-    kind: "interference",
-    prompt: "When do relative phases affect measurement statistics?",
-    options: [
-      { id: "a", label: "When amplitudes recombine and interfere" },
-      { id: "b", label: "Immediately on any Z measurement" },
-      { id: "c", label: "Never; phase is unphysical" },
-      { id: "d", label: "Only for two qubits at once" },
-    ],
-    correctId: "a",
-    explanation: "Phase is hidden in a single basis measurement until interference brings paths together.",
-    difficulty: "medium",
-  },
-];
-
-const FILL_BANK: Partial<Record<ConceptTag, FillChallenge[]>> = {
-  gates: [
-    {
-      kind: "fill",
-      prompt: "Fill the missing gate: |0⟩ → ? → |1⟩",
-      palette: ["H", "X", "Z", "I"],
-      solution: ["X"],
-      missingIndex: 0,
-      explanation: "X flips |0⟩ to |1⟩ in one step.",
-      difficulty: "easy",
-    },
-  ],
-  entanglement: [
-    {
-      kind: "fill",
-      prompt: "Fill the missing gate: |00⟩ → H → ? → Bell pair",
-      palette: ["CNOT", "X", "Z", "H"],
-      solution: ["CNOT"],
-      missingIndex: 0,
-      explanation: "After H on the first qubit, CNOT entangles the pair.",
-      difficulty: "medium",
-    },
-  ],
-};
-
-const FILL_GENERIC: FillChallenge[] = [
-  {
-    kind: "fill",
-    prompt: "Fill the missing gate: |0⟩ → ? → equal superposition",
-    palette: ["H", "X", "Z", "I"],
-    solution: ["H"],
-    missingIndex: 0,
-    explanation: "Hadamard creates an equal superposition from |0⟩.",
-    difficulty: "easy",
-  },
-];
-
-function bankForKind(kind: ChallengeKind, tag: ConceptTag): LocalChallenge[] {
-  switch (kind) {
-    case "order":
-      return ORDER_BANK[tag]?.length ? ORDER_BANK[tag]! : ORDER_GENERIC;
-    case "slots":
-      return SLOTS_BANK[tag]?.length ? SLOTS_BANK[tag]! : SLOTS_GENERIC;
-    case "mistake":
-      return MISTAKE_BANK[tag]?.length ? MISTAKE_BANK[tag]! : MISTAKE_GENERIC;
-    case "prediction":
-      return PREDICTION_BANK[tag]?.length ? PREDICTION_BANK[tag]! : PREDICTION_GENERIC;
-    case "bloch":
-      return BLOCH_BANK[tag]?.length ? BLOCH_BANK[tag]! : BLOCH_GENERIC;
-    case "match":
-      return MATCH_BANK[tag]?.length ? MATCH_BANK[tag]! : MATCH_GENERIC;
-    case "estimate":
-      return ESTIMATE_BANK[tag]?.length ? ESTIMATE_BANK[tag]! : ESTIMATE_GENERIC;
-    case "interference":
-      return INTERFERENCE_BANK[tag]?.length ? INTERFERENCE_BANK[tag]! : INTERFERENCE_GENERIC;
-    case "fill":
-      return FILL_BANK[tag]?.length ? FILL_BANK[tag]! : FILL_GENERIC;
-    case "explain":
-    case "mcq":
-    default:
-      return EXPLAIN_BANK[tag]?.length ? EXPLAIN_BANK[tag]! : EXPLAIN_GENERIC;
+function reasonText(concept: ConceptTag, reason: AssignmentReason): string {
+  const label = CONCEPT_LABEL[concept];
+  switch (reason) {
+    case "struggled":
+      return `${label} tripped you up before`;
+    case "due":
+      return `${label} is due for review`;
+    case "stale":
+      return `${label} hasn't been retrieved lately`;
+    case "current":
+      return `${label}: this realm's focus`;
+    case "interleave":
+      return `${label}: keeping older skill sharp`;
   }
 }
 
-function pickFiltered<T>(bank: T[], seed: number): T {
-  return bank[((seed % bank.length) + bank.length) % bank.length];
+/**
+ * Order a climate's concept pool by learning need: struggled → due → stale
+ * (from the learner model), tagged with the reason for the room UI.
+ */
+function reviewQueue(profile: UserProfile | null, pool: ConceptTag[]): { tag: ConceptTag; reason: ReviewReason }[] {
+  const inPool = new Set(pool);
+  return getRecommendedReview(profile)
+    .filter((r) => inPool.has(r.tag))
+    .map((r) => ({ tag: r.tag, reason: r.reason }));
 }
 
-/** Resolve a graded local challenge for a concept + kind, with generic fallback. */
-export function getChallenge(
-  kind: ChallengeKind,
-  tag: ConceptTag,
-  seed = 0,
-  excludeIds: ReadonlySet<string> = new Set()
-): LocalChallenge {
-  const bank = bankForKind(kind, tag);
-  const filtered = bank.filter((c) => !excludeIds.has(`local:${tag}:${kind}:${c.prompt.trim()}`));
-  const pool = filtered.length > 0 ? filtered : bank;
-  return pickFiltered(pool, seed);
+/**
+ * Build a floor's personalized room plan. The mix targets roughly
+ * 70% due/weak concepts, 20% older mastered (interleaving), and 10% the
+ * current unit — all drawn only from concepts this climate has taught.
+ */
+export function buildFloorPlan(floor: number, profile: UserProfile | null): FloorPlan {
+  const layout = getFloorLayout(floor);
+  const climate = climateForFloor(floor);
+  const pool = climate.poolConcepts;
+  const home = climate.homeConcepts;
+  const baseDiff = difficultyForFloor(floor);
+
+  const weak = reviewQueue(profile, pool);
+  const conceptProfiles = getLearnerConceptProfile(profile);
+  const masteredInPool = conceptProfiles
+    .filter((p) => pool.includes(p.tag) && (p.status === "mastered" || p.status === "strengthening"))
+    .map((p) => p.tag);
+  // Older mastered = mastered concepts that are NOT this climate's home concepts.
+  const interleave = masteredInPool.filter((t) => !home.includes(t));
+
+  let weakIdx = 0;
+  let homeIdx = 0;
+  let interIdx = 0;
+
+  // A 10-slot pattern approximating 70/20/10 (W=weak, I=interleave, C=current).
+  const PATTERN: AssignmentReason[] = [
+    "due",
+    "due",
+    "due",
+    "current",
+    "due",
+    "due",
+    "interleave",
+    "due",
+    "interleave",
+    "due",
+  ];
+
+  function nextConcept(prefer: AssignmentReason, used: ConceptTag[]): { tag: ConceptTag; reason: AssignmentReason } {
+    const notUsed = (t: ConceptTag) => !used.includes(t);
+
+    const tryWeak = (): { tag: ConceptTag; reason: AssignmentReason } | null => {
+      for (let i = 0; i < weak.length; i += 1) {
+        const item = weak[(weakIdx + i) % weak.length];
+        if (notUsed(item.tag)) {
+          weakIdx = (weakIdx + i + 1) % Math.max(1, weak.length);
+          return { tag: item.tag, reason: item.reason };
+        }
+      }
+      return null;
+    };
+    const tryHome = (): { tag: ConceptTag; reason: AssignmentReason } | null => {
+      for (let i = 0; i < home.length; i += 1) {
+        const tag = home[(homeIdx + i) % home.length];
+        if (notUsed(tag)) {
+          homeIdx = (homeIdx + i + 1) % Math.max(1, home.length);
+          return { tag, reason: "current" };
+        }
+      }
+      return null;
+    };
+    const tryInter = (): { tag: ConceptTag; reason: AssignmentReason } | null => {
+      for (let i = 0; i < interleave.length; i += 1) {
+        const tag = interleave[(interIdx + i) % interleave.length];
+        if (notUsed(tag)) {
+          interIdx = (interIdx + i + 1) % Math.max(1, interleave.length);
+          return { tag, reason: "interleave" };
+        }
+      }
+      return null;
+    };
+
+    const order =
+      prefer === "current"
+        ? [tryHome, tryWeak, tryInter]
+        : prefer === "interleave"
+          ? [tryInter, tryWeak, tryHome]
+          : [tryWeak, tryHome, tryInter];
+
+    for (const fn of order) {
+      const got = fn();
+      if (got) return got;
+    }
+    // Everything used or empty buckets — fall back to any pool concept.
+    const fallback = pool[(floor + used.length) % pool.length];
+    return { tag: fallback, reason: "current" };
+  }
+
+  const used: ConceptTag[] = [];
+  const rooms: PlannedRoom[] = [];
+
+  layout.battleRooms.forEach((slot, i) => {
+    if (slot.role === "boss") {
+      // Boss assignment is handled per-round in the component via bossConcepts.
+      const tag = home[0] ?? pool[0];
+      rooms.push({
+        slot,
+        assignment: {
+          concept: tag,
+          conceptLabel: CONCEPT_LABEL[tag],
+          reason: "current",
+          reasonText: `${layout.boss?.name ?? "Boss"}: combines this realm's trials`,
+          difficulty: shift(baseDiff, 0),
+          kind: slot.kind ?? "predict",
+        },
+      });
+      return;
+    }
+
+    const prefer = PATTERN[(floor + i) % PATTERN.length];
+    const { tag, reason } = nextConcept(prefer, used);
+    used.push(tag);
+
+    // Desirable difficulty: ease struggled concepts a notch; press mastered ones.
+    const sig = getConceptSignal(tag);
+    const struggling = !!sig && sig.wrong > 0 && sig.lastResult === "wrong";
+    const mastered = masteredInPool.includes(tag) && !struggling;
+    const difficulty = shift(baseDiff, struggling ? -1 : mastered ? 1 : 0);
+
+    rooms.push({
+      slot,
+      assignment: {
+        concept: tag,
+        conceptLabel: CONCEPT_LABEL[tag],
+        reason,
+        reasonText: reasonText(tag, reason),
+        difficulty,
+        kind: slot.kind ?? "recall",
+      },
+    });
+  });
+
+  // Boss concepts: prioritise the learner's weakest within the boss's set.
+  const boss = bossForFloor(floor);
+  let bossConcepts: ConceptTag[] = [];
+  if (boss) {
+    const weakSet = new Map(weak.map((w, i) => [w.tag, i] as const));
+    bossConcepts = [...boss.concepts].sort((a, b) => {
+      const wa = weakSet.has(a) ? weakSet.get(a)! : 999;
+      const wb = weakSet.has(b) ? weakSet.get(b)! : 999;
+      return wa - wb;
+    });
+  }
+
+  return { floor, rooms, bossConcepts };
+}
+
+/** Concept recall line, used as a final guide hint fallback. */
+export function conceptRecallLine(concept: ConceptTag): string {
+  return CONCEPT_RECALL[concept];
 }

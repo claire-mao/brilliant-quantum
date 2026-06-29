@@ -158,11 +158,11 @@ export default function FloorMap({
                         style={{
                           borderColor: boss ? "rgba(251,113,133,0.5)" : "rgba(255,255,255,0.12)",
                           background: cleared
-                            ? `${climate.accent}33`
+                            ? `${climate.palette.accent}33`
                             : boss
                               ? "rgba(244,63,94,0.12)"
                               : "rgba(255,255,255,0.03)",
-                          color: cleared ? climate.accent : "rgba(226,232,240,0.7)",
+                          color: cleared ? climate.palette.accent : "rgba(226,232,240,0.7)",
                         }}
                       >
                         {cleared ? (boss ? "★" : "✓") : c + 1}
