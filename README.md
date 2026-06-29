@@ -130,58 +130,6 @@ brilliant-quantum/
 
 **Module boundaries:** `content/lessons.ts` is the single source of pedagogical structure; `lib/learning/*` derives scheduling and feedback without changing Firestore schema; `lib/tower/*` owns Tower pure logic and local persistence; `components/*` renders and wires user interaction; `app/api/ai/*` is the only place OpenAI keys are read.
 
-## Setup
-
-```bash
-npm install
-```
-
-Create a `.env.local` file in the project root:
-
-**Firebase** (client config — public by design, from Firebase Console → Project settings → Your apps):
-
-```text
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
-```
-
-**OpenAI** (server-only — required for AI features):
-
-```text
-OPENAI_API_KEY=
-# Optional overrides:
-# OPENAI_BASE_URL=https://api.openai.com/v1
-# OPENAI_MODEL=gpt-4o-mini
-```
-
-In the Firebase Console: enable **Authentication → Email/Password** (and **Google** if desired), create a **Cloud Firestore** database, and deploy the rules in `firestore.rules` (each user can read/write only their own document).
-
-## Scripts
-
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Dev server at http://localhost:3000 |
-| `npm run build` | Production build |
-| `npm run start` | Serve production build |
-| `npm run lint` | ESLint |
-| `npm run test` | Vitest unit tests (lesson / learning / tower logic) |
-| `npm run test:watch` | Vitest in watch mode |
-| `npm run verify:tower` | Validate Tower question bank |
-
-The app works without `OPENAI_API_KEY` — AI features fall back to handwritten content.
-
-## Testing locally
-
-1. Copy env vars into `.env.local` (Firebase required for auth/progress; OpenAI optional).
-2. `npm run dev` — sign up or log in, walk a lesson, open `/tower`, summon the wizard from the dashboard.
-3. `npm run test` — pure logic tests (no browser).
-4. `npm run lint && npm run build` — CI-style check before opening a PR.
-
-Resize the browser to ~375px width (or use device mode) to verify NavBar, lesson footer, dashboard grimoire stats, and Tower map buttons.
 
 ## Wizard Tower overview
 
@@ -195,27 +143,3 @@ Tower progress (`floor`, cleared chambers, boss seed) persists in `localStorage`
 ## Lessons overview
 
 Six units, ~30 interactive lessons total, each built from typed `LessonStep` data rendered by `LessonStepRenderer`. Steps include predictions, simulators, circuit builders, worked examples, and graded challenges. Unlock order is linear within the course; completed lessons stay reachable.
-
-## Deployment
-
-Deployed on **Vercel**:
-
-1. Push the repo to GitHub and import it into Vercel (Next.js is detected automatically).
-2. Add all environment variables for Production, Preview, and Development:
-   - the six `NEXT_PUBLIC_FIREBASE_*` values
-   - `OPENAI_API_KEY` (plus optional `OPENAI_BASE_URL` / `OPENAI_MODEL`)
-   - Because `NEXT_PUBLIC_*` vars are inlined at build time, they must exist **before** the build runs.
-3. Deploy from GitHub (push to the production branch, or click **Deploy**).
-4. Add the Vercel domain to **Firebase Authentication → Settings → Authorized domains**, or sign-in will be rejected on the deployed site.
-
-## Security
-
-- **Never commit `.env.local`** (or any real keys). It is covered by `.gitignore` (`.env*`).
-- **`OPENAI_API_KEY` must stay server-side — do NOT prefix it with `NEXT_PUBLIC_`.** It is read only inside `app/api/ai/*` via `lib/ai/client.ts`.
-- **`NEXT_PUBLIC_FIREBASE_*` values are safe to expose** (client config protected by Firestore security rules).
-
-## Further reading
-
-- [`LEARNING_SCIENCE.md`](./LEARNING_SCIENCE.md) — retrieval, spacing, progressive feedback
-- [`PRD.md`](./PRD.md) — product requirements (internal)
-- [`AGENTS.md`](./AGENTS.md) — agent notes for this Next.js version
