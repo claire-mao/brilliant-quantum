@@ -16,7 +16,14 @@ import {
   type ConceptTag,
 } from "@/lib/learning/concepts";
 import { getRecommendedReview, getNeedsReview, getMisconceptionSignals } from "@/lib/learning/learner-model";
-import type { ClimateId } from "@/lib/tower/climates";
+export type ClimateId =
+  | "forest"
+  | "rune-ruins"
+  | "crystal-caverns"
+  | "entanglement-library"
+  | "algorithm-citadel"
+  | "quantum-core";
+
 
 /** Minimal shape for unlock checks (avoids circular import with progression). */
 export interface FloorUnlockProgress {

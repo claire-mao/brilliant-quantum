@@ -29,7 +29,7 @@ import {
   type EvaluatedAchievement,
 } from "@/lib/achievements/catalog";
 
-const CATEGORY_ORDER: AchievementCategory[] = ["learning", "consistency", "challenge", "secrets"];
+const CATEGORY_ORDER: AchievementCategory[] = ["learning", "consistency", "challenge", "tower", "secrets"];
 
 export default function ProfilePage() {
   return (

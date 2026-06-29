@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Climate } from "@/lib/tower/climates";
+import { climateSceneTokens, type Climate } from "@/lib/tower/climates";
 import { floorTitle } from "@/lib/tower/floor-plan";
 import { Alice, Bob } from "./heroes";
 import { EveBoss } from "./dungeon-monsters";
@@ -59,11 +59,12 @@ export function ClimbTransition({
   onDone: () => void;
 }) {
   useCompletion(reduce ? 420 : 2600, onDone);
+  const scene = climateSceneTokens(climate);
 
   return (
     <div
       className="tower-climb-overlay fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
-      style={{ background: `linear-gradient(180deg, ${climate.wallTop} 0%, ${climate.wallBottom} 100%)` }}
+      style={{ background: `linear-gradient(180deg, ${scene.wallTop} 0%, ${scene.wallBottom} 100%)` }}
       role="status"
       aria-live="polite"
     >
@@ -73,7 +74,7 @@ export function ClimbTransition({
 
       <div
         className="tower-climb-bg pointer-events-none absolute inset-x-0 top-0 h-1/2"
-        style={{ background: `radial-gradient(80% 80% at 50% 0%, ${climate.accent}33, transparent)` }}
+        style={{ background: `radial-gradient(80% 80% at 50% 0%, ${scene.accent}33, transparent)` }}
       />
 
       <p
@@ -83,11 +84,11 @@ export function ClimbTransition({
       </p>
 
       <div className={`relative ${reduce ? "" : "tower-climb-stairs-enter"}`}>
-        <Staircase accent={climate.accent} />
+        <Staircase accent={scene.accent} />
         <div
           className={`absolute bottom-2 left-6 flex items-end gap-1 ${reduce ? "tower-climb-heroes-static" : "tower-climb-heroes-walk"}`}
         >
-          <Alice state={reduce ? "idle" : "walk"} wandGlow={climate.accent} reduce={reduce} className="h-16 w-auto" />
+          <Alice state={reduce ? "idle" : "walk"} wandGlow={scene.accent} reduce={reduce} className="h-16 w-auto" />
           <Bob state={reduce ? "idle" : "walk"} reduce={reduce} className="h-12 w-auto" />
         </div>
       </div>
@@ -98,7 +99,7 @@ export function ClimbTransition({
             <span
               key={i}
               className="dungeon-dust absolute h-1 w-1 rounded-full"
-              style={{ left: `${left}%`, top: `${30 + (i % 3) * 16}%`, background: climate.particle, animationDelay: `${i * 0.4}s` }}
+              style={{ left: `${left}%`, top: `${30 + (i % 3) * 16}%`, background: scene.particle, animationDelay: `${i * 0.4}s` }}
             />
           ))}
         </div>

@@ -12,7 +12,7 @@ import {
   type SlotsChallenge,
   type BlochChallenge,
   type FillChallenge,
-} from "@/lib/tower/challenges";
+} from "@/lib/tower/arena-challenges";
 
 /** The active challenge: either an AI/fallback MCQ or a local graded interaction. */
 export type ActiveChallenge =

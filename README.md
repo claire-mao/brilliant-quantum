@@ -4,9 +4,6 @@
 
 Brilliant Quantum is a learn-by-doing web app that teaches introductory quantum computing through short, interactive lessons instead of videos or long readings. Across six units, learners build intuition for qubits, superposition, measurement, gates, circuits, interference, entanglement, algorithms, and hardware by manipulating live visualizations, predicting outcomes, and getting immediate feedback. A learning-science engine and an AI “wizard” companion adapt practice and hints to each learner — no advanced mathematics required.
 
-- **Live app:** _<add your deployed URL here, e.g. https://brilliant-quantum.vercel.app>_
-- **Demo account:** _<email>_ / _<password>_ _(replace with a real demo login, or sign up)_
-
 ## Tech stack
 
 | Layer | Technology |
@@ -26,7 +23,7 @@ Brilliant Quantum is a learn-by-doing web app that teaches introductory quantum 
 - **Interactive quantum lessons** — six units of bite-sized lessons taught through reusable, configurable visualizations and simulators (Bloch sphere, gate labs, circuit builders, amplitude/interference explorers, two-qubit and entanglement tools, search/oracle/period-finding, hardware comparisons, and more), built with React and inline SVG.
 - **Progress persistence** — current step, completion, attempts, and streaks are saved per user in Cloud Firestore, so learners can leave and resume exactly where they left off.
 - **AI wizard companion** — a floating Guide Wizard offers **hints**, **practice questions**, and **fun facts** through server-side OpenAI calls. All AI is additive and degrades gracefully: if the key is missing or a request fails, handwritten fallbacks keep every lesson fully usable with AI turned off.
-- **Wizard Tower** (`/tower`) — a retrieval-practice arena with seven floors (six unit reviews + Eve boss). Learners battle concept “monsters” with quick recall questions, progressive feedback, and a floor map.
+- **Wizard Tower** (`/tower`) — a 60-floor pixel retrieval dungeon across six unit climates (rooms, bosses, and progressive feedback). Battles adapt to the learner model (retrieval practice, spaced review, interleaving, leveled hints, misconception correction), unlock as course units complete, award tower badges, and persist locally — inline SVG/CSS art with optional battle music and sound.
 - **Learning science engine** — a lightweight, client-side learner model tracks per-concept signals and drives **retrieval practice**, **spaced review**, **progressive (leveled) hints**, **worked examples**, prerequisite reminders, and **mastery** language. See [`LEARNING_SCIENCE.md`](./LEARNING_SCIENCE.md).
 - **Achievements & avatar** — badge unlock ceremonies, profile stats, and a customizable pixel-wizard avatar.
 - **Mobile-first layouts** — responsive Tailwind, 44px touch targets on primary controls, horizontal overflow clipped, safe-area padding on floating controls; animations honor `prefers-reduced-motion`.
@@ -208,8 +205,8 @@ Deployed on **Vercel**:
    - the six `NEXT_PUBLIC_FIREBASE_*` values
    - `OPENAI_API_KEY` (plus optional `OPENAI_BASE_URL` / `OPENAI_MODEL`)
    - Because `NEXT_PUBLIC_*` vars are inlined at build time, they must exist **before** the build runs.
-3. Deploy from GitHub.
-4. Add the Vercel domain to **Firebase Authentication → Settings → Authorized domains**.
+3. Deploy from GitHub (push to the production branch, or click **Deploy**).
+4. Add the Vercel domain to **Firebase Authentication → Settings → Authorized domains**, or sign-in will be rejected on the deployed site.
 
 ## Security
 

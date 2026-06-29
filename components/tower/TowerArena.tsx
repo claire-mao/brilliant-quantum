@@ -13,7 +13,7 @@ import { shouldRevealAnswer, getCorrectHeadline } from "@/lib/learning/progressi
 import ProgressiveFeedbackPanel from "@/components/ProgressiveFeedbackPanel";
 import { logFallbackUsed, verifyTowerQuestion } from "@/lib/tower/verify";
 import { monsterForConcept, type Monster } from "@/lib/tower/encounters";
-import { climateForFloor, projectileColorForConcept } from "@/lib/tower/climates";
+import { climateForFloor, climateSceneTokens, projectileColorForConcept } from "@/lib/tower/climates";
 import {
   damagePerCorrect,
   enemyMaxHp,
@@ -46,7 +46,7 @@ import {
   type ChamberType,
   type TowerProgress,
 } from "@/lib/tower/progression";
-import { getChallenge } from "@/lib/tower/challenges";
+import { getChallenge } from "@/lib/tower/arena-challenges";
 import { getLearnerConceptProfile, getMisconceptionSignals, getNeedsReviewItem, getRecommendedReview, isConceptNeedsReview } from "@/lib/learning/learner-model";
 import { MonsterAvatar, EveBoss, DefeatSparkles, type MonsterFx } from "./dungeon-monsters";
 import TowerChallenge, { type ActiveChallenge, type ResolveOpts } from "./TowerChallenge";
@@ -130,6 +130,7 @@ export default function TowerArena() {
   const conceptLabel = CONCEPT_LABEL[concept];
   const monster: Monster = monsterForConcept(concept);
   const climate = climateForFloor(floor);
+  const scene = climateSceneTokens(climate);
   const projColor = projectileColorForConcept(concept);
   const isBoss = chamberInfo.isBoss;
   const slotsTotal = slotsOnFloor(floor, progress.bossSeed);
@@ -802,7 +803,7 @@ export default function TowerArena() {
 
             <span
               className="pointer-events-none absolute left-4 top-3 z-10 rounded-md bg-black/40 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest"
-              style={{ color: climate.accent }}
+              style={{ color: scene.accent }}
             >
               Floor {floor}: {floorTitle(floor)}
             </span>
@@ -818,10 +819,10 @@ export default function TowerArena() {
                   <Alice state={aliceState} wandGlow={projColor} reduce={reduce} className="h-28 w-auto sm:h-36" />
                   <Bob state={bobState} reduce={reduce} className="h-20 w-auto sm:h-24" />
                 </div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: climate.accent }}>
+                <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: scene.accent }}>
                   Alice &amp; Bob
                 </p>
-                <FocusMeter value={focus} max={WIZARD_MAX_ENERGY} accent={climate.accent} label="Energy" />
+                <FocusMeter value={focus} max={WIZARD_MAX_ENERGY} accent={scene.accent} label="Energy" />
               </div>
 
               <div className="flex flex-col items-center gap-2">
@@ -839,7 +840,7 @@ export default function TowerArena() {
                       state={monsterState}
                       defeated={defeated}
                       glitch={monsterGlitch}
-                      accent={climate.accent}
+                      accent={scene.accent}
                       className="h-28 w-28 sm:h-36 sm:w-36"
                     />
                   )}
@@ -850,7 +851,7 @@ export default function TowerArena() {
                   key={`${floor}-${chamber}-${monster.type}`}
                   value={battle.enemyHp}
                   max={battle.enemyMax}
-                  accent={climate.accent}
+                  accent={scene.accent}
                   defeated={defeated}
                 />
               </div>
@@ -919,7 +920,7 @@ export default function TowerArena() {
                 enemyName={enemyName}
                 conceptLabel={conceptLabel}
                 isBoss={isBoss}
-                accent={climate.accent}
+                accent={scene.accent}
                 nextLabel={
                   nextChamberExists
                     ? `Next ${slotLabel.toLowerCase()}`

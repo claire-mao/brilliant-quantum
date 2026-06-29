@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { FLAME_DOT, FLAME_GLOW_R, FLAME_ORIGIN_STYLE } from "@/components/tower/flame-glow";
-import type { Climate } from "@/lib/tower/climates";
+import { climateSceneTokens, type Climate, type ClimateSceneTokens } from "@/lib/tower/climates";
 
 /**
  * A dark pixel dungeon room rendered entirely with inline SVG + CSS (no image
@@ -24,7 +24,7 @@ const DUST = [
   { left: "66%", top: "28%", delay: "0.9s", size: 1.5 },
 ];
 
-function StoneWall({ climate }: { climate: Climate }) {
+function StoneWall({ climate }: { climate: ClimateSceneTokens }) {
   const rows = 5;
   const cols = 11;
   const blocks: ReactNode[] = [];
@@ -46,7 +46,7 @@ function StoneWall({ climate }: { climate: Climate }) {
   return <g>{blocks}</g>;
 }
 
-function Torch({ x, climate }: { x: number; climate: Climate }) {
+function Torch({ x, climate }: { x: number; climate: ClimateSceneTokens }) {
   const flameCx = x + 1;
   const flameCy = 58;
   return (
@@ -75,7 +75,7 @@ function Torch({ x, climate }: { x: number; climate: Climate }) {
 }
 
 /** A free-standing floor candle stand, casting a small pool of warm light. */
-function Candle({ x, y, climate }: { x: number; y: number; climate: Climate }) {
+function Candle({ x, y, climate }: { x: number; y: number; climate: ClimateSceneTokens }) {
   const flameCy = y - 13;
   return (
     <g>
@@ -104,7 +104,7 @@ function Candle({ x, y, climate }: { x: number; y: number; climate: Climate }) {
 }
 
 /** Receding nested arches behind the back opening to suggest a deep corridor. */
-function BackCorridor({ climate }: { climate: Climate }) {
+function BackCorridor({ climate }: { climate: ClimateSceneTokens }) {
   const arches = [0, 1, 2];
   return (
     <g>
@@ -130,10 +130,10 @@ function BackCorridor({ climate }: { climate: Climate }) {
   );
 }
 
-function Decor({ climate }: { climate: Climate }) {
+function Decor({ climate, climateIndex }: { climate: ClimateSceneTokens; climateIndex: number }) {
   const a = climate.accent;
-  switch (climate.id) {
-    case "forest":
+  switch (climateIndex) {
+    case 0:
       return (
         <g>
           {/* hanging vines */}
@@ -156,7 +156,7 @@ function Decor({ climate }: { climate: Climate }) {
           ))}
         </g>
       );
-    case "rune-ruins":
+    case 1:
       return (
         <g stroke={a} strokeWidth="2" fill="none" opacity="0.7" className="dungeon-rune">
           <path d="M40 40 l10 -10 l10 10 l-10 10 Z" />
@@ -164,7 +164,7 @@ function Decor({ climate }: { climate: Climate }) {
           <path d="M150 24 l8 0 m-4 -4 v12" strokeLinecap="round" />
         </g>
       );
-    case "crystal-caverns":
+    case 2:
       return (
         <g>
           {[
@@ -185,7 +185,7 @@ function Decor({ climate }: { climate: Climate }) {
           ))}
         </g>
       );
-    case "entanglement-library":
+    case 3:
       return (
         <g>
           {/* floating books */}
@@ -204,7 +204,7 @@ function Decor({ climate }: { climate: Climate }) {
           <circle cx="262" cy="72" r="3" fill={a} />
         </g>
       );
-    case "algorithm-citadel":
+    case 4:
       return (
         <g stroke={a} fill="none" opacity="0.55">
           {/* gears */}
@@ -223,7 +223,7 @@ function Decor({ climate }: { climate: Climate }) {
           <circle cx="204" cy="34" r="2.5" fill={a} stroke="none" />
         </g>
       );
-    case "quantum-core":
+    case 5:
     default:
       return (
         <g>
@@ -240,7 +240,8 @@ function Decor({ climate }: { climate: Climate }) {
   }
 }
 
-export default function DungeonScene({ climate }: { climate: Climate }) {
+export default function DungeonScene({ climate: climateProp, children }: { climate: Climate; children?: ReactNode }) {
+  const climate = climateSceneTokens(climateProp);
   return (
     <div
       className="dungeon-scene pointer-events-none absolute inset-0 overflow-hidden rounded-3xl"
@@ -269,7 +270,7 @@ export default function DungeonScene({ climate }: { climate: Climate }) {
           </g>
         ))}
 
-        <Decor climate={climate} />
+        <Decor climate={climate} climateIndex={climateProp.index} />
 
         {/* side pillars */}
         {[8, 284].map((x, i) => (

@@ -6,7 +6,7 @@
 
 import type { PracticeQuestion } from "@/lib/ai/validators";
 import type { ConceptTag } from "@/lib/learning/concepts";
-import type { ChallengeKind, LocalChallenge } from "@/lib/tower/challenges";
+import type { ChallengeKind, LocalChallenge } from "@/lib/tower/arena-challenges";
 
 export const TOWER_QUESTION_HISTORY_KEY = "bq-tower-question-history-v1";
 
