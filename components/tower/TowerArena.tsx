@@ -724,7 +724,7 @@ export default function TowerArena() {
     : "";
 
   return (
-    <div className="font-arcane relative flex flex-1 flex-col bg-[radial-gradient(120%_120%_at_50%_-10%,#0c1430_0%,#070a12_55%,#04060c_100%)] text-slate-100">
+    <div className="font-arcane relative flex min-h-0 flex-1 flex-col bg-[radial-gradient(120%_120%_at_50%_-10%,#0c1430_0%,#070a12_55%,#04060c_100%)] text-slate-100">
       {leaving && <LeaveTransition reduce={reduce} onDone={() => router.push("/dashboard")} />}
       {climbing && (
         <ClimbTransition
@@ -748,19 +748,25 @@ export default function TowerArena() {
       {introReady && showIntro ? (
         <TowerIntro reduce={reduce} onComplete={() => setShowIntro(false)} />
       ) : !entered ? (
-        <div className="relative flex flex-1 flex-col">
+        <div className="relative flex min-h-0 flex-1 flex-col">
           <TowerGate
+            canEnter={() => {
+              if (isFloorUnlocked(1, progress, profile)) return true;
+              setToast(floorUnlockMessage(1, profile, progress));
+              later(() => setToast(null), 3500);
+              return false;
+            }}
             onEnter={() => {
-              if (!isFloorUnlocked(1, progress, profile)) {
-                setToast(floorUnlockMessage(1, profile, progress));
-                later(() => setToast(null), 3500);
-                return;
-              }
               setFocus(WIZARD_MAX_ENERGY);
               setEntered(true);
             }}
             reduce={reduce}
           />
+          {!isFloorUnlocked(1, progress, profile) && (
+            <div className="pointer-events-none absolute inset-x-4 top-24 z-30 mx-auto max-w-md rounded-xl border border-amber-400/35 bg-black/75 px-4 py-3 text-center text-sm text-amber-100 shadow-lg backdrop-blur-sm">
+              {floorUnlockMessage(1, profile, progress)}
+            </div>
+          )}
           <div className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2">
             <button
               type="button"

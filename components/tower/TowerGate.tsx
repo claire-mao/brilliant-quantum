@@ -10,17 +10,32 @@ import { FLAME_DOT, FLAME_GLOW_R, FLAME_ORIGIN_STYLE } from "@/components/tower/
  * swing open, then the light fills the view. A delicate glowing sigil rides the
  * doors. Pixel/SVG + CSS only; the swing is skipped under prefers-reduced-motion.
  */
-export default function TowerGate({ onEnter, reduce }: { onEnter: () => void; reduce: boolean }) {
+export default function TowerGate({
+  onEnter,
+  canEnter,
+  reduce,
+}: {
+  /** Called after the door animation (or immediately when motion is reduced). */
+  onEnter: () => void;
+  /** Sync gate before opening; return false to block the white flash animation. */
+  canEnter?: () => boolean;
+  reduce: boolean;
+}) {
   const [opening, setOpening] = useState(false);
 
   function handleEnter() {
     if (opening) return;
+    if (canEnter && !canEnter()) return;
     if (reduce) {
       onEnter();
       return;
     }
     setOpening(true);
-    window.setTimeout(onEnter, 1200);
+    window.setTimeout(() => {
+      onEnter();
+      // Parent may reject entry (e.g. floor still locked); undo the white flash.
+      setOpening(false);
+    }, 1200);
   }
 
   return (
