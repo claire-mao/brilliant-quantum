@@ -13,6 +13,7 @@ import { CONCEPT_LABEL, type ConceptTag } from "@/lib/learning/concepts";
 import { getLesson } from "@/content/lessons";
 
 export const runtime = "nodejs";
+export const maxDuration = 30;
 
 const MAX_TRANSCRIPT_CHARS = 4000;
 
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
         maxTokens: 900,
         temperature: 0.3,
         provider: llamaProvider(),
-        timeoutMs: 30_000,
+        timeoutMs: 20_000,
       });
       const analysis = parseTeachBack(raw, ctx.conceptLabel);
       if (analysis) {

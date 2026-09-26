@@ -85,9 +85,11 @@ export default function TeachBackPanel({
 }) {
   const conceptTag = teachBackConcept(lessonId);
   const conceptLabel = conceptTag ? CONCEPT_LABEL[conceptTag] : lessonTitle;
-  const prompt = (conceptTag && PROMPTS[conceptTag]) ?? `Explain the main idea of ${lessonTitle} in your own words.`;
+  const basePrompt = (conceptTag && PROMPTS[conceptTag]) ?? `Explain the main idea of ${lessonTitle} in your own words.`;
 
   const [stage, setStage] = useState<Stage>("intro");
+  const [challenge, setChallenge] = useState<string | null>(null);
+  const prompt = challenge ?? basePrompt;
   const [inputMode, setInputMode] = useState<InputMode>("voice");
   const [transcript, setTranscript] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -292,6 +294,7 @@ export default function TeachBackPanel({
   }, [transcript, lessonId, priorMastery, conceptTag]);
 
   const reset = useCallback(() => {
+    setChallenge(analysis?.followUpQuestion?.trim() || null);
     setStage("intro");
     setTranscript("");
     setAnalysis(null);
@@ -300,7 +303,7 @@ export default function TeachBackPanel({
     setNewMastery(null);
     if (conceptTag) setPriorMastery(getConceptMastery(conceptTag));
     if (!micSupported) setInputMode("typed");
-  }, [conceptTag, micSupported]);
+  }, [analysis, conceptTag, micSupported]);
 
   const busy = stage === "recording" || stage === "transcribing" || stage === "analyzing";
 
@@ -349,10 +352,14 @@ export default function TeachBackPanel({
           ) : (
             <>
               <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Your prompt</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                  {challenge ? "Your next challenge" : "Your prompt"}
+                </p>
                 <p className="mt-1 text-base leading-7 text-slate-800">{prompt}</p>
                 <p className="mt-1 text-sm text-slate-500">
-                  Teach it like you would to a friend. The tutor is looking for what you understand, not perfect wording.
+                  {challenge
+                    ? "Answer the challenge in your own words. The tutor will check whether the earlier gap is fixed."
+                    : "Teach it like you would to a friend. The tutor is looking for what you understand, not perfect wording."}
                 </p>
               </div>
 
