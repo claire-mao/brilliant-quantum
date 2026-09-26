@@ -6,6 +6,7 @@ import {
   teachBackConcept,
   type TeachBackContext,
 } from "./teachback";
+import { normalizeLlamaKey } from "./llama";
 
 const ctx: TeachBackContext = {
   lessonId: "qubits-superposition",
@@ -85,5 +86,14 @@ describe("teachBackConcept", () => {
     expect(teachBackConcept("qubits-superposition")).toBe("superposition");
     expect(teachBackConcept("measurement")).toBe("measurement");
     expect(teachBackConcept("nope")).toBeNull();
+  });
+});
+
+describe("normalizeLlamaKey", () => {
+  it("restores pipes mangled into underscores", () => {
+    expect(normalizeLlamaKey("LLM_123_abcDEF")).toBe("LLM|123|abcDEF");
+    expect(normalizeLlamaKey(" LLM|123|abc ")).toBe("LLM|123|abc");
+    expect(normalizeLlamaKey("gsk_other")).toBe("gsk_other");
+    expect(normalizeLlamaKey("")).toBeUndefined();
   });
 });

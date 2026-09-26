@@ -15,14 +15,25 @@ import type { ProviderConfig } from "@/lib/ai/client";
 export const LLAMA_DEFAULT_BASE_URL = "https://api.llama.com/compat/v1";
 export const LLAMA_DEFAULT_MODEL = "Llama-4-Maverick-17B-128E-Instruct-FP8";
 
+/**
+ * Meta Llama API keys have the shape `LLM|<digits>|<token>`. Secret managers
+ * and shells frequently mangle the `|` into `_`; accept both spellings.
+ */
+export function normalizeLlamaKey(raw: string | undefined): string | undefined {
+  const key = raw?.trim();
+  if (!key) return undefined;
+  const m = /^LLM_(\d+)_(.+)$/.exec(key);
+  return m ? `LLM|${m[1]}|${m[2]}` : key;
+}
+
 export function llamaProvider(): ProviderConfig {
   return {
-    apiKey: process.env.LLAMA_API_KEY,
+    apiKey: normalizeLlamaKey(process.env.LLAMA_API_KEY),
     baseUrl: process.env.LLAMA_BASE_URL ?? LLAMA_DEFAULT_BASE_URL,
     model: process.env.LLAMA_MODEL ?? LLAMA_DEFAULT_MODEL,
   };
 }
 
 export function llamaConfigured(): boolean {
-  return Boolean(process.env.LLAMA_API_KEY);
+  return Boolean(normalizeLlamaKey(process.env.LLAMA_API_KEY));
 }
