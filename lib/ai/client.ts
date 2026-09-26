@@ -14,6 +14,12 @@ export class AIUnavailableError extends Error {
   }
 }
 
+export interface ProviderConfig {
+  apiKey: string | undefined;
+  baseUrl: string;
+  model: string;
+}
+
 interface ChatOptions {
   system: string;
   user: string;
@@ -21,9 +27,20 @@ interface ChatOptions {
   json?: boolean;
   maxTokens?: number;
   temperature?: number;
+  /** Override the default OpenAI-compatible provider (e.g. a Llama endpoint). */
+  provider?: ProviderConfig;
+  timeoutMs?: number;
 }
 
 const TIMEOUT_MS = 12_000;
+
+function defaultProvider(): ProviderConfig {
+  return {
+    apiKey: process.env.OPENAI_API_KEY,
+    baseUrl: process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1",
+    model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+  };
+}
 
 export async function chat({
   system,
@@ -31,18 +48,17 @@ export async function chat({
   json = false,
   maxTokens = 300,
   temperature = 0.6,
+  provider,
+  timeoutMs = TIMEOUT_MS,
 }: ChatOptions): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const { apiKey, baseUrl, model } = provider ?? defaultProvider();
   if (!apiKey) throw new AIUnavailableError();
 
-  const baseUrl = process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
-  const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
-
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(`${baseUrl}/chat/completions`, {
+    const res = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

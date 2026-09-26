@@ -24,6 +24,7 @@ import RetrievalPrompt from "@/components/learning/RetrievalPrompt";
 import { conceptsForLesson, primaryConcept } from "@/lib/learning/concepts";
 import { recordLessonPracticed } from "@/lib/learning/signals";
 import { getNextRetrievalPrompt, type RetrievalPromptResult } from "@/lib/learning/learner-model";
+import TeachBackButton from "@/components/teachback/TeachBackButton";
 
 export default function LessonPage() {
   const params = useParams<{ lessonId: string }>();
@@ -248,6 +249,7 @@ function LessonPlayer() {
           ← {lesson.title}
         </Link>
         <div className="flex shrink-0 items-center gap-3 sm:gap-4">
+          <TeachBackButton lessonId={lessonId} lessonTitle={lesson.title} compact />
           <button
             type="button"
             onClick={startRun}
@@ -288,14 +290,17 @@ function LessonPlayer() {
       </div>
 
       <div className="mt-10">
-        <button
-          type="button"
-          onClick={handleNext}
-          disabled={!canAdvance || saving}
-          className="min-h-11 w-full rounded-lg bg-indigo-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-        >
-          {saving ? "Saving..." : isLast ? "Finish lesson" : "Next"}
-        </button>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <button
+            type="button"
+            onClick={handleNext}
+            disabled={!canAdvance || saving}
+            className="min-h-11 w-full rounded-lg bg-indigo-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          >
+            {saving ? "Saving..." : isLast ? "Finish lesson" : "Next"}
+          </button>
+          {isLast && <TeachBackButton lessonId={lessonId} lessonTitle={lesson.title} />}
+        </div>
         {!canAdvance && (
           <p className="mt-2 text-sm text-slate-400">{advanceHint(step)}</p>
         )}
@@ -461,6 +466,16 @@ function CompletionView({
         <span className="rounded-lg bg-slate-100 px-3 py-2 text-slate-700">
           Times completed: <span className="font-semibold tabular-nums">{attempts}</span>
         </span>
+      </div>
+
+      <div className="mx-auto mt-6 max-w-xl rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 px-5 py-4 text-left">
+        <p className="text-sm font-semibold text-violet-900">Lock it in: teach it back</p>
+        <p className="mt-1 text-sm text-violet-800/80">
+          Explain {lesson.title.toLowerCase()} in your own words and your AI tutor will show what you understood, what to fix, and your next challenge.
+        </p>
+        <div className="mt-3">
+          <TeachBackButton lessonId={lesson.id} lessonTitle={lesson.title} />
+        </div>
       </div>
 
       {retrieval && (
