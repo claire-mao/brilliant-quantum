@@ -96,6 +96,7 @@ function sceneFor(pathname: string, profile: UserProfile | null): SceneCopy {
 
 /** Session-scoped memory so repeated clicks vary and hints escalate per question. */
 const shownFacts: string[] = [];
+const FACT_HISTORY = 5;
 const shownPractice: string[] = [];
 const hintLevels = new Map<string, number>();
 
@@ -112,7 +113,6 @@ function wizardRequest(ctx: ActiveLessonContext): Omit<WizardRequest, "action"> 
     concept: ctx.concept,
     question: ctx.question,
     choices: ctx.choices,
-    correctAnswer: ctx.correctAnswer,
     studentAnswer: attempt?.studentAnswer ?? null,
     incorrectAttempts: attempt?.incorrectAttempts ?? 0,
     attemptFeedback: attempt?.lastFeedback,
@@ -227,13 +227,14 @@ export default function SummonWizardButton() {
       void withWizard(async () => {
         const reply = await callWizard({
           action: "fun_fact",
-          avoid: shownFacts.slice(-10),
+          avoidFacts: shownFacts.slice(-FACT_HISTORY),
           ...(lessonCtx
             ? wizardRequest(lessonCtx)
             : { lessonTitle: aiTopicForPage(pathname), concept: aiTopicForPage(pathname) }),
         });
         const fact = reply?.text ?? fallbackFunFact(lessonCtx?.conceptTag ?? null, shownFacts);
         shownFacts.push(fact);
+        if (shownFacts.length > FACT_HISTORY) shownFacts.splice(0, shownFacts.length - FACT_HISTORY);
         speak(fact, lessonCtx ? LESSON_ACTIONS : [], -12, 30000);
       });
     }

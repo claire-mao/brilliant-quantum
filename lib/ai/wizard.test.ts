@@ -36,8 +36,12 @@ describe("wizardPrompt", () => {
   });
 
   it("passes the avoid list for facts and practice", () => {
-    const facts = wizardPrompt({ action: "fun_fact", ...base, avoid: ["Fact one.", "Fact two."] });
+    const facts = wizardPrompt({ action: "fun_fact", ...base, avoidFacts: ["Fact one.", "Fact two."] });
     expect(facts.user).toContain("- Fact one.");
+    expect(facts.user).toContain("- Fact two.");
+    expect(facts.user).toMatch(/do not repeat, reword, or closely paraphrase/);
+    const hint = wizardPrompt({ action: "hint", ...base, avoidFacts: ["Fact one."] });
+    expect(hint.user).not.toContain("Fact one.");
     const practice = wizardPrompt({ action: "practice", ...base, avoid: ["Old question?"] });
     expect(practice.user).toContain("- Old question?");
     expect(practice.system).toContain('"answer": string');

@@ -16,13 +16,16 @@ export interface WizardRequest {
   question?: string;
   choices?: string[];
   studentAnswer?: string | null;
+  /** Resolved server-side from lesson content; never sent by the client. */
   correctAnswer?: string;
   /** Feedback shown for the learner's last wrong choice (names the misconception). */
   attemptFeedback?: string;
   incorrectAttempts?: number;
   hintLevel?: WizardHintLevel;
-  /** Previously shown facts / practice questions to steer away from. */
+  /** Previously shown practice questions to steer away from. */
   avoid?: string[];
+  /** Recently shown fun facts (client keeps the last few). */
+  avoidFacts?: string[];
   /** Explanatory text of the current step, when there is no question. */
   stepSummary?: string;
 }
@@ -71,8 +74,9 @@ function contextBlock(req: WizardRequest): string {
 
 export function wizardPrompt(req: WizardRequest): { system: string; user: string } {
   const ctx = contextBlock(req);
-  const avoid = req.avoid?.length
-    ? `\nAlready shown this session (do NOT repeat or closely paraphrase any of these):\n${req.avoid.map((a) => `- ${a}`).join("\n")}`
+  const avoidList = req.action === "fun_fact" ? [...(req.avoidFacts ?? []), ...(req.avoid ?? [])] : req.avoid ?? [];
+  const avoid = avoidList.length
+    ? `\nAlready shown this session (do NOT repeat or closely paraphrase any of these):\n${avoidList.map((a) => `- ${a}`).join("\n")}`
     : "";
 
   if (req.action === "hint") {
@@ -108,7 +112,8 @@ export function wizardPrompt(req: WizardRequest): { system: string; user: string
     system: `${PERSONA}\n\nReturn ONLY a JSON object: {"text": string}. No markdown, no code fences.`,
     user:
       `${ctx}${avoid}\n\nTask: Share ONE short, accurate, interesting fun fact (max 220 characters) directly connected to the current lesson step or concept: ` +
-      `history, a real experiment, a surprising consequence, or a real quantum technology that uses this idea. It must be different in substance from every avoided fact. ` +
+      `history, a real experiment, a surprising consequence, or a real quantum technology that uses this idea. ` +
+      `It must be different in substance from every fact in the already-shown list: do not repeat, reword, or closely paraphrase any of them, and pick a different angle (e.g. history vs. technology vs. experiment). ` +
       `Do not restate the step text or ask a question.`,
   };
 }

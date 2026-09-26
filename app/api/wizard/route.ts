@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { anthropicConfigured, claudeChat } from "@/lib/ai/anthropic";
+import { getLesson } from "@/content/lessons";
+import { correctAnswerFor } from "@/lib/companions/lesson-context";
 import {
   WIZARD_ACTIONS,
   parseWizardReply,
@@ -14,6 +16,7 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const MAX_AVOID = 12;
+const MAX_AVOID_FACTS = 5;
 const MAX_TEXT = 1200;
 
 function str(value: unknown, max = MAX_TEXT): string | undefined {
@@ -51,20 +54,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
   }
 
+  const lessonId = str(body.lessonId, 80);
+  const question = str(body.question);
   const req: WizardRequest = {
     action: action as WizardAction,
-    lessonId: str(body.lessonId, 80),
+    lessonId,
     lessonTitle: str(body.lessonTitle, 160),
     step: str(body.step, 200),
     concept: str(body.concept, 120),
-    question: str(body.question),
+    question,
     choices: strArray(body.choices, 8),
     studentAnswer: str(body.studentAnswer, 300) ?? null,
-    correctAnswer: str(body.correctAnswer, 300),
+    correctAnswer: action === "hint" ? correctAnswerFor(lessonId ? getLesson(lessonId) : undefined, question) : undefined,
     attemptFeedback: str(body.attemptFeedback, 400),
     incorrectAttempts: num(body.incorrectAttempts),
     hintLevel: toHintLevel(body.hintLevel),
     avoid: strArray(body.avoid, MAX_AVOID),
+    avoidFacts: strArray(body.avoidFacts, MAX_AVOID_FACTS),
     stepSummary: str(body.stepSummary, 600),
   };
 
