@@ -27,7 +27,7 @@ interface ChatOptions {
   json?: boolean;
   maxTokens?: number;
   temperature?: number;
-  /** Override the default OpenAI-compatible provider (e.g. a Llama endpoint). */
+  /** Override the default OpenAI-compatible provider (base URL, model, key). */
   provider?: ProviderConfig;
   timeoutMs?: number;
 }

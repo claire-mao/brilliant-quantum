@@ -1,7 +1,7 @@
 /**
  * Adaptive Teach-Back tutor: shared types, the formative-assessment prompt,
  * a strict validator for the model's structured output, and a handwritten
- * fallback analysis so the flow keeps working when no Llama key is configured.
+ * fallback analysis so the flow keeps working when no Anthropic key is configured.
  *
  * Safe to import from client code (no secrets, no network calls).
  */
@@ -129,7 +129,7 @@ export const TEACHBACK_SYSTEM = [
   "6. tutorResponse: 3-5 sentences, second person, addressed to this learner. Start from what they said, then repair the single most important misconception (or fill the biggest gap) with a precise explanation. For superposition, explain probability amplitudes and that probabilities are squared amplitudes. Never generic, never overpraise, no exclamation marks, no lists.",
   "7. followUpQuestion: exactly ONE concrete challenge question that targets the misconception or gap and can be answered in a sentence or two. Not a yes/no question.",
   "",
-  "Return ONLY a JSON object with keys: concept, masteryScore, correctIdeas, misconceptions, missingIdeas, teachingStrategy, tutorResponse, followUpQuestion. No markdown, no extra keys.",
+  "Return ONLY a JSON object with keys: concept, masteryScore, correctIdeas, misconceptions, missingIdeas, teachingStrategy, tutorResponse, followUpQuestion. correctIdeas, misconceptions and missingIdeas MUST be JSON arrays of short strings (one idea per string, [] when none). masteryScore MUST be a number. No markdown, no code fences, no extra keys.",
 ].join("\n");
 
 export function teachBackPrompt(ctx: TeachBackContext): { system: string; user: string } {
@@ -153,6 +153,7 @@ function asString(value: unknown): string | null {
 }
 
 function asStringArray(value: unknown): string[] {
+  if (typeof value === "string") return value.trim() ? [value.trim()] : [];
   if (!Array.isArray(value)) return [];
   return value.filter((v): v is string => typeof v === "string" && v.trim() !== "").map((v) => v.trim());
 }

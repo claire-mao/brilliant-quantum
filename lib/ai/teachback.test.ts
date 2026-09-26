@@ -6,7 +6,6 @@ import {
   teachBackConcept,
   type TeachBackContext,
 } from "./teachback";
-import { normalizeLlamaKey } from "./llama";
 
 const ctx: TeachBackContext = {
   lessonId: "qubits-superposition",
@@ -19,6 +18,26 @@ const ctx: TeachBackContext = {
 };
 
 describe("parseTeachBack", () => {
+  it("wraps single-string list fields and tolerates code fences", () => {
+    const out = parseTeachBack(
+      "```json\n" +
+        JSON.stringify({
+          concept: "Superposition",
+          masteryScore: 20,
+          correctIdeas: "measurement gives one outcome",
+          misconceptions: "both 0 and 1 literally",
+          missingIdeas: "",
+          teachingStrategy: "correct-misconception",
+          tutorResponse: "You said...",
+          followUpQuestion: "Why square the amplitude?",
+        }) +
+        "\n```"
+    );
+    expect(out?.correctIdeas).toEqual(["measurement gives one outcome"]);
+    expect(out?.misconceptions).toEqual(["both 0 and 1 literally"]);
+    expect(out?.missingIdeas).toEqual([]);
+  });
+
   it("accepts a well-formed response and clamps the score", () => {
     const out = parseTeachBack(
       JSON.stringify({
@@ -89,11 +108,3 @@ describe("teachBackConcept", () => {
   });
 });
 
-describe("normalizeLlamaKey", () => {
-  it("restores pipes mangled into underscores", () => {
-    expect(normalizeLlamaKey("LLM_123_abcDEF")).toBe("LLM|123|abcDEF");
-    expect(normalizeLlamaKey(" LLM|123|abc ")).toBe("LLM|123|abc");
-    expect(normalizeLlamaKey("gsk_other")).toBe("gsk_other");
-    expect(normalizeLlamaKey("")).toBeUndefined();
-  });
-});
