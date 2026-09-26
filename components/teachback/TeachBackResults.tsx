@@ -185,8 +185,9 @@ function ListenButton({ text }: { text: string }) {
       return;
     }
     if (audioRef.current && urlRef.current) {
-      void audioRef.current.play();
-      setState("playing");
+      const el = audioRef.current;
+      el.currentTime = 0;
+      el.play().then(() => setState("playing")).catch(() => setState("error"));
       return;
     }
     setState("loading");

@@ -21,6 +21,23 @@ type Stage =
 type InputMode = "voice" | "typed";
 
 const MAX_RECORDING_SECONDS = 90;
+/** Client-side ceiling so the modal never hangs on a spinner if the network stalls. */
+const REQUEST_TIMEOUT_MS = 45_000;
+
+/** fetch that always settles: aborts (and rejects with AbortError) after `ms`. */
+async function fetchWithTimeout(input: RequestInfo, init: RequestInit, ms: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+function isAbort(err: unknown): boolean {
+  return err instanceof DOMException && err.name === "AbortError";
+}
 
 const PROMPTS: Partial<Record<string, string>> = {
   superposition: "Explain what a qubit in superposition is, and what happens when you measure it.",
@@ -141,7 +158,7 @@ export default function TeachBackPanel({
       try {
         const form = new FormData();
         form.append("audio", blob, "teachback.webm");
-        const res = await fetch("/api/teachback/transcribe", { method: "POST", body: form });
+        const res = await fetchWithTimeout("/api/teachback/transcribe", { method: "POST", body: form }, REQUEST_TIMEOUT_MS);
         const data = (await res.json().catch(() => ({}))) as { transcript?: string; error?: string };
         if (res.ok && data.transcript) {
           setTranscript(data.transcript);
@@ -161,8 +178,12 @@ export default function TeachBackPanel({
         }
         setError("Transcription failed. You can retry the recording or type your explanation.");
         setStage("intro");
-      } catch {
-        setError("Could not reach the transcription service. Check your connection, retry, or type instead.");
+      } catch (err) {
+        setError(
+          isAbort(err)
+            ? "Transcription is taking too long. Retry, or type your explanation instead."
+            : "Could not reach the transcription service. Check your connection, retry, or type instead."
+        );
         setStage("intro");
       }
     },
@@ -226,11 +247,15 @@ export default function TeachBackPanel({
     setError(null);
     setStage("analyzing");
     try {
-      const res = await fetch("/api/teachback/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lessonId, transcript: text, priorMastery }),
-      });
+      const res = await fetchWithTimeout(
+        "/api/teachback/analyze",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lessonId, transcript: text, priorMastery }),
+        },
+        REQUEST_TIMEOUT_MS
+      );
       const data = (await res.json().catch(() => ({}))) as {
         analysis?: TeachBackAnalysis;
         source?: "llama" | "fallback";
@@ -256,8 +281,12 @@ export default function TeachBackPanel({
       }
       playSound(data.analysis.masteryScore >= 50 ? "correct" : "complete");
       setStage("results");
-    } catch {
-      setError("Could not reach the tutor. Check your connection and try again.");
+    } catch (err) {
+      setError(
+        isAbort(err)
+          ? "The tutor is taking too long to respond. Please try again."
+          : "Could not reach the tutor. Check your connection and try again."
+      );
       setStage("review");
     }
   }, [transcript, lessonId, priorMastery, conceptTag]);
