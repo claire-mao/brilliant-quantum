@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 45;
 
 const MAX_AUDIO_BYTES = 15 * 1024 * 1024;
 const TIMEOUT_MS = 30_000;

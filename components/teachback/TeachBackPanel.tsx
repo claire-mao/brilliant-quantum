@@ -21,6 +21,23 @@ type Stage =
 type InputMode = "voice" | "typed";
 
 const MAX_RECORDING_SECONDS = 90;
+/** Client-side ceiling so the modal never hangs on a spinner if the network stalls. */
+const REQUEST_TIMEOUT_MS = 45_000;
+
+/** fetch that always settles: aborts (and rejects with AbortError) after `ms`. */
+async function fetchWithTimeout(input: RequestInfo, init: RequestInit, ms: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+function isAbort(err: unknown): boolean {
+  return err instanceof DOMException && err.name === "AbortError";
+}
 
 const PROMPTS: Partial<Record<string, string>> = {
   superposition: "Explain what a qubit in superposition is, and what happens when you measure it.",
@@ -68,9 +85,11 @@ export default function TeachBackPanel({
 }) {
   const conceptTag = teachBackConcept(lessonId);
   const conceptLabel = conceptTag ? CONCEPT_LABEL[conceptTag] : lessonTitle;
-  const prompt = (conceptTag && PROMPTS[conceptTag]) ?? `Explain the main idea of ${lessonTitle} in your own words.`;
+  const basePrompt = (conceptTag && PROMPTS[conceptTag]) ?? `Explain the main idea of ${lessonTitle} in your own words.`;
 
   const [stage, setStage] = useState<Stage>("intro");
+  const [challenge, setChallenge] = useState<string | null>(null);
+  const prompt = challenge ?? basePrompt;
   const [inputMode, setInputMode] = useState<InputMode>("voice");
   const [transcript, setTranscript] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -141,7 +160,7 @@ export default function TeachBackPanel({
       try {
         const form = new FormData();
         form.append("audio", blob, "teachback.webm");
-        const res = await fetch("/api/teachback/transcribe", { method: "POST", body: form });
+        const res = await fetchWithTimeout("/api/teachback/transcribe", { method: "POST", body: form }, REQUEST_TIMEOUT_MS);
         const data = (await res.json().catch(() => ({}))) as { transcript?: string; error?: string };
         if (res.ok && data.transcript) {
           setTranscript(data.transcript);
@@ -161,8 +180,12 @@ export default function TeachBackPanel({
         }
         setError("Transcription failed. You can retry the recording or type your explanation.");
         setStage("intro");
-      } catch {
-        setError("Could not reach the transcription service. Check your connection, retry, or type instead.");
+      } catch (err) {
+        setError(
+          isAbort(err)
+            ? "Transcription is taking too long. Retry, or type your explanation instead."
+            : "Could not reach the transcription service. Check your connection, retry, or type instead."
+        );
         setStage("intro");
       }
     },
@@ -226,11 +249,15 @@ export default function TeachBackPanel({
     setError(null);
     setStage("analyzing");
     try {
-      const res = await fetch("/api/teachback/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lessonId, transcript: text, priorMastery }),
-      });
+      const res = await fetchWithTimeout(
+        "/api/teachback/analyze",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lessonId, transcript: text, priorMastery }),
+        },
+        REQUEST_TIMEOUT_MS
+      );
       const data = (await res.json().catch(() => ({}))) as {
         analysis?: TeachBackAnalysis;
         source?: "llama" | "fallback";
@@ -256,13 +283,18 @@ export default function TeachBackPanel({
       }
       playSound(data.analysis.masteryScore >= 50 ? "correct" : "complete");
       setStage("results");
-    } catch {
-      setError("Could not reach the tutor. Check your connection and try again.");
+    } catch (err) {
+      setError(
+        isAbort(err)
+          ? "The tutor is taking too long to respond. Please try again."
+          : "Could not reach the tutor. Check your connection and try again."
+      );
       setStage("review");
     }
   }, [transcript, lessonId, priorMastery, conceptTag]);
 
   const reset = useCallback(() => {
+    setChallenge(analysis?.followUpQuestion?.trim() || null);
     setStage("intro");
     setTranscript("");
     setAnalysis(null);
@@ -271,7 +303,7 @@ export default function TeachBackPanel({
     setNewMastery(null);
     if (conceptTag) setPriorMastery(getConceptMastery(conceptTag));
     if (!micSupported) setInputMode("typed");
-  }, [conceptTag, micSupported]);
+  }, [analysis, conceptTag, micSupported]);
 
   const busy = stage === "recording" || stage === "transcribing" || stage === "analyzing";
 
@@ -320,10 +352,14 @@ export default function TeachBackPanel({
           ) : (
             <>
               <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Your prompt</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                  {challenge ? "Your next challenge" : "Your prompt"}
+                </p>
                 <p className="mt-1 text-base leading-7 text-slate-800">{prompt}</p>
                 <p className="mt-1 text-sm text-slate-500">
-                  Teach it like you would to a friend. The tutor is looking for what you understand, not perfect wording.
+                  {challenge
+                    ? "Answer the challenge in your own words. The tutor will check whether the earlier gap is fixed."
+                    : "Teach it like you would to a friend. The tutor is looking for what you understand, not perfect wording."}
                 </p>
               </div>
 
