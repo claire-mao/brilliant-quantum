@@ -22,7 +22,7 @@ Brilliant Quantum is a learn-by-doing web app that teaches introductory quantum 
 
 - **Interactive quantum lessons** — six units of bite-sized lessons taught through reusable, configurable visualizations and simulators (Bloch sphere, gate labs, circuit builders, amplitude/interference explorers, two-qubit and entanglement tools, search/oracle/period-finding, hardware comparisons, and more), built with React and inline SVG.
 - **Progress persistence** — current step, completion, attempts, and streaks are saved per user in Cloud Firestore, so learners can leave and resume exactly where they left off.
-- **AI wizard companion** — a floating Guide Wizard offers **hints**, **practice questions**, and **fun facts** through server-side OpenAI calls. All AI is additive and degrades gracefully: if the key is missing or a request fails, handwritten fallbacks keep every lesson fully usable with AI turned off.
+- **AI wizard companion** — a floating Guide Wizard offers **hints**, **practice questions**, and **fun facts** through a single server-side `POST /api/wizard` route backed by Anthropic Claude, aware of the current lesson step, on-screen question, answer choices, and attempt state (the Wizard Tower's wrong-answer hints still use the OpenAI routes). All AI is additive and degrades gracefully: if the key is missing or a request fails, handwritten fallbacks keep every lesson fully usable with AI turned off.
 - **Adaptive Teach-Back Tutor** — every lesson has a **Teach It Back** button. Learners record (or type) an explanation in their own words; Deepgram transcribes it server-side, Anthropic Claude performs a formative assessment (correct ideas, misconceptions, missing ideas, 0–100 mastery, teaching strategy, tutor explanation, one follow-up challenge), and the results render as “What you understood / One thing to fix / Next challenge” with an optional ElevenLabs **Listen** button. Per-concept mastery is kept in `localStorage` (`bq-teachback-profile-v1`) and shown on `/profile`. Without keys, a rubric-based offline tutor keeps the flow demoable.
 - **Wizard Tower** (`/tower`) — a retrieval-practice arena with seven floors (six unit reviews + Eve boss). Learners battle concept “monsters” with quick recall questions, progressive feedback, and a floor map.
 - **Learning science engine** — a lightweight, client-side learner model tracks per-concept signals and drives **retrieval practice**, **spaced review**, **progressive (leveled) hints**, **worked examples**, prerequisite reminders, and **mastery** language. See [`LEARNING_SCIENCE.md`](./LEARNING_SCIENCE.md).
@@ -53,6 +53,7 @@ flowchart TB
     Hint["/api/ai/hint"]
     Practice["/api/ai/practice"]
     FunFact["/api/ai/fun-fact"]
+    Wizard["/api/wizard"]
   end
 
   subgraph Firebase["Firebase"]
@@ -84,13 +85,13 @@ flowchart TB
   FloorPlan --> Battle
   Battle --> Model
   Battle --> Practice
-  Companion --> Hint
-  Companion --> FunFact
+  Companion --> Wizard
   Pages --> Auth
   Pages --> Firestore
   Hint --> OpenAI[(OpenAI API)]
   Practice --> OpenAI
   FunFact --> OpenAI
+  Wizard --> Claude[(Anthropic Claude)]
 ```
 
 **Data flow in brief:** lesson content lives in typed TS data; Firestore stores durable progress; localStorage holds learning signals and Tower cursor; the learner model is derived from both. AI routes never expose keys to the browser.
@@ -150,7 +151,7 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 ```
 
-**OpenAI** (server-only — required for AI features):
+**OpenAI** (server-only — Wizard Tower AI hints):
 
 ```text
 OPENAI_API_KEY=
@@ -185,7 +186,7 @@ In the Firebase Console: enable **Authentication → Email/Password** (and **Goo
 | `npm run test:watch` | Vitest in watch mode |
 | `npm run verify:tower` | Validate Tower question bank |
 
-The app works without `OPENAI_API_KEY` — AI features fall back to handwritten content.
+The app works without `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` — AI features fall back to handwritten content.
 
 ## Testing locally
 
@@ -217,7 +218,7 @@ Deployed on **Vercel**:
 2. Add all environment variables for Production, Preview, and Development:
    - the six `NEXT_PUBLIC_FIREBASE_*` values
    - `OPENAI_API_KEY` (plus optional `OPENAI_BASE_URL` / `OPENAI_MODEL`)
-   - `ANTHROPIC_API_KEY`, `DEEPGRAM_API_KEY`, `ELEVENLABS_API_KEY` for the Teach-Back tutor
+   - `ANTHROPIC_API_KEY` for the Guide Wizard and Teach-Back tutor; `DEEPGRAM_API_KEY`, `ELEVENLABS_API_KEY` for Teach-Back speech
    - Because `NEXT_PUBLIC_*` vars are inlined at build time, they must exist **before** the build runs.
 3. Deploy from GitHub (push to the production branch, or click **Deploy**).
 4. Add the Vercel domain to **Firebase Authentication → Settings → Authorized domains**, or sign-in will be rejected on the deployed site.
@@ -225,7 +226,7 @@ Deployed on **Vercel**:
 ## Security
 
 - **Never commit `.env.local`** (or any real keys). It is covered by `.gitignore` (`.env*`).
-- **`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPGRAM_API_KEY`, and `ELEVENLABS_API_KEY` must stay server-side — do NOT prefix them with `NEXT_PUBLIC_`.** They are read only inside `app/api/ai/*` and `app/api/teachback/*` route handlers; the browser only ever talks to those routes.
+- **`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPGRAM_API_KEY`, and `ELEVENLABS_API_KEY` must stay server-side — do NOT prefix them with `NEXT_PUBLIC_`.** They are read only inside `app/api/ai/*`, `app/api/wizard`, and `app/api/teachback/*` route handlers; the browser only ever talks to those routes.
 - **`NEXT_PUBLIC_FIREBASE_*` values are safe to expose** (client config protected by Firestore security rules).
 
 ## Further reading

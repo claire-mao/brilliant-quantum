@@ -20,7 +20,6 @@ export interface ActiveLessonContext {
   /** Exact question shown on screen, when the step asks one. */
   question?: string;
   choices?: string[];
-  correctAnswer?: string;
   /** Short excerpt of the step's explanatory text (no question). */
   stepSummary?: string;
 }
@@ -47,7 +46,9 @@ function excerpt(text: string | undefined, max = 360): string | undefined {
 }
 
 /** Pull question / choices / explanation out of any lesson step shape. */
-function describeStep(step: LessonStep): Pick<ActiveLessonContext, "question" | "choices" | "correctAnswer" | "stepSummary"> {
+function describeStep(
+  step: LessonStep
+): Pick<ActiveLessonContext, "question" | "choices" | "stepSummary"> & { correctAnswer?: string } {
   const s = step as unknown as Record<string, unknown>;
   const options = Array.isArray(s.options)
     ? (s.options as { label?: unknown; correct?: unknown }[])
@@ -82,6 +83,7 @@ export function lessonContextFromStep(lesson: Lesson, stepIndex: number): Active
   const step = lesson.steps[stepIndex];
   if (!step) return null;
   const conceptTag = primaryConcept(lesson.id);
+  const { question, choices, stepSummary } = describeStep(step);
   return {
     lessonId: lesson.id,
     lessonTitle: lesson.title,
@@ -92,8 +94,24 @@ export function lessonContextFromStep(lesson: Lesson, stepIndex: number): Active
     stepType: step.type,
     conceptTag,
     concept: conceptTag ? CONCEPT_LABEL[conceptTag] : lesson.title,
-    ...describeStep(step),
+    question,
+    choices,
+    stepSummary,
   };
+}
+
+/**
+ * Server-side lookup of the graded answer for a question, so the client never
+ * has to send it. Matches the exact prompt text within the lesson.
+ */
+export function correctAnswerFor(lesson: Lesson | undefined, question: string | undefined): string | undefined {
+  if (!lesson || !question) return undefined;
+  const target = question.trim();
+  for (const step of lesson.steps) {
+    const d = describeStep(step);
+    if (d.question === target) return d.correctAnswer;
+  }
+  return undefined;
 }
 
 export function setActiveLessonContext(ctx: ActiveLessonContext | null): void {
