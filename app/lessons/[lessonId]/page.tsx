@@ -289,8 +289,8 @@ function LessonPlayer() {
         />
       </div>
 
-      <div className="mt-10">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="mt-10 pb-28 sm:pb-24">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
             onClick={handleNext}
@@ -302,7 +302,7 @@ function LessonPlayer() {
           {isLast && <TeachBackButton lessonId={lessonId} lessonTitle={lesson.title} />}
         </div>
         {!canAdvance && (
-          <p className="mt-2 text-sm text-slate-400">{advanceHint(step)}</p>
+          <p className="mt-2 text-sm text-slate-400 sm:text-right">{advanceHint(step)}</p>
         )}
       </div>
     </main>

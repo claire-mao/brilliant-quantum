@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 45;
 
 const MAX_TEXT_CHARS = 2000;
 const TIMEOUT_MS = 30_000;

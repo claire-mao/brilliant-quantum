@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { TeachBackAnalysis, TeachingStrategy } from "@/lib/ai/teachback";
 import { masteryTone } from "@/lib/learning/teachback-profile";
 
@@ -14,6 +14,8 @@ const STRATEGY_LABEL: Record<TeachingStrategy, string> = {
 };
 
 type TtsState = "idle" | "loading" | "playing" | "unavailable" | "error";
+
+const TTS_TIMEOUT_MS = 30_000;
 
 export default function TeachBackResults({
   analysis,
@@ -65,8 +67,8 @@ export default function TeachBackResults({
           <p className="mt-2 text-xs text-slate-500">
             Strategy: <span className="font-medium text-slate-700">{STRATEGY_LABEL[analysis.teachingStrategy]}</span>
             {source === "fallback" && (
-              <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 font-medium text-slate-600" title="The Llama model was unavailable; a rubric-based tutor produced this feedback.">
-                offline tutor
+              <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 font-medium text-slate-600" title="The Llama model was unavailable; the built-in rubric tutor produced this feedback.">
+                rubric tutor
               </span>
             )}
           </p>
@@ -107,7 +109,7 @@ export default function TeachBackResults({
             </>
           ) : (
             <p className="mt-2 text-sm leading-6 text-amber-950">
-              No misconceptions spotted. Push toward precision: name the amplitudes and how they turn into probabilities.
+              No misconceptions spotted and no key idea missing. Keep sharpening your wording with the next challenge below.
             </p>
           )}
           {(analysis.misconceptions.length > 1 || (fixKind === "misconception" && analysis.missingIdeas.length > 0)) && (
@@ -169,13 +171,54 @@ function ListenButton({ text }: { text: string }) {
   const [state, setState] = useState<TtsState>("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const urlRef = useRef<string | null>(null);
+  const pendingRef = useRef<Promise<HTMLAudioElement | null> | null>(null);
 
+  const fetchAudio = useCallback((): Promise<HTMLAudioElement | null> => {
+    if (audioRef.current) return Promise.resolve(audioRef.current);
+    if (pendingRef.current) return pendingRef.current;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), TTS_TIMEOUT_MS);
+    const p = (async () => {
+      try {
+        const res = await fetch("/api/teachback/speak", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+          signal: controller.signal,
+        });
+        if (res.status === 503) {
+          setState("unavailable");
+          return null;
+        }
+        if (!res.ok) return null;
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        urlRef.current = url;
+        const audio = new Audio(url);
+        audio.preload = "auto";
+        audio.onended = () => setState("idle");
+        audio.onerror = () => setState("error");
+        audioRef.current = audio;
+        return audio;
+      } catch {
+        return null;
+      } finally {
+        window.clearTimeout(timer);
+        pendingRef.current = null;
+      }
+    })();
+    pendingRef.current = p;
+    return p;
+  }, [text]);
+
+  // Warm the voice as soon as results render so "Listen" starts instantly.
   useEffect(() => {
+    void fetchAudio();
     return () => {
       audioRef.current?.pause();
       if (urlRef.current) URL.revokeObjectURL(urlRef.current);
     };
-  }, []);
+  }, [fetchAudio]);
 
   async function toggle() {
     if (state === "playing") {
@@ -184,34 +227,14 @@ function ListenButton({ text }: { text: string }) {
       setState("idle");
       return;
     }
-    if (audioRef.current && urlRef.current) {
-      const el = audioRef.current;
-      el.currentTime = 0;
-      el.play().then(() => setState("playing")).catch(() => setState("error"));
+    if (!audioRef.current) setState("loading");
+    const audio = await fetchAudio();
+    if (!audio) {
+      setState((s) => (s === "unavailable" ? s : "error"));
       return;
     }
-    setState("loading");
     try {
-      const res = await fetch("/api/teachback/speak", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      if (res.status === 503) {
-        setState("unavailable");
-        return;
-      }
-      if (!res.ok) {
-        setState("error");
-        return;
-      }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      urlRef.current = url;
-      const audio = new Audio(url);
-      audio.onended = () => setState("idle");
-      audio.onerror = () => setState("error");
-      audioRef.current = audio;
+      audio.currentTime = 0;
       await audio.play();
       setState("playing");
     } catch {
