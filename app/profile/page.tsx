@@ -9,6 +9,7 @@ import MagicalStatCard from "@/components/dashboard/MagicalStatCard";
 import AvatarWizard from "@/components/profile/AvatarWizard";
 import AvatarBuilder from "@/components/profile/AvatarBuilder";
 import LearningProfile from "@/components/profile/LearningProfile";
+import TeachBackMastery from "@/components/profile/TeachBackMastery";
 import DeleteAccountSection from "@/components/profile/DeleteAccountSection";
 import AchievementBadge from "@/components/AchievementBadge";
 import { useAuth } from "@/lib/auth-context";
@@ -126,6 +127,8 @@ function ProfileContent() {
       </section>
 
       <LearningProfile profile={profile} />
+
+      <TeachBackMastery />
 
       {/* Relics (integrated, compact, self-contained) */}
       <section className="mt-8">
