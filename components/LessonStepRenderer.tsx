@@ -25,6 +25,7 @@ import { getCorrectHeadline } from "@/lib/learning/progressive-feedback";
 import ProgressiveFeedbackPanel from "./ProgressiveFeedbackPanel";
 import WorkedExample from "./WorkedExample";
 import { saveTowerHintContext } from "@/lib/companions/tower-context";
+import { reportQuestionAttempt } from "@/lib/companions/lesson-context";
 import { primaryConcept, type ConceptTag } from "@/lib/learning/concepts";
 import { recordConceptResult } from "@/lib/learning/signals";
 import BlochExplorer from "./BlochExplorer";
@@ -125,6 +126,7 @@ function Body({
             options={step.options}
             onCanAdvanceChange={onCanAdvanceChange}
             onAttempt={onGradedAttempt}
+            hintMeta={{ lessonId, lessonTitle, prompt: step.prompt }}
             conceptTag={conceptTag}
           />
         </div>
@@ -198,6 +200,7 @@ function Body({
             teaching={step.teaching}
             onCanAdvanceChange={onCanAdvanceChange}
             onAttempt={onGradedAttempt}
+            hintMeta={{ lessonId, lessonTitle, prompt: step.prompt }}
             conceptTag={conceptTag}
           />
         </div>
@@ -244,6 +247,7 @@ function Body({
             teaching={step.teaching}
             onCanAdvanceChange={onCanAdvanceChange}
             onAttempt={onGradedAttempt}
+            hintMeta={{ lessonId, lessonTitle, prompt: step.prompt }}
             conceptTag={conceptTag}
           />
         </div>
@@ -940,6 +944,7 @@ function ChallengeView({
     if (solved) return;
     onGradedAttempt();
     const passed = Math.abs(value - step.targetProbability) <= step.tolerance;
+    reportQuestionAttempt(lessonId, step.prompt, `${value}%`, passed, step.incorrectFeedback);
     setResult(passed ? "correct" : "incorrect");
     onCanAdvanceChange(passed);
     if (conceptTag) recordConceptResult(conceptTag, passed, { misconception: passed ? undefined : step.incorrectFeedback });
