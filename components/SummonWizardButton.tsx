@@ -5,12 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useCompanion } from "@/components/companions/CompanionProvider";
 import type { BubbleAction, ContextKind } from "@/lib/companions/types";
+import { aiTopicForPage, pageKindFromPath, type PageKind } from "@/lib/companions/page-context";
 import {
-  aiTopicForPage,
-  hintContextForPage,
-  pageKindFromPath,
-  type PageKind,
-} from "@/lib/companions/page-context";
+  getActiveLessonContext,
+  getQuestionAttempt,
+  type ActiveLessonContext,
+} from "@/lib/companions/lesson-context";
+import { fallbackFunFact, fallbackHint, fallbackPractice } from "@/lib/companions/wizard-fallbacks";
+import { toHintLevel, type WizardHintLevel, type WizardReply, type WizardRequest } from "@/lib/ai/wizard";
 import { quantumBasicsCourse } from "@/content/lessons";
 import type { UserProfile } from "@/lib/types";
 import {
@@ -45,6 +47,19 @@ interface SceneCopy {
   actions: BubbleAction[];
 }
 
+const LESSON_ACTIONS: BubbleAction[] = [
+  { id: "summon-hint", label: "Hint", variant: "primary" },
+  { id: "summon-practice", label: "Practice", variant: "ghost" },
+  { id: "summon-funfact", label: "Fun fact", variant: "ghost" },
+];
+
+/** Shown under a practice question so the learner can check themselves. */
+const PRACTICE_ACTIONS: BubbleAction[] = [
+  { id: "summon-reveal", label: "Show answer", variant: "primary" },
+  { id: "summon-practice", label: "Another", variant: "ghost" },
+  { id: "summon-hint", label: "Hint", variant: "ghost" },
+];
+
 /**
  * Pick the bubble copy for the page the wizard was summoned on. All copy comes
  * from the local (non-AI) pools in lib/companions/messages.ts. This runs from a
@@ -57,11 +72,7 @@ function sceneFor(pathname: string, profile: UserProfile | null): SceneCopy {
     return {
       context: "hint",
       message: pickRandom(LESSON_PAGE_MESSAGES),
-      actions: [
-        { id: "summon-hint", label: "Hint", variant: "primary" },
-        { id: "summon-practice", label: "Practice", variant: "ghost" },
-        { id: "summon-funfact", label: "Fun fact", variant: "ghost" },
-      ],
+      actions: LESSON_ACTIONS,
     };
   }
   if (pathname.startsWith("/profile")) {
@@ -83,6 +94,47 @@ function sceneFor(pathname: string, profile: UserProfile | null): SceneCopy {
   };
 }
 
+/** Session-scoped memory so repeated clicks vary and hints escalate per question. */
+const shownFacts: string[] = [];
+const shownPractice: string[] = [];
+const hintLevels = new Map<string, number>();
+
+function hintKey(ctx: ActiveLessonContext): string {
+  return `${ctx.lessonId}::${ctx.stepId}::${ctx.question ?? ""}`;
+}
+
+function wizardRequest(ctx: ActiveLessonContext): Omit<WizardRequest, "action"> {
+  const attempt = ctx.question ? getQuestionAttempt(ctx.lessonId, ctx.question) : null;
+  return {
+    lessonId: ctx.lessonId,
+    lessonTitle: ctx.lessonTitle,
+    step: `${ctx.stepIndex + 1} of ${ctx.stepCount}: ${ctx.stepTitle} (${ctx.stepType})`,
+    concept: ctx.concept,
+    question: ctx.question,
+    choices: ctx.choices,
+    correctAnswer: ctx.correctAnswer,
+    studentAnswer: attempt?.studentAnswer ?? null,
+    incorrectAttempts: attempt?.incorrectAttempts ?? 0,
+    attemptFeedback: attempt?.lastFeedback,
+    stepSummary: ctx.question ? undefined : ctx.stepSummary,
+  };
+}
+
+async function callWizard(body: WizardRequest): Promise<WizardReply | null> {
+  try {
+    const res = await fetch("/api/wizard", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json().catch(() => null)) as Partial<WizardReply> | null;
+    return data && typeof data.text === "string" && data.text.trim() ? { text: data.text, answer: data.answer } : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Persistent control to summon the guide wizard from any authenticated page.
  * Route-aware: the speech bubble offers context-appropriate, guide-style
@@ -93,21 +145,40 @@ export default function SummonWizardButton() {
   const router = useRouter();
   const { user, profile } = useAuth();
   const { summon, update, dismiss, isActive, setBubbleActionHandler, clearBubbleActionHandler } = useCompanion();
+  const busyRef = useRef(false);
+  const practiceAnswerRef = useRef<string | null>(null);
 
   useEffect(() => {
     const ids = [
       "summon-hint",
       "summon-practice",
       "summon-funfact",
+      "summon-reveal",
       "summon-continue",
       "summon-tower",
       "summon-dashboard",
     ];
 
-    async function askHint() {
-      const ctx = hintContextForPage(pathname);
+    /** Runs one wizard request at a time; extra clicks while thinking are ignored. */
+    async function withWizard(run: () => Promise<void>) {
+      if (busyRef.current) return;
+      busyRef.current = true;
+      update("wizard", { state: "thinking", message: undefined, bubbleActions: undefined });
+      try {
+        await run();
+      } finally {
+        busyRef.current = false;
+      }
+    }
+
+    function speak(message: string, actions: BubbleAction[], wandAim: number, autoDismissMs: number) {
+      update("wizard", { state: "speaking", message, bubbleActions: actions, wandAim, autoDismissMs });
+    }
+
+    function askHint() {
+      const ctx = getActiveLessonContext();
       const pageKind = pageKindFromPath(pathname) as PageKind;
-      if (!ctx) {
+      if (!ctx || pageKind !== "lesson") {
         const fallback =
           pageKind === "profile"
             ? SUMMON_FALLBACKS.profileHint
@@ -117,37 +188,52 @@ export default function SummonWizardButton() {
         update("wizard", { state: "speaking", message: fallback, bubbleActions: undefined, autoDismissMs: 16000 });
         return;
       }
-      update("wizard", { state: "thinking", message: undefined, bubbleActions: undefined });
-      try {
-        const res = await fetch("/api/ai/hint", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...ctx, pageKind }),
-        });
-        const data = (await res.json().catch(() => null)) as { hint?: string } | null;
-        const hint = res.ok && data?.hint ? data.hint : SUMMON_FALLBACKS.hint;
-        update("wizard", { state: "speaking", message: hint, bubbleActions: undefined, wandAim: 16, autoDismissMs: 22000 });
-      } catch {
-        update("wizard", { state: "speaking", message: SUMMON_FALLBACKS.hint, bubbleActions: undefined, autoDismissMs: 22000 });
-      }
+      void withWizard(async () => {
+        const key = hintKey(ctx);
+        const level = toHintLevel(Math.min(3, (hintLevels.get(key) ?? 0) + 1)) as WizardHintLevel;
+        hintLevels.set(key, level);
+        const reply = await callWizard({ action: "hint", hintLevel: level, ...wizardRequest(ctx) });
+        speak(reply?.text ?? fallbackHint(ctx.conceptTag, level), LESSON_ACTIONS, 16, 30000);
+      });
     }
 
-    async function askFunFact() {
-      const topic = aiTopicForPage(pathname);
-      const pageKind = pageKindFromPath(pathname) as PageKind;
-      update("wizard", { state: "thinking", message: undefined, bubbleActions: undefined });
-      try {
-        const res = await fetch("/api/ai/fun-fact", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ topic, pageKind }),
-        });
-        const data = (await res.json().catch(() => null)) as { fact?: string } | null;
-        const fact = res.ok && data?.fact ? data.fact : SUMMON_FALLBACKS.funFact;
-        update("wizard", { state: "speaking", message: fact, bubbleActions: undefined, wandAim: -12, autoDismissMs: 24000 });
-      } catch {
-        update("wizard", { state: "speaking", message: SUMMON_FALLBACKS.funFact, bubbleActions: undefined, autoDismissMs: 24000 });
+    function askPractice() {
+      const ctx = getActiveLessonContext();
+      if (!ctx) {
+        update("wizard", { state: "speaking", message: SUMMON_FALLBACKS.noContext, bubbleActions: undefined, autoDismissMs: 16000 });
+        return;
       }
+      void withWizard(async () => {
+        const reply = await callWizard({ action: "practice", avoid: shownPractice.slice(-6), ...wizardRequest(ctx) });
+        const practice = reply?.answer ? { text: reply.text, answer: reply.answer } : fallbackPractice(ctx.conceptTag);
+        shownPractice.push(practice.text);
+        practiceAnswerRef.current = practice.answer;
+        speak(practice.text, PRACTICE_ACTIONS, 12, 60000);
+      });
+    }
+
+    function revealAnswer() {
+      const answer = practiceAnswerRef.current;
+      if (!answer) return;
+      speak(answer, LESSON_ACTIONS, 20, 30000);
+    }
+
+    function askFunFact() {
+      const ctx = getActiveLessonContext();
+      const pageKind = pageKindFromPath(pathname) as PageKind;
+      const lessonCtx = pageKind === "lesson" ? ctx : null;
+      void withWizard(async () => {
+        const reply = await callWizard({
+          action: "fun_fact",
+          avoid: shownFacts.slice(-10),
+          ...(lessonCtx
+            ? wizardRequest(lessonCtx)
+            : { lessonTitle: aiTopicForPage(pathname), concept: aiTopicForPage(pathname) }),
+        });
+        const fact = reply?.text ?? fallbackFunFact(lessonCtx?.conceptTag ?? null, shownFacts);
+        shownFacts.push(fact);
+        speak(fact, lessonCtx ? LESSON_ACTIONS : [], -12, 30000);
+      });
     }
 
     function go(href: string, farewell: string) {
@@ -156,9 +242,10 @@ export default function SummonWizardButton() {
       router.push(href);
     }
 
-    setBubbleActionHandler("summon-hint", () => void askHint());
-    setBubbleActionHandler("summon-practice", () => go("/tower", FAREWELLS.practice));
-    setBubbleActionHandler("summon-funfact", () => void askFunFact());
+    setBubbleActionHandler("summon-hint", askHint);
+    setBubbleActionHandler("summon-practice", askPractice);
+    setBubbleActionHandler("summon-funfact", askFunFact);
+    setBubbleActionHandler("summon-reveal", revealAnswer);
     setBubbleActionHandler("summon-continue", () => go(nextLessonHref(profile), FAREWELLS.continue));
     setBubbleActionHandler("summon-tower", () => go("/tower", FAREWELLS.tower));
     setBubbleActionHandler("summon-dashboard", () => go("/dashboard", FAREWELLS.dashboard));

@@ -9,6 +9,7 @@ import Badge from "@/components/Badge";
 import LessonStepRenderer from "@/components/LessonStepRenderer";
 import { useCompanion } from "@/components/companions/CompanionProvider";
 import { saveTowerLessonContext } from "@/lib/companions/tower-context";
+import { lessonContextFromStep, setActiveLessonContext } from "@/lib/companions/lesson-context";
 import { playSound } from "@/lib/sound/sounds";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -133,6 +134,13 @@ function LessonPlayer() {
   useEffect(() => {
     stepIndexRef.current = stepIndex;
   }, [stepIndex]);
+
+  // Publish the on-screen step so the Guide Wizard's Hint / Practice / Fun fact
+  // can talk about exactly what the learner is looking at.
+  useEffect(() => {
+    setActiveLessonContext(lesson && mode === "lesson" ? lessonContextFromStep(lesson, stepIndex) : null);
+    return () => setActiveLessonContext(null);
+  }, [lesson, stepIndex, mode]);
 
   useEffect(() => {
     if (process.env.NODE_ENV === "development" && !resumeLogged.current) {

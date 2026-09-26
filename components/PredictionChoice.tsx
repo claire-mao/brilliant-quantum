@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { PredictionOption } from "@/lib/types";
 import MathText from "./MathText";
 import { saveTowerHintContext } from "@/lib/companions/tower-context";
+import { reportQuestionAttempt } from "@/lib/companions/lesson-context";
 import { recordConceptResult } from "@/lib/learning/signals";
 import type { ConceptTag } from "@/lib/learning/concepts";
 import { getCorrectHeadline } from "@/lib/learning/progressive-feedback";
@@ -50,6 +51,7 @@ export default function PredictionChoice({
     }
 
     onAttempt();
+    reportQuestionAttempt(hintMeta?.lessonId, hintMeta?.prompt, option.label, !!option.correct, option.feedback);
     if (option.correct) {
       setSolved(true);
       onCanAdvanceChange(true);
