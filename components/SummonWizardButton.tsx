@@ -163,7 +163,9 @@ export default function SummonWizardButton() {
     async function withWizard(run: () => Promise<void>) {
       if (busyRef.current) return;
       busyRef.current = true;
-      update("wizard", { state: "thinking", message: undefined, bubbleActions: undefined });
+      // Long auto-dismiss replaces any timer left by the previous bubble so the
+      // wizard stays out while the model is still answering.
+      update("wizard", { state: "thinking", message: undefined, bubbleActions: undefined, autoDismissMs: 90000 });
       try {
         await run();
       } finally {
@@ -205,7 +207,7 @@ export default function SummonWizardButton() {
       }
       void withWizard(async () => {
         const reply = await callWizard({ action: "practice", avoid: shownPractice.slice(-6), ...wizardRequest(ctx) });
-        const practice = reply?.answer ? { text: reply.text, answer: reply.answer } : fallbackPractice(ctx.conceptTag);
+        const practice = reply?.answer ? { text: reply.text, answer: reply.answer } : fallbackPractice(ctx.conceptTag, shownPractice);
         shownPractice.push(practice.text);
         practiceAnswerRef.current = practice.answer;
         speak(practice.text, PRACTICE_ACTIONS, 12, 60000);

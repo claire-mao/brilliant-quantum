@@ -9,18 +9,41 @@ export function fallbackHint(conceptTag: ConceptTag | null, level: WizardHintLev
   return AI_OFF_HINT_FALLBACKS[level];
 }
 
-export function fallbackPractice(conceptTag: ConceptTag | null): { text: string; answer: string } {
-  if (conceptTag) {
-    const recall = CONCEPT_RECALL[conceptTag];
-    return {
-      text: `Quick check: in your own words, why is it true that ${recall.replace(/\.$/, "")}?`,
-      answer: recall.charAt(0).toUpperCase() + recall.slice(1),
-    };
-  }
-  return {
+interface PracticeItem {
+  text: string;
+  answer: string;
+}
+
+const GENERIC_PRACTICE: readonly PracticeItem[] = [
+  {
     text: "Quick check: what is the one idea this step wants you to predict before testing it?",
     answer: "Name the idea, then run the experiment to check it.",
-  };
+  },
+  {
+    text: "Quick check: which everyday intuition does this step say breaks down for quantum systems?",
+    answer: "The one the step's experiment contradicts — state it, then say what replaces it.",
+  },
+  {
+    text: "Quick check: if you repeated this step's experiment many times, what pattern would you expect to see?",
+    answer: "The probabilities predicted by the amplitudes, not a single fixed outcome.",
+  },
+];
+
+export function fallbackPractice(conceptTag: ConceptTag | null, avoid: readonly string[] = []): PracticeItem {
+  const pool: PracticeItem[] = [];
+  if (conceptTag) {
+    const recall = CONCEPT_RECALL[conceptTag];
+    const claim = recall.replace(/\.$/, "");
+    const answer = recall.charAt(0).toUpperCase() + recall.slice(1);
+    pool.push(
+      { text: `Quick check: in your own words, why is it true that ${claim}?`, answer },
+      { text: `True or false: ${claim}. Say what would go wrong if it were false.`, answer: `True — ${recall}` }
+    );
+  }
+  pool.push(...GENERIC_PRACTICE);
+  const fresh = pool.filter((p) => !avoid.includes(p.text));
+  const candidates = fresh.length ? fresh : pool;
+  return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
 const FALLBACK_FACTS: Partial<Record<ConceptTag, readonly string[]>> & { default: readonly string[] } = {

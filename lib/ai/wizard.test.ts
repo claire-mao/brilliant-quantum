@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseWizardReply, toHintLevel, wizardPrompt } from "./wizard";
+import { hintRevealsAnswer, parseWizardReply, toHintLevel, wizardPrompt } from "./wizard";
 
 describe("wizardPrompt", () => {
   const base = {
@@ -68,5 +68,14 @@ describe("toHintLevel", () => {
     expect(toHintLevel(undefined)).toBe(1);
     expect(toHintLevel(2)).toBe(2);
     expect(toHintLevel(7)).toBe(3);
+  });
+});
+
+describe("hintRevealsAnswer", () => {
+  it("catches the correct label verbatim or by its key words", () => {
+    expect(hintRevealsAnswer("So the answer is: the interference pattern disappeared.", "The interference pattern disappeared")).toBe(true);
+    expect(hintRevealsAnswer("Notice the interference pattern simply disappeared.", "The interference pattern disappeared")).toBe(true);
+    expect(hintRevealsAnswer("Compare what happens before and after the detector.", "The interference pattern disappeared")).toBe(false);
+    expect(hintRevealsAnswer("Think about it.", undefined)).toBe(false);
   });
 });

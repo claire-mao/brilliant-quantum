@@ -46,12 +46,12 @@ export function toHintLevel(value: unknown): WizardHintLevel {
 const PERSONA =
   "You are the Guide Wizard, a terse, warm mentor inside Brilliant Quantum, an interactive quantum computing course. " +
   "You speak in a small speech bubble, so keep replies short (max 2 sentences, under 220 characters unless told otherwise), plain text, no markdown, no emoji, no greetings. " +
-  "Be accurate about quantum physics. Never invent experiment details that are not in the context.";
+  "Be accurate about quantum physics: describe superposition as amplitudes for both outcomes, not 'both values at once', and never claim quantum computers 'try every solution simultaneously'. Never invent experiment details that are not in the context.";
 
 const HINT_LEVEL_GUIDE: Record<WizardHintLevel, string> = {
   1: "Hint level 1 = conceptual nudge: point at the idea the question is really testing, phrased around THIS question. Do not mention any answer choice.",
   2: "Hint level 2 = specific reasoning direction: tell the learner what to compare or check in this exact question so they can narrow the choices. You may rule out a wrong idea, but do not name the correct choice.",
-  3: "Hint level 3 = strong guidance: walk them to the brink of the answer with the key reasoning step, so the correct choice becomes obvious, but still do not state the answer or quote the correct choice.",
+  3: "Hint level 3 = strong guidance: walk them to the brink of the answer with the key reasoning step, so the correct choice becomes obvious, but still do not state the answer or quote the correct choice. Phrase the final step as a question the learner answers themselves (e.g. 'so can it hold both at once?') rather than as a fact; if the question is yes/no or the fact would settle it outright, never state that fact.",
 };
 
 function contextBlock(req: WizardRequest): string {
@@ -116,6 +116,33 @@ export function wizardPrompt(req: WizardRequest): { system: string; user: string
 function stripFences(raw: string): string {
   return raw.replace(/^\s*```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
 }
+
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[|⟩⟨]/g, "")
+    .replace(/[^a-z0-9%]+/g, " ")
+    .trim();
+}
+
+/**
+ * True when a hint quotes the correct choice (whole label, or all of its
+ * meaningful words in order) so the route can retry or fall back instead of
+ * handing the answer over.
+ */
+export function hintRevealsAnswer(text: string, correctAnswer: string | undefined): boolean {
+  if (!correctAnswer) return false;
+  const hint = normalize(text);
+  const answer = normalize(correctAnswer);
+  if (!answer) return false;
+  if (answer.length >= 3 && hint.includes(answer)) return true;
+  const words = answer.split(" ").filter((w) => w.length > 2 && !STOP_WORDS.has(w));
+  if (words.length < 2) return false;
+  const pattern = new RegExp(words.map((w) => w.replace(/[.*+?^${}()[\]\\]/g, "\\$&")).join("\\s+(?:\\w+\\s+){0,2}"));
+  return pattern.test(hint);
+}
+
+const STOP_WORDS = new Set(["the", "and", "that", "this", "with", "for", "its", "are", "was", "will", "can", "not"]);
 
 export function parseWizardReply(raw: string, action: WizardAction): WizardReply | null {
   const cleaned = stripFences(raw);

@@ -3,6 +3,7 @@ import { anthropicConfigured, claudeChat } from "@/lib/ai/anthropic";
 import {
   WIZARD_ACTIONS,
   parseWizardReply,
+  hintRevealsAnswer,
   toHintLevel,
   wizardPrompt,
   type WizardAction,
@@ -76,7 +77,18 @@ export async function POST(request: Request) {
       temperature: req.action === "hint" ? 0.4 : 0.9,
       timeoutMs: 15_000,
     });
-    const reply = parseWizardReply(raw, req.action);
+    let reply = parseWizardReply(raw, req.action);
+    if (reply && req.action === "hint" && hintRevealsAnswer(reply.text, req.correctAnswer)) {
+      const retry = await claudeChat({
+        system,
+        user: `${user}\n\nYour previous hint quoted the correct choice, which is forbidden. Rewrite it as a guiding question that does not contain the answer.`,
+        maxTokens: 180,
+        temperature: 0.2,
+        timeoutMs: 15_000,
+      });
+      reply = parseWizardReply(retry, req.action);
+      if (reply && hintRevealsAnswer(reply.text, req.correctAnswer)) reply = null;
+    }
     if (!reply) {
       console.warn("[wizard] malformed model reply", req.action);
       return NextResponse.json({ error: "invalid_reply" }, { status: 422 });
