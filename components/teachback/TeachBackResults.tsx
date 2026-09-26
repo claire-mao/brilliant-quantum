@@ -27,7 +27,7 @@ export default function TeachBackResults({
   onDone,
 }: {
   analysis: TeachBackAnalysis;
-  source: "llama" | "fallback";
+  source: "claude" | "fallback";
   priorMastery: number | null;
   profileMastery: number | null;
   transcript: string;
@@ -67,7 +67,7 @@ export default function TeachBackResults({
           <p className="mt-2 text-xs text-slate-500">
             Strategy: <span className="font-medium text-slate-700">{STRATEGY_LABEL[analysis.teachingStrategy]}</span>
             {source === "fallback" && (
-              <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 font-medium text-slate-600" title="The Llama model was unavailable; the built-in rubric tutor produced this feedback.">
+              <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 font-medium text-slate-600" title="The Claude model was unavailable; the built-in rubric tutor produced this feedback.">
                 rubric tutor
               </span>
             )}

@@ -96,7 +96,7 @@ export default function TeachBackPanel({
   const [notice, setNotice] = useState<string | null>(null);
   const [seconds, setSeconds] = useState(0);
   const [analysis, setAnalysis] = useState<TeachBackAnalysis | null>(null);
-  const [source, setSource] = useState<"llama" | "fallback">("llama");
+  const [source, setSource] = useState<"claude" | "fallback">("claude");
   const [priorMastery, setPriorMastery] = useState<number | null>(null);
   const [newMastery, setNewMastery] = useState<number | null>(null);
   const [micSupported, setMicSupported] = useState(true);
@@ -260,7 +260,7 @@ export default function TeachBackPanel({
       );
       const data = (await res.json().catch(() => ({}))) as {
         analysis?: TeachBackAnalysis;
-        source?: "llama" | "fallback";
+        source?: "claude" | "fallback";
         error?: string;
       };
       if (!res.ok || !data.analysis) {
@@ -269,7 +269,7 @@ export default function TeachBackPanel({
         return;
       }
       setAnalysis(data.analysis);
-      setSource(data.source ?? "llama");
+      setSource(data.source ?? "claude");
       if (conceptTag) {
         const entry = recordTeachBackSession(conceptTag, {
           lessonId,

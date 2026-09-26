@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { chat } from "@/lib/ai/client";
-import { llamaProvider, llamaConfigured } from "@/lib/ai/llama";
+import { anthropicConfigured, claudeChat } from "@/lib/ai/anthropic";
 import {
   CONCEPT_KEY_IDEAS,
   fallbackTeachBack,
@@ -19,9 +18,9 @@ const MAX_TRANSCRIPT_CHARS = 4000;
 
 /**
  * POST { lessonId, transcript, priorMastery? }
- * -> { analysis: TeachBackAnalysis, source: "llama" | "fallback" }
+ * -> { analysis: TeachBackAnalysis, source: "claude" | "fallback" }
  *
- * The Llama key never leaves this route. When the model is unavailable or
+ * The Anthropic key never leaves this route. When the model is unavailable or
  * returns malformed JSON we fall back to a rubric-based analysis so the demo
  * flow always completes.
  */
@@ -51,21 +50,13 @@ export async function POST(request: Request) {
     priorMastery,
   };
 
-  if (llamaConfigured()) {
+  if (anthropicConfigured()) {
     try {
       const { system, user } = teachBackPrompt(ctx);
-      const raw = await chat({
-        system,
-        user,
-        json: true,
-        maxTokens: 900,
-        temperature: 0.3,
-        provider: llamaProvider(),
-        timeoutMs: 20_000,
-      });
+      const raw = await claudeChat({ system, user, maxTokens: 900, temperature: 0.3, timeoutMs: 20_000 });
       const analysis = parseTeachBack(raw, ctx.conceptLabel);
       if (analysis) {
-        return NextResponse.json({ analysis: { ...analysis, concept: ctx.conceptLabel }, source: "llama" });
+        return NextResponse.json({ analysis: { ...analysis, concept: ctx.conceptLabel }, source: "claude" });
       }
       console.warn("[teachback] model returned malformed JSON; using fallback");
     } catch (err) {
